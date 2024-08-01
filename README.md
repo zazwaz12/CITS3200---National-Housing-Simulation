@@ -10,7 +10,11 @@ Currently, two methods are supported. `poetry` is the main method for managing P
 
 [Poetry](https://python-poetry.org/) is a Python dependency manager. Install it following the [official guide](https://python-poetry.org/docs/#installing-with-the-official-installer).
 
-Run `poetry install` to install the required dependencies and then `poetry shell` to activate the virtual environment.
+Run `poetry install` to install the required dependencies and then activate the virtual environment with
+
+```bash
+poetry shell
+```
 
 ## Devbox + direnv
 
@@ -20,8 +24,10 @@ Run `poetry install` to install the required dependencies and then `poetry shell
 
 [`direnv`](https://github.com/direnv/direnv) is used to extend the current shell by loading and unloading environmental variables automatically as the user enters the current directory. This is used to activate the Devbox shell automatically using the `.envrc` file.
 
-First, install both [Devbox](https://github.com/jetify-com/devbox) and [`direnv`](https://github.com/direnv/direnv). Then, from the top-most directory of the project, run the following command. When you `cd` into the directory, Devbox will install the required dependencies locally, run poetry to install the requirements, and activate the virtual environment automatically.
+First, install both [Devbox](https://github.com/jetify-com/devbox) and [`direnv`](https://github.com/direnv/direnv). Then, from the top-most directory of the project, run the following command. 
 
 ```bash
 direnv allow    # Allow direnv to execute .envrc
 ```
+
+When you `cd` into the directory, Devbox will install the required dependencies locally, run poetry to install the requirements, and activate the virtual environment automatically.
