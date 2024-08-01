@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.12.0/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.12.4",
+    "github:GuillaumeDesforges/fix-python/",
+    "poetry@1.8.3"
+  ],
+  "env": {
+    "VENV_DIR": ".venv"
+  },
+  "shell": {
+    "init_hook": [
+      "alias python=\"poetry run python\"",
+      "alias python3=\"poetry run python\"",
+      "alias py=\"poetry run python\"",
+      "alias py3=\"poetry run python\"",
+
+      "poetry install",
+      // Python modules assume path for C/C++ libraries, use fix-python to change link
+      "echo \"Fixing python paths...\"",
+      "fix-python --venv .venv --libs .nix/libs.nix &> /dev/null",
+    ],
+    "scripts": {}
+  }
+}
