@@ -23,4 +23,3 @@ if __name__ == "__main__":
 
     # Run the sync
     sync_onedrive_to_desktop(username, onedrive_name)
-
