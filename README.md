@@ -39,19 +39,26 @@ As shown below, a shortcut to Sharepoint from Teams need to be saved on your Des
 
 <img src="diagram-sources/syncing.jpg" alt="Diagram showing sources and syncing" width="900"/>
 
-The syncing process is done as shown below, note my directory is on my Desktop too by coincidence that is not important:
+<img src="diagram-sources/onedrivefiles.jpg" alt="Setting up the OneDrive Shortcut" width="900"/>
+
+<img src="diagram-sources/shortcut.jpg" alt="Referencing the Shortcut" width="900"/>
+
+The syncing process is done as shown below, note my directory is on my Desktop too by coincidence - that is not important:
 
 ```bash
+pip install dirsync
+
 PS C:\Users\61420\Desktop\CITS3200---National-Housing-Simulation> python syncdata.py
 
 Please enter your Windows username: 61420
 
 Please enter your OneDrive name (e.g., OneDrive - UWA): Onedrive - UWA
-
-Enter sync direction ('pull' to OneDrive to Desktop, 'push' to Desktop to OneDrive): pull
-
 ```
 
-Ensure the syncscript work for your workflow, it will NOT be tracked for updates and contained in the “.gitignore”
-
 **_ PLEASE ADD HOW THIS WOULD BE DONE IN POETRY OR DEVBOX, I AM NOT FAMILIAR WITH HOW THE WORKFLOW THEY COMBINE WITH _**
+
+Ensure the syncscript works for your workflow, it will NOT be tracked for updates and contained in the “.gitignore”
+
+<img src="diagram-sources/localfiles.png" alt="Referencing the Shortcut" width="900"/>
+
+The Sharepoint files will then be loaded to the local copy, which took 40 minutes for 3.4GB of input data.

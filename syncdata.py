@@ -1,7 +1,7 @@
 from dirsync import sync
 import os
 
-def sync_onedrive_to_desktop(username, onedrive_name, direction):
+def sync_onedrive_to_desktop(username, onedrive_name):
     user_profile = os.path.join('C:\\Users', username)
     source_path = os.path.join(user_profile, onedrive_name, "DataFiles")
     target_path = os.path.join(user_profile, 'Desktop', "DataFiles")
@@ -21,9 +21,6 @@ if __name__ == "__main__":
     onedrive_folder_name = "DataFiles"
     desktop_folder_name = "DataFiles" 
 
-    # Prompt for sync direction
-    direction = input("Enter sync direction ('pull' to OneDrive to Desktop, 'push' to Desktop to OneDrive): ").strip().lower()
-
     # Run the sync
-    sync_onedrive_to_desktop(username, onedrive_name, direction)
+    sync_onedrive_to_desktop(username, onedrive_name)
 
