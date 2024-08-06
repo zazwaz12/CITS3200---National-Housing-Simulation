@@ -1,0 +1,47 @@
+name: Python CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GH_PAT }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black pyright pytest
+
+    - name: Format with Black
+      run: black .
+
+    - name: Check types with Pyright
+      run: pyright
+
+    - name: Run tests with Pytest
+      run: pytest
+
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic formatting"
+    
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GH_PAT }}
+        branch: ${{ github.head_ref }}
+        force: true
