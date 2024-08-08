@@ -1,5 +1,5 @@
 ---
-Title: "Closes issue-<#NUMBER>-<TITLE>"
+Title: "Closes issue #<NUMBER>"
 About: Suggest code changes or fixes to improve the project
 Labels: ''
 Assignees: ''
