@@ -1,7 +1,7 @@
 ---
+Title: "issue-<NUMBER>-<TITLE>"
 Name: 🐛 Bug report
 About: Create a report to help us improve
-Title: "[BUG] "
 Labels: bug
 Assignees: ''
 

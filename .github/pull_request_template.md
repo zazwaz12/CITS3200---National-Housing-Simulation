@@ -1,7 +1,6 @@
 ---
-Name: 📝 Pull Request
+Title: "Closes issue-<#NUMBER>-<TITLE>"
 About: Suggest code changes or fixes to improve the project
-Title: "[PR] "
 Labels: ''
 Assignees: ''
 
@@ -10,11 +9,8 @@ Assignees: ''
 ## **What does this implement/fix? Explain your changes.**
 A clear and concise description of what the pull request does, including any context about the code changes.
 
-## **Does this close any currently open issues?**
-If yes, please list the issue numbers here, using the format `Closes #issue-<issue number>-<issue-title>`.
-
 ## **Describe the changes made**
-A detailed list of the changes made in this PR, ideally broken down by file or functionality.
+A  list of the changes made in this PR, ideally broken down by file or functionality.
 
 ## **Screenshots**
 If applicable, add screenshots to help visualize the changes.

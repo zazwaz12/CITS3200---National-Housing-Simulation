@@ -1,7 +1,7 @@
 ---
+Title: "issue-<NUMBER>-<TITLE>"
 Name: ⚙️ Internal Development Issue
 About: For tracking technical tasks or bugs
-Title: "[DEV] "
 Labels: ''
 Assignees: ''
 

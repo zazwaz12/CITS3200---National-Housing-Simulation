@@ -1,7 +1,7 @@
 ---
+Title: "issue-<NUMBER>-<TITLE>"
 Name: ✨ Feature Addition
 About: Track new features or enhancements for development
-Title: "[FEATURE] "
 Labels: ''
 Assignees: ''
 
