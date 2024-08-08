@@ -434,6 +434,19 @@ graph = ["objgraph (>=1.7.2)"]
 profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
+name = "dirsync"
+version = "2.2.5"
+description = "Advanced directory tree synchronisation tool"
+optional = false
+python-versions = "*"
+files = [
+    {file = "dirsync-2.2.5.tar.gz", hash = "sha256:1e3a4cd2b639a2eae5afc03c2b8a003fc43d56a0da5114db579386da9a14a8be"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "executing"
 version = "2.0.1"
 description = "Get the currently executing AST node of a frame, and other information"
@@ -1692,4 +1705,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "4dd9134ff232964117ac2825156da22b04fbd3692c9fe342b6753d71c89ca17f"
+content-hash = "407a555b52a649ce3c633240eeadacf27fd883ea0a62ca1f08cab6391ccc28da"
