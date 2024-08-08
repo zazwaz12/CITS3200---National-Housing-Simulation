@@ -3,23 +3,35 @@
   "packages": [
     "python@3.12.4",
     "github:GuillaumeDesforges/fix-python/",
-    "poetry@1.8.3"
+    "poetry@1.8.3",
+    "rclone@1.67.0"
   ],
   "env": {
-    "VENV_DIR": ".venv"
+    "VENV_DIR": ".venv",
+    "RCLONE_CONFIG": "./.rclone/rclone.conf",
+    "RCLONE_DATA_FOLDER": "./DataFiles"
   },
   "shell": {
     "init_hook": [
-      "alias python=\"poetry run python\"",
-      "alias python3=\"poetry run python\"",
-      "alias py=\"poetry run python\"",
-      "alias py3=\"poetry run python\"",
+      // Make rclone config file and DataFiles folder if they don't exist
+      "if [ ! -f \"./.rclone/rclone.conf\" ]; then",
+      "    mkdir -p \"./.rclone\"",
+      "    touch \"./.rclone/rclone.conf\"",
+      "    mkdir $RCLONE_DATA_FOLDER",
+      "    RED=\"\\033[0;31m\"",
+      "    echo -e \"\n${RED}WARNING: New rclone config file and ${RCLONE_DATA_FOLDER} created, please do the following:\n - Specify remote for shared DataFiles folder with\n\t'rclone config'\n   Note that /DataFiles must be in the top-most directory of OneDrive.\n - Mount remote with\n\t'devbox run mount-remote'\n\"",
+      "fi",
 
       "poetry install",
+
+       "if git diff --name-only HEAD~1 HEAD | grep -q 'poetry.lock'; then",
+      "    echo \"poetry.lock was modified, fixing python paths...\"", 
       // Python modules assume path for C/C++ libraries, use fix-python to change link
-      "echo \"Fixing python paths...\"",
-      "fix-python --venv .venv --libs .nix/libs.nix &> /dev/null",
+      "    fix-python --venv .venv --libs .nix/libs.nix &> /dev/null",
+      "fi"
     ],
-    "scripts": {}
+    "scripts": {
+      "mount-remote":"remoteName=$(head -n 1 ./.rclone/rclone.conf | sed 's/^\\[\\(.*\\)\\]$/\\1/') && rclone --vfs-cache-mode writes mount $remoteName:/DataFiles $RCLONE_DATA_FOLDER",
+    }
   }
 }
