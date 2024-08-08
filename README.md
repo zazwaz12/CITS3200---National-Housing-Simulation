@@ -1,32 +1,26 @@
-# CITS3200---National-Housing-Simulation
+# National Housing Simulation
 
-National Housing Simulation - mapping data points from the G-NAF and the census data sets.
+Repository for the National Housing Simulation project, involving mapping data points from the G-NAF and the SA1 census datasets.
 
 ## Install
 
-Currently, two methods are supported. `poetry` is the main method for managing Python dependencies. `devbox` uses `poetry` to manage Python dependencies but provide extra isolation from your host environment and automates some of the processes when used with `direnv`. It can also manage non-Python dependencies as well without installing it on your main machine.
+You can install project dependencies using either `poetry` or `devbox`.
 
 ### Poetry
 
-[Poetry](https://python-poetry.org/) is a Python dependency manager. Install it following the [official guide](https://python-poetry.org/docs/#installing-with-the-official-installer).
+[Poetry](https://python-poetry.org/) is a Python dependency manager that also manages dependency configurations. Install it following the [official guide](https://python-poetry.org/docs/#installing-with-the-official-installer).
 
 ```bash
-poetry install   # Install the dependencies from pyproject.toml
 poetry shell     # Activate the virtual environment
+poetry install   # Install the dependencies from pyproject.toml
 ```
 
-## Devbox + direnv
+## Devbox
 
-**Warning: `direnv` allow any arbitrary bash commands to be executed, please inspect `.envrc` before allowing direnv!**
+[Devbox](https://github.com/jetify-com/devbox) is used to create development shells where the dependencies are declared in `devbox.json` file. It can manage non-Python dependencies which will only be accessible in the shell (i.e. not installed globally). It is internally powered by Nix where the list of Nix packages can be found at [Nixhub.io](https://www.nixhub.io/).
 
-[Devbox](https://github.com/jetify-com/devbox) is used to create isolated development shells where the dependencies are declared in `devbox.json` file and are version-locked in `devbox.lock`. Dependencies and programs installed in the shell are only accessible in the shell. It is internally powered by Nix where the list of Nix packages can be found at [Nixhub.io](https://www.nixhub.io/).
-
-[`direnv`](https://github.com/direnv/direnv) is used to extend the current shell by loading and unloading environmental variables automatically as the user enters the current directory. This is used to activate the Devbox shell automatically using the `.envrc` file.
-
-First, install both [Devbox](https://www.jetify.com/devbox/docs/installing_devbox/) and [`direnv`](https://github.com/direnv/direnv). Then, from the top-most directory of the project, run the following command. 
+First, install [Devbox](https://www.jetify.com/devbox/docs/installing_devbox/). Then, from the top-most directory of the project, run
 
 ```bash
-direnv allow    # Allow direnv to execute .envrc
+devbox shell  # activate the dev shell
 ```
-
-When you `cd` into the directory, Devbox will install the required dependencies locally, run poetry to install the requirements, and activate the virtual environment automatically.
