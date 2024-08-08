@@ -1,9 +1,9 @@
 ---
-name: ⚙️ Internal Development Issue
-about: For tracking technical tasks or bugs
-title: "[DEV] "
-labels: ''
-assignees: ''
+Name: ⚙️ Internal Development Issue
+About: For tracking technical tasks or bugs
+Title: "[DEV] "
+Labels: ''
+Assignees: ''
 
 ---
 

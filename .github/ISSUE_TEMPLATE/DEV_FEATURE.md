@@ -1,9 +1,9 @@
 ---
-name: ✨ Feature Addition
-about: Track new features or enhancements for development
-title: "[FEATURE] "
-labels: ''
-assignees: ''
+Name: ✨ Feature Addition
+About: Track new features or enhancements for development
+Title: "[FEATURE] "
+Labels: ''
+Assignees: ''
 
 ---
 
