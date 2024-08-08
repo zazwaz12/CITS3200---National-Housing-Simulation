@@ -1,6 +1,8 @@
 data/
 .nix/fix-python
 .devbox/
+.rclone/
+DataFiles/
 
 syncdata.py
 
