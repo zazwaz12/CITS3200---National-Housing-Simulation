@@ -11,7 +11,7 @@ Assignees: ''
 A clear and concise description of what the pull request does, including any context about the code changes.
 
 ## **Does this close any currently open issues?**
-If yes, please list the issue numbers here, using the format `Closes #<issue number>`.
+If yes, please list the issue numbers here, using the format `Closes #issue-<issue number>-<issue-title>`.
 
 ## **Describe the changes made**
 A detailed list of the changes made in this PR, ideally broken down by file or functionality.
