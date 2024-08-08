@@ -7,19 +7,19 @@ Assignees: ''
 
 ---
 
-**What does this implement/fix? Explain your changes.**
+## **What does this implement/fix? Explain your changes.**
 A clear and concise description of what the pull request does, including any context about the code changes.
 
-**Does this close any currently open issues?**
+## **Does this close any currently open issues?**
 If yes, please list the issue numbers here, using the format `Closes #<issue number>`.
 
-**Describe the changes made**
+## **Describe the changes made**
 A detailed list of the changes made in this PR, ideally broken down by file or functionality.
 
-**Screenshots**
+## **Screenshots**
 If applicable, add screenshots to help visualize the changes.
 
-**Checklist:**
+# **Checklist:**
 - [ ] My code follows the code style of this project.
 - [ ] I have performed a self-review of my own code.
 - [ ] I have commented on my code, particularly in hard-to-understand areas.
@@ -29,5 +29,5 @@ If applicable, add screenshots to help visualize the changes.
 - [ ] New and existing unit tests pass locally with my changes.
 - [ ] Any dependent changes have been merged and published in downstream modules.
 
-**Additional context**
+### **Additional context**
 Add any other context or relevant information about the pull request here.
