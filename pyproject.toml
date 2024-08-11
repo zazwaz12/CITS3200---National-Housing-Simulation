@@ -17,7 +17,7 @@ fastexcel = "^0.11.5"
 jupyter-black = "^0.3.4"
 isort = "^5.13.2"
 pathos = "^0.3.2"
-dirsync = "^2.2.5"
+pyright ="^1.1.316"
 
 [tool.isort]
 profile = "black"
@@ -25,3 +25,18 @@ profile = "black"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+reportMissingTypeStubs = true
+strict = true
+reportUnknownParameterType = true
+reportUntypedFunctionDecorator = true
+typeCheckingMode = "standard"
+pythonVersion = "3.12"
+include = ["**/*.py"]
+exclude = ["**/node_modules", "**/__pycache__"]
+ignore = ["src/oldstuff"]
+defineConstant = { DEBUG = true }
+strictListInference = true
+strictDictionaryInference = true
+strictParameterNoneValue = true
