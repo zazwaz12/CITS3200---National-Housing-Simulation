@@ -122,6 +122,74 @@
           "store_path": "/nix/store/z7xxy35k7620hs6fn6la5fg2lgklv72l-python3-3.12.4"
         }
       }
+    },
+    "rclone@1.67.0": {
+      "last_modified": "2024-07-20T09:11:00Z",
+      "resolved": "github:NixOS/nixpkgs/6e14bbce7bea6c4efd7adfa88a40dac750d80100#rclone",
+      "source": "devbox-search",
+      "version": "1.67.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/lkfsh625ckv182mjks9fa0apfhwqbi1d-rclone-1.67.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/yz5mcl0gnnc294nxvnyiy16xj9n3qjpv-rclone-1.67.0-man",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/lkfsh625ckv182mjks9fa0apfhwqbi1d-rclone-1.67.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/psflc8wwndqll6s3728gyhmllvp5v2l5-rclone-1.67.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/2nyicbc0zxbi9gqwbngqz44myhazfrbr-rclone-1.67.0-man",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/psflc8wwndqll6s3728gyhmllvp5v2l5-rclone-1.67.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ycax2gn88s4zg0p66jh2xaamzhw8sm9d-rclone-1.67.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/yxc05wa8mc372varnbiwz5yxyzg3zckm-rclone-1.67.0-man",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/ycax2gn88s4zg0p66jh2xaamzhw8sm9d-rclone-1.67.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dm00f841y1h0kaflccch8j0cawh36pbk-rclone-1.67.0",
+              "default": true
+            },
+            {
+              "name": "man",
+              "path": "/nix/store/khnr78n2nbgyi5xnjnw9xy3r2kkngb2r-rclone-1.67.0-man",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/dm00f841y1h0kaflccch8j0cawh36pbk-rclone-1.67.0"
+        }
+      }
     }
   }
 }
