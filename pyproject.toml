@@ -18,6 +18,8 @@ jupyter-black = "^0.3.4"
 isort = "^5.13.2"
 pathos = "^0.3.2"
 pyright ="^1.1.316"
+openpyxl = "^3.1.5"
+tqdm = "^4.66.5"
 
 [tool.isort]
 profile = "black"

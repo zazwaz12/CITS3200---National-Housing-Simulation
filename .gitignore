@@ -3,6 +3,7 @@ data/
 .devbox/
 .rclone/
 DataFiles/
+demo.*
 
 syncdata.py
 
