@@ -4,7 +4,6 @@ import polars as pl
 # aliases
 read_psv = nhs.data.read_psv
 read_all_psv = nhs.data.read_all_psv
-pmap = nhs.utils.parallel.pmap
 
 lazy_frames = read_all_psv(
     "./DataFiles/FilesIn/Standard/", "./DataFiles/FilesIn/Standard/{key}_psv.psv"
@@ -27,4 +26,4 @@ def psv_info(name_frame: tuple[str, pl.LazyFrame | None]) -> tuple | None:
     return name, n_cols, n_rows, head
 
 
-[print(i) for i in pmap(psv_info, lazy_frames.items(), n_workers=5)]
+[print(i) for i in map(psv_info, lazy_frames.items())]

@@ -1,3 +1,3 @@
-from . import common, logging, parallel, path, sequence, string, wrappers
+from . import common, logging, path, sequence, string, wrappers
 
-__all__ = ["common", "logging", "parallel", "path", "sequence", "string", "wrappers"]
+__all__ = ["common", "logging", "path", "sequence", "string", "wrappers"]
