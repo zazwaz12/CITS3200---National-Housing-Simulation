@@ -1,4 +1,3 @@
-data/
 .nix/fix-python
 .devbox/
 .rclone/
