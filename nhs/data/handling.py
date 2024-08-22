@@ -35,6 +35,9 @@ def read_xlsx(file_path: str) -> pl.LazyFrame | None:
 def __get_spreadsheet_reader(
     file_extension: str,
 ) -> Callable[[str], pl.LazyFrame | None]:
+    """
+    Maps file extension to corresponding reader function
+    """
     return {
         ".psv": read_psv,
         ".csv": read_csv,
