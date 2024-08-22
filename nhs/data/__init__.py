@@ -1,3 +1,3 @@
-from .handling import read_all_psv, read_psv
+from .handling import read_spreadsheets, read_csv, read_psv, read_xlsx
 
-__all__ = ["read_all_psv", "read_psv"]
+__all__ = ["read_spreadsheets", "read_csv", "read_psv", "read_xlsx"]
