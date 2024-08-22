@@ -1,5 +1,6 @@
-from ..context import nhs
 from pytest_mock import MockerFixture
+
+from ..context import nhs
 
 PATCH_OS_WALK = "os.walk"
 

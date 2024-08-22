@@ -1,6 +1,7 @@
 from gzip import READ
-from pytest_mock import MockerFixture
+
 import polars as pl
+from pytest_mock import MockerFixture
 
 from ..context import nhs
 

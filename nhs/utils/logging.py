@@ -2,13 +2,13 @@
 Functions for logging
 """
 
-from functools import wraps
 import inspect
 import logging
 import warnings
+from functools import wraps
+from typing import Any, Callable
 
 from loguru import logger
-from typing import Any, Callable
 
 
 class __InterceptHandler(logging.Handler):

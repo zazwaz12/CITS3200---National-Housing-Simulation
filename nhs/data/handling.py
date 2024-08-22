@@ -1,12 +1,16 @@
-from typing import Callable, Literal
 import os
+from typing import Callable, Literal
+
 import polars as pl
+from loguru import logger
+
+from nhs.utils.logging import log_entry_exit
 from nhs.utils.path import list_files
 from nhs.utils.string import placeholder_matches
-from loguru import logger
 
 
 @logger.catch()
+@log_entry_exit()
 def read_psv(file_path: str) -> pl.LazyFrame | None:
     """
     Load a .psv file into a polars LazyFrame, returning None if exception occurs
@@ -15,6 +19,7 @@ def read_psv(file_path: str) -> pl.LazyFrame | None:
 
 
 @logger.catch()
+@log_entry_exit()
 def read_csv(file_path: str) -> pl.LazyFrame | None:
     """
     Load a .csv file into a polars LazyFrame, returning None if exception occurs
@@ -23,6 +28,7 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 
 
 @logger.catch()
+@log_entry_exit()
 def read_xlsx(file_path: str) -> pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs
@@ -45,6 +51,7 @@ def __get_spreadsheet_reader(
     }[file_extension]
 
 
+@log_entry_exit(level="INFO")
 def read_spreadsheets(
     file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"]
 ) -> dict[str, pl.LazyFrame | None]:
