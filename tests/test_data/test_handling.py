@@ -58,7 +58,7 @@ class TestReadSpreadsheets:
         assert result == {}
 
     # Uses specified placeholder to extract keys from file names
-    def test_read_all_psv_with_placeholder(self, mocker: MockerFixture):
+    def test_read_all_csv_with_placeholder(self, mocker: MockerFixture):
         mocker.patch(
             LIST_FILES_PATCH,
             return_value=["path/to/csv_files/file1.csv", "path/to/csv_files/file2.csv"],
