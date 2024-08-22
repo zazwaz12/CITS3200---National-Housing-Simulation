@@ -12,7 +12,7 @@ READ_CSV_PATCH = "nhs.data.handling.read_csv"
 READ_XLSX_PATCH = "nhs.data.handling.read_xlsx"
 
 
-class TestReadAllPsv:
+class TestReadSpreadsheets:
 
     # Reads all .psv files in a given directory and returns a dictionary of LazyFrames
     def test_reads_all_psv_files(self, mocker: MockerFixture):
