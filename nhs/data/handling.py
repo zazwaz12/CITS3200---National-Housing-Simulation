@@ -35,5 +35,5 @@ def read_all_psv(file_dir: str, key_pattern: str) -> dict[str, pl.LazyFrame | No
     """
     psv_files: Iterable[str] = list_files(file_dir)
     psv_files = list(filter(lambda x: x.endswith(".psv"), psv_files))
-    keys: tuple[str] = placeholder_matches(psv_files, key_pattern, ["key"])
+    keys = placeholder_matches(psv_files, key_pattern, ["key"])
     return {key[0]: val for key, val in zip(keys, map(read_psv, psv_files))}

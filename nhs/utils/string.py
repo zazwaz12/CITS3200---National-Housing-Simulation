@@ -2,16 +2,13 @@
 String utilities for working with placeholders in strings
 """
 
-from .wrappers import curry
-
 from typing import List
 import re
 
-import toolz as tz
-import toolz.curried as curried
+import toolz as tz  # type: ignore
+import toolz.curried as curried  # type: ignore
 
 
-@curry
 def capture_placeholders(
     s: str, placeholders: List[str], re_pattern: str = r".*?"
 ) -> str:
@@ -54,7 +51,6 @@ def capture_placeholders(
     )
 
 
-@curry
 def placeholder_matches(
     str_list: list[str], pattern: str, placeholders: list[str], re_pattern: str = r".*?"
 ) -> list[tuple[str, ...]]:
