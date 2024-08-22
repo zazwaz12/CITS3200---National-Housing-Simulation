@@ -1,7 +1,7 @@
 """
 Script for syncing local OneDrive folder to Desktop folder
 """
-
+# pyright: reportMissingTypeStubs=false
 from dirsync import sync
 import os
 

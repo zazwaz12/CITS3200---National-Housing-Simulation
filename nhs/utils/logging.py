@@ -6,9 +6,11 @@ from functools import wraps
 import inspect
 import logging
 import warnings
+from typing import Any, Callable, TypeVar, cast
 
 from loguru import logger
 
+T = TypeVar('T')
 
 class __InterceptHandler(logging.Handler):
     """
@@ -34,7 +36,7 @@ class __InterceptHandler(logging.Handler):
         )
 
 
-def config_logger():
+def config_logger() -> None:
     """
     Configure loguru logger settings and set it as as the default logger
     """
@@ -49,32 +51,31 @@ def config_logger():
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
-    warnings.showwarning = lambda msg, *args, **kwargs: logger.warning(msg)
+    warnings.showwarning = lambda msg, *args, **kwargs: logger.warning(str(msg))
 
 
-def log_entry_exit(*, entry=True, exit=True, level="DEBUG"):
+def log_entry_exit(*, entry: bool = True, exit: bool = True, level: str = "DEBUG") -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Logs entry and exit of a function that this decorator wraps
     """
 
-    def wrapper(func):
+    def wrapper(func: Callable[..., T]) -> Callable[..., T]:
         name = func.__name__
 
         @wraps(func)
-        def wrapped(*args, **kwargs):
-            result = None
+        def wrapped(*args: Any, **kwargs: Any) -> T:
+            result: T | None = None
             logger_ = logger.opt(depth=1)
             if entry:
-                logger.log(
+                logger_.log(
                     level,
                     f"Entering '{name}' (args={args}, kwargs={kwargs})",
                 )
-                result = func(*args, **kwargs)
+            result = func(*args, **kwargs)
             if exit:
-                logger.log(level, f"Exiting '{name}' (result={result})")
+                logger_.log(level, f"Exiting '{name}' (result={result})")
             return result
 
         return wrapped
 
     return wrapper
-
