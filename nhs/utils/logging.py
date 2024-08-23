@@ -2,10 +2,11 @@
 Functions for logging
 """
 
-from functools import wraps
 import inspect
 import logging
 import warnings
+from functools import wraps
+from typing import Any, Callable
 
 from loguru import logger
 
@@ -57,11 +58,11 @@ def log_entry_exit(*, entry=True, exit=True, level="DEBUG"):
     Logs entry and exit of a function that this decorator wraps
     """
 
-    def wrapper(func):
+    def wrapper(func: Callable[..., Any]) -> Callable[..., Any]:
         name = func.__name__
 
         @wraps(func)
-        def wrapped(*args, **kwargs):
+        def wrapped(*args: Any, **kwargs: Any) -> Any:
             result = None
             logger_ = logger.opt(depth=1)
             if entry:
@@ -77,4 +78,3 @@ def log_entry_exit(*, entry=True, exit=True, level="DEBUG"):
         return wrapped
 
     return wrapper
-
