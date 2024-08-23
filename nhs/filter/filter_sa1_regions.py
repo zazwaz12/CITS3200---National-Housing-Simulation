@@ -9,7 +9,7 @@ def filter_SA1_region_codes(lf: pl.LazyFrame, SA1_column: str = "SA1_CODE_2021",
     Parameters
     ----------
     lf : pl.LazyFrame
-        The LazyFrame containing SA1 region codes to be filtered.
+        The LazyFrame containing SA1 region codes and data to be filtered.
     SA1_column : str
         The name of the column containing the SA1 area codes. Defaults to "SA1_CODE_2021".
     region_codes : List[str]
