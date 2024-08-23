@@ -6,8 +6,7 @@ from functools import wraps
 import inspect
 import logging
 import warnings
-from typing import Any, Callable, TypeVar, cast
-
+from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union
 from loguru import logger
 
 T = TypeVar("T")
@@ -20,7 +19,6 @@ class __InterceptHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord) -> None:
         # Get corresponding Loguru level if it exists.
-        level: str | int
         try:
             level = logger.level(record.levelname).name
         except ValueError:
@@ -53,8 +51,18 @@ def config_logger() -> None:
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
-    warnings.showwarning = lambda msg, *args, **kwargs: logger.warning(str(msg))
 
+    def custom_showwarning(
+        message: Union[Warning, str],
+        category: Type[Warning],
+        filename: str,
+        lineno: int,
+        file: Optional[TextIO] = None,
+        line: Optional[str] = None
+    ) -> None:
+        logger.warning(f"{category.__name__}: {str(message)}")
+
+    warnings.showwarning = custom_showwarning
 
 def log_entry_exit(
     *,
@@ -73,14 +81,12 @@ def log_entry_exit(
 
         @wraps(func)
         def wrapped(*args: Any, **kwargs: Any) -> T:
-            result: Any = None
-            logger_ = logger.opt(depth=1)
             if entry:
                 logger.log(level, f"Entering '{name}' (args={args}, kwargs={kwargs})")
             result = func(*args, **kwargs)
             if exit:
                 logger.log(level, f"Exiting '{name}' (result={result})")
-            return cast(T, result)
+            return result
 
         return wrapped
 
