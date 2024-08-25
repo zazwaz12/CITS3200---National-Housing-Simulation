@@ -4,7 +4,10 @@ Utility functions for working with file paths
 
 import os
 
+from nhs.utils.logging import log_entry_exit
 
+
+@log_entry_exit()
 def list_files(path: str, list_hidden: bool = False) -> list[str]:
     """
     Return list of full file paths in a given path

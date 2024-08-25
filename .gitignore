@@ -1,9 +1,9 @@
-data/
 .nix/fix-python
 .devbox/
 .rclone/
 DataFiles/
-
+demo.*
+/logs/
 syncdata.py
 
 # Byte-compiled / optimized / DLL files
