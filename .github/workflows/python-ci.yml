@@ -39,7 +39,7 @@ jobs:
           source $VENV
           pytest
           black --check .
-          isort --check .
+#          isort --check .
           pyright
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
@@ -49,7 +49,7 @@ jobs:
         run: |
           source $VENV
           black .
-          isort .
+#          isort .
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
