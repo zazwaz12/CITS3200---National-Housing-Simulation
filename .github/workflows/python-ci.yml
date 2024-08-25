@@ -53,8 +53,8 @@ jobs:
       - name: Run tests and type checking
         run: |
           source $VENV
-          pytest  # Run tests using pytest
-          pyright  # Run static type checking using pyright
+          pytest tests/
+          pyright nhs/
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 
