@@ -3,7 +3,7 @@ String utilities for working with placeholders in strings
 """
 
 import re
-from typing import List
+from typing import List, Tuple, Optional
 
 import toolz as tz  # type: ignore
 import toolz.curried as curried  # type: ignore
@@ -42,9 +42,9 @@ def capture_placeholders(
         [s] + placeholders,
         # Replace placeholders to avoid them being escaped
         curried.reduce(
-            lambda string, placeholder: string.replace("{" + placeholder + "}", "\x00")
+            lambda string, placeholder: string.replace(f"{{{placeholder}}}", "\x00")
         ),
-        # Replace all non-capturing placeholders with different symbol
+        # Replace all non-capturing placeholders with a different symbol
         lambda string: re.sub(r"{[a-zA-Z0-9_]*}", "\x01", string),
         re.escape,
         # Encase provided placeholders in parentheses to create capturing groups
@@ -56,10 +56,13 @@ def capture_placeholders(
 
 @log_entry_exit()
 def placeholder_matches(
-    str_list: list[str], pattern: str, placeholders: list[str], re_pattern: str = r".*?"
-) -> list[tuple[str, ...]]:
+    str_list: List[str],
+    pattern: str,
+    placeholders: List[str],
+    re_pattern: str = r".*?",
+) -> List[Tuple[str, ...]]:
     """
-    Return placeholder values for each string in a list that match pattern
+    Return placeholder values for each string in a list that match pattern.
 
     Placeholders are string in the form of "{placeholder}". They can be any
     combination of numbers, characters, and underscore. Placeholders not in
@@ -68,18 +71,19 @@ def placeholder_matches(
     Parameters
     ----------
     str_list: list[str]
-        List of strings to match against the pattern
+        List of strings to match against the pattern.
     pattern: str
         Pattern containing placeholders to match file names, e.g.
-        `"/path/to/{organ}_{observer}.nii.gz"`
+        `"/path/to/{organ}_{observer}.nii.gz"`.
     placeholders: list[str]
-        List of placeholders to match in the pattern, e.g. `["organ", "observer"]`
+        List of placeholders to match in the pattern, e.g. `["organ", "observer"]`.
     re_pattern: str, optional
-        Regex pattern filter placeholder matches by, by default any character
-        except line terminators
+        Regex pattern to filter placeholder matches by, by default any character
+        except line terminators.
+
     Returns
     -------
-    set[tuple[str, ...]]
+    list[tuple[str, ...]]
         List of tuples containing the matches for each placeholder.
 
     Example
@@ -120,6 +124,6 @@ def placeholder_matches(
             ),
         ),
         curried.filter(lambda match: match is not None),
-        curried.map(lambda re_match: re_match.groups()),
+        curried.map(lambda re_match: re_match.groups() if re_match else ()),
         list,
-    )  # type: ignore
+    )
