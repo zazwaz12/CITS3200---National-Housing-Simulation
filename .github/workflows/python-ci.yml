@@ -34,31 +34,41 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
 
-      - name: Run tests and linting
-        run: |
-          source $VENV
-          pytest
-          black --check .
-          isort --check .
-          pyright
-        env:
-          VENV: ${{ github.workspace }}/.venv/bin/activate
-
-      - name: Commit changes
-        if: ${{ failure() }}
+      - name: Format code and imports
         run: |
           source $VENV
           black .
           isort .
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Check code and imports formatting
+        run: |
+          source $VENV
+          black --check .
+          isort --check .
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Run tests and type checking
+        run: |
+          source $VENV
+          pytest  # Run tests using pytest
+          pyright  # Run static type checking using pyright
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Commit changes
+        run: |
+          source $VENV
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add .
+          git add .  # Stage all changes
           git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic formatting"
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 
       - name: Push changes
-        if: ${{ failure() }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GH_PAT }}
