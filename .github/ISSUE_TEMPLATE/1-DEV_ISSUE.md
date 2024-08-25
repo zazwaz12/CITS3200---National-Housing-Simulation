@@ -1,7 +1,7 @@
 ---
-name: "Internal Development Issue"
-about: "Template for internal development-related tasks and bug reports"
-title: "issue-<NUMBER>-<TITLE>"
+Name: "Internal Development Issue"
+About: "Template for internal development-related tasks and bug reports"
+Title: "issue-<NUMBER>-<TITLE>"
 ---
 
 # **Summary**
