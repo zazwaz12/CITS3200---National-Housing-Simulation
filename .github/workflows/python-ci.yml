@@ -56,7 +56,6 @@ jobs:
         run: |
           source .venv/bin/activate
           pytest tests/
-          coverage report
   code-quality:
     runs-on: ubuntu-latest
 
