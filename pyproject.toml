@@ -18,6 +18,7 @@ jupyter-black = "^0.3.4"
 isort = "^5.13.2"
 pathos = "^0.3.2"
 pyright ="^1.1.316"
+pytest-mock = "^3.14.0"
 
 [tool.isort]
 profile = "black"
