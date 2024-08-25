@@ -45,7 +45,7 @@ jobs:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 
       - name: Commit changes
-        if: failure()
+        if: ${{ failure() }}
         run: |
           source $VENV
           black .
@@ -58,7 +58,7 @@ jobs:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 
       - name: Push changes
-        if: failure()
+        if: ${{ failure() }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GH_PAT }}
