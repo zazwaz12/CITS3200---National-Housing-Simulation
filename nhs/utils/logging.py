@@ -58,11 +58,12 @@ def config_logger() -> None:
         filename: str,
         lineno: int,
         file: Optional[TextIO] = None,
-        line: Optional[str] = None
+        line: Optional[str] = None,
     ) -> None:
         logger.warning(f"{category.__name__}: {str(message)}")
 
     warnings.showwarning = custom_showwarning
+
 
 def log_entry_exit(
     *,
