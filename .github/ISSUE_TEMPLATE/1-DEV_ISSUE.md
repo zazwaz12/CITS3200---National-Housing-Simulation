@@ -1,22 +1,21 @@
 ---
-Name: "Internal Development Issue"
-About: "Template for internal development-related tasks and bug reports"
-Title: "issue-<NUMBER>-<TITLE>"
+name: Development Request
+title: 'issue-<NUMBER>-<TITLE>'
 ---
 
-# **Summary**
-Briefly describe the issue or task.
+# Issue
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is.
 
-## **Technical Details**
-Key components/files affected, relevant logs, or errors.
+## Suggested Solution
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-## **Acceptance Criteria**
-- [ ] Criteria 1
-- [ ] Criteria 2
-- [ ] Criteria 3
+## Alternatives Considered
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
 
-## **Suggested Solution**
-Quick outline of the intended fix or approach.
+## Additional context
+Add any other context or screenshots about the feature request here.
 
-## **Additional Notes**
-Any other relevant information.
+---
