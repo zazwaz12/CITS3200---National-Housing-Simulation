@@ -1,6 +1,8 @@
-from typing import Callable, Literal
+from typing import Callable, Literal, Dict
 import os
 import polars as pl
+from polars import DataFrame
+
 from nhs.utils.path import list_files
 from nhs.utils.string import placeholder_matches
 from loguru import logger
@@ -23,13 +25,13 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 
 
 @logger.catch()
-def read_xlsx(file_path: str) -> pl.LazyFrame | None:
+def read_xlsx(file_path: str) -> dict[str, DataFrame]:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs
 
     **NOTE**: Polars use `xlsx2csv` to read .xlsx files, so whole CSV file is read
     """
-    return pl.read_excel(file_path).lazy()
+    return pl.read_excel(file_path, sheet_id=0)
 
 
 def __get_spreadsheet_reader(
