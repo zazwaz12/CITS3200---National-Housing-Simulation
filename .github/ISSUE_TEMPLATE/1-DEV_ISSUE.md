@@ -1,31 +1,21 @@
 ---
-Title: "issue-<NUMBER>-<TITLE>"
-Name: ⚙️ Internal Development Issue
-About: For tracking technical tasks or bugs
-Labels: ''
-Assignees: ''
-
+name: Development Request
+title: 'issue-<NUMBER>-<TITLE>'
 ---
 
-## **Summary**
-Briefly describe the issue or task.
+# Issue
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is.
 
-## **Steps to Reproduce**
-If applicable, list key steps to replicate the issue.
+## Suggested Solution
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
 
-## **Technical Details**
-Key components/files affected, relevant logs, or errors.
+## Alternatives Considered
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
 
-## **Acceptance Criteria**
-- [ ] Criteria 1
-- [ ] Criteria 2
-- [ ] Criteria 3
+## Additional context
+Add any other context or screenshots about the feature request here.
 
-## **Environment**
-Branch/Version: [e.g. `main`, `v1.2.3`]
-
-## **Proposed Solution**
-Quick outline of the intended fix or approach.
-
-## **Additional Notes**
-Any other relevant information.
+---
