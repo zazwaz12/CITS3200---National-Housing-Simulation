@@ -136,15 +136,3 @@ def placeholder_matches(
     x = filter(lambda match: match is not None, x)
     x = map(lambda re_match: re_match.groups() if re_match else (), x)
     return list(x)
-
-    return tz.pipe(
-        str_list,
-        curried.map(
-            lambda string: re.match(
-                capture_placeholders(pattern, placeholders, re_pattern), string
-            ),
-        ),
-        curried.filter(lambda match: match is not None),
-        curried.map(lambda re_match: re_match.groups() if re_match else ()),
-        list,
-    )
