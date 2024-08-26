@@ -6,7 +6,7 @@ Title: "Closes #NUMBER"
 A clear and concise description of what the pull request does, including any context about the code changes.
 
 ### **Optional Further Details**
-A  list of the changes made in this PR, ideally broken down by file or functionality.
+A list of the changes made in this PR, ideally broken down by file or functionality.
 
 ### **Screenshots**
 If applicable, add screenshots to help visualize the changes.
