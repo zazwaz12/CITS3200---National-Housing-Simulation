@@ -3,17 +3,15 @@ String utilities for working with placeholders in strings
 """
 
 import re
-from typing import List, Tuple, Optional
 
-import toolz as tz  # type: ignore
-import toolz.curried as curried  # type: ignore
+from functools import reduce
 
-from nhs.utils.logging import log_entry_exit  # type: ignore
+from nhs.utils.logging import log_entry_exit
 
 
 @log_entry_exit()
 def capture_placeholders(
-    s: str, placeholders: List[str], re_pattern: str = r".*?"
+    s: str, placeholders: list[str], re_pattern: str = r".*?"
 ) -> str:
     """
     Replace placeholders in a string `s` with `"(re_pattern)"`
@@ -38,29 +36,27 @@ def capture_placeholders(
     str
         String with placeholders replaced by the specified `re_pattern`.
     """
-    return tz.pipe(
+    # Replace placeholders to avoid them being escaped
+    x = reduce(
+        lambda string, placeholder: string.replace(f"{{{placeholder}}}", "\x00"),
         [s] + placeholders,
-        # Replace placeholders to avoid them being escaped
-        curried.reduce(
-            lambda string, placeholder: string.replace(f"{{{placeholder}}}", "\x00")
-        ),
-        # Replace all non-capturing placeholders with a different symbol
-        lambda string: re.sub(r"{[a-zA-Z0-9_]*}", "\x01", string),
-        re.escape,
-        # Encase provided placeholders in parentheses to create capturing groups
-        lambda string: string.replace("\x00", f"({re_pattern})"),
-        lambda string: string.replace("\x01", re_pattern),
-        str,
     )
+    # Replace all non-capturing placeholders with a different symbol
+    x = re.sub(r"{[a-zA-Z0-9_]*}", "\x01", x)
+    x = re.escape(x)
+    # Encase provided placeholders in parentheses to create capturing groups
+    x = x.replace("\x00", f"({re_pattern})")
+    x = x.replace("\x01", re_pattern)
+    return str(x)
 
 
 @log_entry_exit()
 def placeholder_matches(
-    str_list: List[str],
+    str_list: list[str],
     pattern: str,
-    placeholders: List[str],
+    placeholders: list[str],
     re_pattern: str = r".*?",
-) -> List[Tuple[str, ...]]:
+) -> list[tuple[str, ...]]:
     """
     Return placeholder values for each string in a list that match pattern.
 
@@ -116,14 +112,12 @@ def placeholder_matches(
 
     ```
     """
-    return tz.pipe(
-        str_list,
-        curried.map(
-            lambda string: re.match(
-                capture_placeholders(pattern, placeholders, re_pattern), string
-            ),
-        ),
-        curried.filter(lambda match: match is not None),
-        curried.map(lambda re_match: re_match.groups() if re_match else ()),
-        list,
-    )
+
+    def _capture(string: str) -> re.Match[str] | None:
+        # Purely using named function because python type checking sucks
+        re.match(capture_placeholders(pattern, placeholders, re_pattern), string)
+
+    x = map(_capture, str_list)
+    x = filter(lambda match: match is not None, x)
+    x = map(lambda re_match: re_match.groups() if re_match else (), x)
+    return list(x)
