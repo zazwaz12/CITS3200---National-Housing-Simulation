@@ -7,3 +7,4 @@ from loguru import logger
 
 logger.enable("nhs")
 config_logger()
+
