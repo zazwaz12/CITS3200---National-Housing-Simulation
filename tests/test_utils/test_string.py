@@ -80,7 +80,7 @@ class TestPlaceholderMatches:
         ]
         pattern = "/path/to/{organ}_{observer}.nii.gz"
         placeholders = []
-        expected_output = [(), (), ()]
+        expected_output = []
 
         result = placeholder_matches(str_list, pattern, placeholders)
 
@@ -111,7 +111,7 @@ class TestPlaceholderMatches:
         ]
         pattern = ""
         placeholders = ["organ", "observer"]
-        expected_output = [(), (), ()]
+        expected_output = []
 
         result = placeholder_matches(str_list, pattern, placeholders)
 

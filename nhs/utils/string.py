@@ -49,6 +49,21 @@ def capture_placeholders(
     x = x.replace("\x01", re_pattern)
     return str(x)
 
+    return tz.pipe(
+        [s] + placeholders,
+        # Replace placeholders to avoid them being escaped
+        curried.reduce(
+            lambda string, placeholder: string.replace(f"{{{placeholder}}}", "\x00")
+        ),
+        # Replace all non-capturing placeholders with a different symbol
+        lambda string: re.sub(r"{[a-zA-Z0-9_]*}", "\x01", string),
+        re.escape,
+        # Encase provided placeholders in parentheses to create capturing groups
+        lambda string: string.replace("\x00", f"({re_pattern})"),
+        lambda string: string.replace("\x01", re_pattern),
+        str,
+    )
+
 
 @log_entry_exit()
 def placeholder_matches(
@@ -121,3 +136,15 @@ def placeholder_matches(
     x = filter(lambda match: match is not None, x)
     x = map(lambda re_match: re_match.groups() if re_match else (), x)
     return list(x)
+
+    return tz.pipe(
+        str_list,
+        curried.map(
+            lambda string: re.match(
+                capture_placeholders(pattern, placeholders, re_pattern), string
+            ),
+        ),
+        curried.filter(lambda match: match is not None),
+        curried.map(lambda re_match: re_match.groups() if re_match else ()),
+        list,
+    )
