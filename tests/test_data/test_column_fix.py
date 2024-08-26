@@ -3,10 +3,10 @@ import polars as pl
 from polars import LazyFrame
 import pandas as pd
 
-column_readable = nhs.data.column_fix.column_readable
+column_readable = nhs.data.handling.standarise_names
 
 
-class TestCOLUMNREADABLE:
+class TestColumnReadable:
     # Converts xlsx_pl_df to a dictionary of column mappings correctly
     def test_converts_xlsx_pl_df_to_dict_correctly(self):
         prev_csv_pl_df = {

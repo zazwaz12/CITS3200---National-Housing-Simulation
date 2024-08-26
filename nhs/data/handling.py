@@ -12,35 +12,35 @@ from nhs.utils.string import placeholder_matches
 
 @logger.catch()
 @log_entry_exit()
-def read_psv(file_path: str) -> pl.LazyFrame | None:
+def read_psv(file_path: str, sheet_id: None | int = None) -> pl.LazyFrame | None:
     """
     Load a .psv file into a polars LazyFrame, returning None if exception occurs
     """
-    return pl.scan_csv(file_path, separator="|")
+    return pl.scan_csv(file_path, separator="|", sheet_id=sheet_id)
 
 
 @logger.catch()
 @log_entry_exit()
-def read_csv(file_path: str) -> pl.LazyFrame | None:
+def read_csv(file_path: str, sheet_id: None | int = None) -> pl.LazyFrame | None:
     """
     Load a .csv file into a polars LazyFrame, returning None if exception occurs
     """
-    return pl.scan_csv(file_path)
+    return pl.scan_csv(file_path, sheet_id=sheet_id)
 
 
 @logger.catch()
 @log_entry_exit()
-def read_xlsx(file_path: str) -> dict[str, DataFrame]:
+def read_xlsx(file_path: str, sheet_id: None | int = None) -> dict[str, pl.LazyFrame] | pl.LazyFrame:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs
 
     **NOTE**: Polars use `xlsx2csv` to read .xlsx files, so whole CSV file is read
     """
-    return pl.read_excel(file_path, sheet_id=0)
+    return pl.read_excel(file_path, sheet_id=sheet_id).lazy()
 
 
 def __get_spreadsheet_reader(
-    file_extension: str,
+        file_extension: str,
 ) -> Callable[[str], pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
@@ -54,7 +54,7 @@ def __get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-    file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"]
+        file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"]
 ) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV, or XLSX files.
@@ -81,8 +81,7 @@ def read_spreadsheets(
 
     Examples
     --------
-    Assume we have the following files in the directory `"path/to/psv
-_files/"`:
+    Assume we have the following files in the directory `"path/to/psv_files/"`:
         - file1.psv
         - file2.psv
 
@@ -106,3 +105,66 @@ _files/"`:
         )
 
     return {key: val for key, val in zip(keys, map(reader, files))}
+
+
+@log_entry_exit(level="INFO")
+def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: [pl.LazyFrame | None],
+                     identification: str, abbreviation_column_name: str,
+                     long_column_name: str) -> dict[str, pl.LazyFrame | None]:
+    """
+    Process the column names of a polar Lazy frame dictionary to make them more readable.
+        1. Expand abbreviated names.
+        2. Converting to lower case.
+    If any parameters are None, this function returns prev_csv_pl_df without change.
+    The filename in both dictionaries are checked or filtered to be passed.
+
+    Parameters:
+    --------
+    param1 : dict[str, pl.LazyFrame]
+        df_dict: A dictionary containing census data as value and filename as key or None.
+    param2 : [pl.LazyFrame | None]
+        census_metadata: Census metadata lazy frame with one standard sheet or None.
+        Blank files won't change prev_csv_pl_df.
+    param3 : str
+        identification: Identify different files in df_dict. Could not be None
+    param4 : str
+    abbreviation_column_name: column name of abbreviated names. Could not be None
+    param5 : str
+    long_column_name: column name of expanded names. Could not be None
+
+    Returns:
+    --------
+    dict[str, pl.LazyFrame]
+        A dictionary with updated column names based on the provided mapping.
+
+    Examples
+    --------
+        Assume we have the following files in the directory `"path/to/csv_files/"`:
+            - 2021Census_G01_AUS_AUS.csv
+            - 2021Census_G02_AUS_AUS.csv....
+        and "path/to/xlsx_files/":
+            - Metadata_2021_GCP_DataPack_R1_R2.xlsx
+            - 2021Census_geog_desc_1st_2nd_3rd_release.xlsx
+        Standard file in second sheet of Metadata_2021_GCP_DataPack_R1_R2.xlsx
+        "name of XLSX" : {"name of sheet1" : <dataframe>, "name of sheet2": <dataframe> ...}
+        By using read_spreadsheets to get dictionary containing dataFrames.
+        >>> def standarise_names({"files_identify1_with_abbreviated_names": <LazyFrame>,
+        >>>"files_identify2_with_abbreviated_names": <LazyFrame>},
+        >>>"standard_sheet1's" <LazyFrame>, "identification", "abbreviation_column_name", "Long_column_name")
+        {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
+    """
+    result_dict = {}
+
+    for row in census_metadata.iter_rows(named=True):
+        key = row[identification]
+        short = row[abbreviation_column_name]
+        long = row[long_column_name]
+        result_dict.setdefault(key, {})[short] = long
+
+    for key in df_dict:
+        try:
+            value = df_dict[key].rename(result_dict[key.split('_')[1]])
+            df_dict[key] = value
+        except KeyError:
+            continue
+    return df_dict
