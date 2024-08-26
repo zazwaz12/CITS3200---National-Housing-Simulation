@@ -115,7 +115,7 @@ def placeholder_matches(
 
     def _capture(string: str) -> re.Match[str] | None:
         # Purely using named function because python type checking sucks
-        re.match(capture_placeholders(pattern, placeholders, re_pattern), string)
+        return re.match(capture_placeholders(pattern, placeholders, re_pattern), string)
 
     x = map(_capture, str_list)
     x = filter(lambda match: match is not None, x)
