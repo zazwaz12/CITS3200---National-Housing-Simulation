@@ -12,36 +12,38 @@ from nhs.utils.string import placeholder_matches
 
 @logger.catch()
 @log_entry_exit()
-def read_psv(file_path: str, sheet_id: None | int = None) -> pl.LazyFrame | None:
+def read_psv(file_path: str) -> pl.LazyFrame | None:
     """
     Load a .psv file into a polars LazyFrame, returning None if exception occurs
     """
-    return pl.scan_csv(file_path, separator="|", sheet_id=sheet_id)
+    return pl.scan_csv(file_path, separator="|")
 
 
 @logger.catch()
 @log_entry_exit()
-def read_csv(file_path: str, sheet_id: None | int = None) -> pl.LazyFrame | None:
+def read_csv(file_path: str) -> pl.LazyFrame | None:
     """
     Load a .csv file into a polars LazyFrame, returning None if exception occurs
     """
-    return pl.scan_csv(file_path, sheet_id=sheet_id)
+    return pl.scan_csv(file_path)
 
 
 @logger.catch()
 @log_entry_exit()
-def read_xlsx(file_path: str, sheet_id: None | int = None) -> dict[str, pl.LazyFrame] | pl.LazyFrame:
+def read_xlsx(file_path: str, sheet_id: None | int = None) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs
 
     **NOTE**: Polars use `xlsx2csv` to read .xlsx files, so whole CSV file is read
     """
-    return pl.read_excel(file_path, sheet_id=sheet_id).lazy()
+    frames = pl.read_excel(file_path, sheet_id=sheet_id)
+    if isinstance(frames, dict):
+        return {name: df.lazy() for name, df in frames.items()}
+    return frames.lazy()
 
 
 def __get_spreadsheet_reader(
-        file_extension: str,
-) -> Callable[[str], pl.LazyFrame | None]:
+        file_extension: str) -> Callable[..., pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
     """
@@ -54,11 +56,10 @@ def __get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-        file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"]
-) -> dict[str, pl.LazyFrame | None]:
+        file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"],
+        sheet_id: None | int = None) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV, or XLSX files.
-
     If a file cannot be read, the value will be None.
 
     **Warning**: If file is XLSX, the whole file is read (i.e. no lazy evaluation). A `LazyFrame` is
@@ -66,6 +67,7 @@ def read_spreadsheets(
 
     Parameters
     ----------
+    sheet_id
     file_dir_pattern: str
         Path to directory containing .psv, .csv, or .xlsx files. Optionally, you can include the name of
         the PSV file with a placeholder `"{key}"` - the resulting dictionary will use
@@ -104,11 +106,14 @@ def read_spreadsheets(
             lambda x: x[0], placeholder_matches(files, file_dir_pattern, ["key"])
         )
 
-    return {key: val for key, val in zip(keys, map(reader, files))}
+    return {key: reader(file, sheet_id) for key, file in zip(keys, files)} if extension == "xlsx" else {
+        key: reader(file) for key, file in zip(keys, files)
+    }
+
 
 
 @log_entry_exit(level="INFO")
-def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: [pl.LazyFrame | None],
+def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: pl.LazyFrame | None,
                      identification: str, abbreviation_column_name: str,
                      long_column_name: str) -> dict[str, pl.LazyFrame | None]:
     """
@@ -154,8 +159,7 @@ def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: [
         {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
     """
     result_dict = {}
-
-    for row in census_metadata.iter_rows(named=True):
+    for row in census_metadata.collect().iter_rows(named=True):
         key = row[identification]
         short = row[abbreviation_column_name]
         long = row[long_column_name]
