@@ -111,7 +111,6 @@ def read_spreadsheets(
     }
 
 
-
 @log_entry_exit(level="INFO")
 def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: pl.LazyFrame | None,
                      identification: str, abbreviation_column_name: str,
@@ -163,7 +162,7 @@ def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: p
         key = row[identification]
         short = row[abbreviation_column_name]
         long = row[long_column_name]
-        result_dict.setdefault(key, {})[short] = long
+        result_dict.setdefault(key, {})[short] = long.lower()
 
     for key in df_dict:
         try:
