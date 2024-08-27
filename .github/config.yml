@@ -1,0 +1,62 @@
+blank_issues_enabled: false
+contact_links:
+  - name: CITS3200 Project Discussion
+    url: https://github.com/zazwaz12/CITS3200---National-Housing-Simulation/wiki
+    about: Please ask and answer questions here.
+
+templates:
+  - name: Development Request
+    about: Submit a request for new development/feature/bug
+    file_name: development_request.md
+    title: 'issue-<NUMBER>-<TITLE>'
+    body:
+      - type: markdown
+        attributes:
+          value: |
+            # Summary of Issue/Bug/Feature Request
+      - type: textarea
+        id: summary
+        attributes:
+          label: Is your feature request related to a problem? Please describe.
+          description: A clear and concise description of the issue, bug, or feature request.
+        validations:
+          required: true
+
+      - type: markdown
+        attributes:
+          value: |
+            ## Suggested Solution/Tasks
+      - type: textarea
+        id: solution
+        attributes:
+          label: What do you think is the best way to go about it?
+          description: Describe your proposed solution or list the tasks needed.
+        validations:
+          required: true
+
+      - type: markdown
+        attributes:
+          value: |
+            ## Acceptance Criteria
+      - type: textarea
+        id: criteria
+        attributes:
+          label: List the acceptance criteria
+          description: Add criteria that need to be met for this issue to be resolved.
+          value: |
+            - [ ] Criteria 1
+            - [ ] Criteria 2
+        validations:
+          required: true
+
+      - type: markdown
+        attributes:
+          value: |
+            ### Additional context
+      - type: textarea
+        id: context
+        attributes:
+          label: Additional context
+          description: Add any other context or screenshots about the feature request here.
+        validations:
+          required: false
