@@ -20,6 +20,9 @@ pathos = "^0.3.2"
 pyright ="^1.1.316"
 pytest-mock = "^3.14.0"
 
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.1.1"
+
 [tool.isort]
 profile = "black"
 
