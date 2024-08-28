@@ -3,7 +3,6 @@ String utilities for working with placeholders in strings
 """
 
 import re
-
 from functools import reduce
 
 from nhs.utils.logging import log_entry_exit
