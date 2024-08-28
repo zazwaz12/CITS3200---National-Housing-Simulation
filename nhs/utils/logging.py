@@ -5,9 +5,12 @@ Functions for logging
 from functools import wraps
 import inspect
 import logging
+from loguru import logger
+from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union
 import warnings
 
-from loguru import logger
+
+T = TypeVar("T")
 
 
 class __InterceptHandler(logging.Handler):
@@ -17,7 +20,6 @@ class __InterceptHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord) -> None:
         # Get corresponding Loguru level if it exists.
-        level: str | int
         try:
             level = logger.level(record.levelname).name
         except ValueError:
@@ -34,10 +36,11 @@ class __InterceptHandler(logging.Handler):
         )
 
 
-def config_logger():
+def config_logger() -> None:
     """
     Configure loguru logger settings and set it as as the default logger
     """
+
     logger.remove()
     logger.add(
         "./logs/out_{time}.log",
@@ -49,27 +52,40 @@ def config_logger():
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
-    warnings.showwarning = lambda msg, *args, **kwargs: logger.warning(msg)
+
+    def custom_showwarning(
+        message: Union[Warning, str],
+        category: Type[Warning],
+        filename: str,
+        lineno: int,
+        file: Optional[TextIO] = None,
+        line: Optional[str] = None,
+    ) -> None:
+        logger.warning(f"{category.__name__}: {str(message)}")
+
+    warnings.showwarning = custom_showwarning
 
 
-def log_entry_exit(*, entry=True, exit=True, level="DEBUG"):
+def log_entry_exit(
+    *,
+    entry: bool = True,
+    exit: bool = True,
+    level: Literal[
+        "TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"
+    ] = "DEBUG",
+):
     """
     Logs entry and exit of a function that this decorator wraps
     """
 
-    def wrapper(func):
+    def wrapper(func: Callable[..., T]) -> Callable[..., T]:
         name = func.__name__
 
         @wraps(func)
-        def wrapped(*args, **kwargs):
-            result = None
-            logger_ = logger.opt(depth=1)
+        def wrapped(*args: Any, **kwargs: Any) -> T:
             if entry:
-                logger.log(
-                    level,
-                    f"Entering '{name}' (args={args}, kwargs={kwargs})",
-                )
-                result = func(*args, **kwargs)
+                logger.log(level, f"Entering '{name}' (args={args}, kwargs={kwargs})")
+            result = func(*args, **kwargs)
             if exit:
                 logger.log(level, f"Exiting '{name}' (result={result})")
             return result
@@ -77,4 +93,3 @@ def log_entry_exit(*, entry=True, exit=True, level="DEBUG"):
         return wrapped
 
     return wrapper
-

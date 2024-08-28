@@ -1,0 +1,76 @@
+name: Python CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+
+      - name: Format code and imports
+        run: |
+          source $VENV
+          black .
+          isort .
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Check code and imports formatting
+        run: |
+          source $VENV
+          black --check .
+          isort --check .
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Run tests and type checking
+        run: |
+          source $VENV
+          pytest tests/
+          pyright nhs/
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Commit changes
+        run: |
+          source $VENV
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .  # Stage all changes
+          git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic formatting"
+        env:
+          VENV: ${{ github.workspace }}/.venv/bin/activate
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.head_ref }}
+          force: true

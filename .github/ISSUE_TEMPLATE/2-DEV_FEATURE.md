@@ -1,13 +1,10 @@
 ---
-Title: "issue-<NUMBER>-<TITLE>"
-Name: ✨ Feature Addition
-About: Track new features or enhancements for development
-Labels: ''
-Assignees: ''
-
+title: "issue-<NUMBER>-<TITLE>"
+name: "Feature Addition" 
+about: "Track new features or enhancements for development"
 ---
 
-## **Feature Summary**
+# **Feature Summary**
 Briefly describe the new feature or enhancement.
 
 ## **Objective**
@@ -19,7 +16,7 @@ What is the goal of this feature?
 - [ ] Requirement 3
 
 
-## **Proposed Implementation**
+## **Suggested Implementation**
 Outline the basic approach for adding this feature.
 
 ## **Dependencies**
