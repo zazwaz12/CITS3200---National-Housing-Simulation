@@ -34,11 +34,6 @@ def read_xlsx(file_path: str, sheet_id: None | int = 1) -> dict[str, pl.LazyFram
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
     Function returns lazyFrame if sheet_id = 1 and 0 returns dictionary, so default sheet_id is 1.
-    Parameters
-    ----------
-    sheet_id: None | int = 1
-        For reading multiple sheets in single xlsx files, the `sheet_id` can be an integer or None. And lazyFrame will
-        be stored in dictionary keyed by sheet_name.
     **NOTE**: Polars use `xlsx2csv` to read .xlsx files, so whole CSV file is read
     """
     frames = pl.read_excel(file_path, sheet_id=sheet_id)
