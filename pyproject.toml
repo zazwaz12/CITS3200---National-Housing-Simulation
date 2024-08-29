@@ -7,7 +7,6 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 polars = "^1.3.0"
-loguru = "^0.7.2"
 pytest = "^8.3.2"
 black = "^24.4.2"
 matplotlib = "^3.9.1"
@@ -18,6 +17,7 @@ isort = "^5.13.2"
 pathos = "^0.3.2"
 pyright ="^1.1.316"
 pytest-mock = "^3.14.0"
+loguru = "^0.7.2"
 
 [tool.isort]
 profile = "black"
