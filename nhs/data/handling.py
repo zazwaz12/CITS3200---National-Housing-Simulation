@@ -3,7 +3,6 @@ from typing import Callable, Literal, Dict
 
 import polars as pl
 from loguru import logger
-from polars import DataFrame
 
 from nhs.utils.logging import log_entry_exit
 from nhs.utils.path import list_files
@@ -107,8 +106,8 @@ def read_spreadsheets(
 
 
 @log_entry_exit(level="INFO")
-def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: pl.LazyFrame | None, identification: str,
-                     census_code_col: str, long_column_name: str) -> dict[str, pl.LazyFrame | None]:
+def standardize_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: pl.LazyFrame | None,
+                      census_code_col: str, abbreviation_column_name: str, long_column_name: str) -> dict[str, pl.LazyFrame | None]:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
 
@@ -139,13 +138,13 @@ def standarise_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: p
 
     Examples
     --------
-    >>> def standarise_names({"files_identify1_with_abbreviated_names": <LazyFrame>,"files_identify2_with_abbreviated_names": <LazyFrame>},"standard_sheet1's" <LazyFrame>, "identification", "abbreviation_column_name", "Long_column_name")
+    >>> def standardize_names({"files_identify1_with_abbreviated_names": <LazyFrame>,"files_identify2_with_abbreviated_names": <LazyFrame>},"standard_sheet1's" <LazyFrame>, "identification", "abbreviation_column_name", "Long_column_name")
     {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
     """
     result_dict = {}
     for row in census_metadata.collect().iter_rows(named=True):
-        key = row[identification]
-        short = row[census_code_col]
+        key = row[census_code_col]
+        short = row[abbreviation_column_name]
         long = row[long_column_name]
         result_dict.setdefault(key, {})[short] = long.lower()
 

@@ -7,7 +7,7 @@ from ..context import nhs
 
 read_spreadsheets = nhs.data.handling.read_spreadsheets
 read_xlsx = nhs.data.handling.read_xlsx
-
+standardize_names = nhs.data.handling.standardize_names
 LIST_FILES_PATCH = "nhs.data.handling.list_files"
 READ_PSV_PATCH = "nhs.data.handling.read_psv"
 READ_CSV_PATCH = "nhs.data.handling.read_csv"
@@ -57,98 +57,111 @@ class TestReadSpreadsheets:
         assert isinstance(result["e1"], pl.LazyFrame)
         assert isinstance(result["e2"], pl.LazyFrame)
 
+    #Read one xlsx file with default sheet_id.
+    def test_read_xlsx_with_default_sheet_id(self, mocker):
+        mocker.patch(
+            LIST_FILES_PATCH,
+            return_value="Path/to/xlsx/test.xlsx",
+        )
+        mock_lazy_frame = mocker.Mock(spec=pl.LazyFrame)
+        mock_lazy_frame.lazy.return_value = mock_lazy_frame
+        mocker.patch("polars.read_excel", return_value=mock_lazy_frame)
+
+        result = read_xlsx("Path/to/xlsx", 1)
+        assert result == mock_lazy_frame
+        assert isinstance(result, pl.LazyFrame)
+
+    # Read non_existent_file_path with different sheet_id.
+    def test_non_existent_file_path(self, mocker):
+        mocker.patch(
+            LIST_FILES_PATCH,
+            return_value="Path/to/xlsx/non_existent_file.xlsx",
+        )
+        mocker.patch("polars.read_excel", side_effect=FileNotFoundError)
+        result = read_xlsx("Path/to/xlsx/", 1)
+        assert result is None
+        mocker.patch('polars.read_excel', side_effect=Exception("File not found"))
+        result2 = read_xlsx("Path/to/xlsx/", 0)
+        assert result2 is None
+
+    # Successfully read multiple sheets from an .xlsx file and return a dictionary of LazyFrames
+    def test_read_multiple_sheets(self, mocker):
+        mock_lazy_frame1 = mocker.Mock(spec=pl.LazyFrame)
+        mock_lazy_frame2 = mocker.Mock(spec=pl.LazyFrame)
+        mock_lazy_frame1.lazy.return_value = mock_lazy_frame1
+        mock_lazy_frame2.lazy.return_value = mock_lazy_frame2
+        mocker.patch(
+            LIST_FILES_PATCH,
+            return_value="Path/to/xlsx/file.xlsx"
+        )
+        mocker.patch('polars.read_excel',
+                     return_value={'Sheet1': mock_lazy_frame1, 'Sheet2': mock_lazy_frame2})
+
+        result = read_xlsx("Path/to/xlsx/file.xlsx", 0)
+
+        assert isinstance(result, dict)
+        for key, value in result.items():
+            assert isinstance(key, str)
+            assert isinstance(value, pl.LazyFrame)
+
+    # Successfully read multiple sheets from an .xlsx file and return a dictionary of LazyFrames.
+    def test_read_multiple_sheets_with_sheet_id_equals_0(self, mocker):
+        mock_sheet_data = {
+            'Cell Descriptors Information': pl.DataFrame({
+                'DataPackfile': ['G01', 'G02'],
+                'Short': ['A', 'C'],
+                'Long': ['Alpha', 'Charlie']
+            }),
+            'Table Number, Name, Population': pl.DataFrame({
+                'DataPackfile': ['G03', 'G04'],
+                'Short': ['B', 'D'],
+                'Long': ['Banana', 'Ddddd']
+            })
+        }
+
+        mock_lazy_frame_data = {k: v.lazy() for k, v in mock_sheet_data.items()}
+
+        mocker.patch(LIST_FILES_PATCH, return_value="Path/to/xlsx/Metadata_2021_GCP_DataPack_R1_R2.xlsx")
+
+        mocker.patch('polars.read_excel', return_value=mock_lazy_frame_data)
+
+        expected_keys = ['Cell Descriptors Information', 'Table Number, Name, Population']
+
+        result = read_xlsx("Path/to/xlsx/", 0)
+
+        assert isinstance(result, dict)
+        assert sorted(result.keys()) == sorted(expected_keys)
+        for key, value in result.items():
+            assert isinstance(key, str)
+            assert isinstance(value, pl.LazyFrame)
+
 
 class TestColumnReadable:
-    # Converts xlsx_pl_df to a dictionary of column mappings correctly
-    def test_converts_xlsx_pl_df_to_dict_correctly(self):
-        prev_csv_pl_df = {
-            'file_G01': pl.DataFrame({'A': [1, 2], 'B': [3, 4]}).lazy(),
-            'file_G02': pl.DataFrame({'C': [5, 6], 'D': [7, 8]}).lazy()
+    # Standardize column names correctly when all parameters are valid
+    def test_standardize_names_valid_parameters(self, mocker):
+        df_dict = {
+            "G01": pl.LazyFrame({"short_col": [1, 2, 3]}),
+            "G02": pl.LazyFrame({"short_col": [4, 5, 6]})
+        }
+        census_metadata = pl.LazyFrame({
+            "identification": ["G01", "G02"],
+            "abbreviation_column_name": ["short_col", "short_col"],
+            "long_column_name": ["long_col", "long_col"]
+        })
+        expected_df_dict = {
+            "G01": pl.LazyFrame({"long_col": [1, 2, 3]}),
+            "G02": pl.LazyFrame({"long_col": [4, 5, 6]})
         }
 
-        xlsx_pl_df = {
-            'Metadata_2021_GCP_DataPack_R1_R2.xlsx': {
-                'Cell Descriptors Information': pl.DataFrame({
-                    'DataPackfile': ['G01', 'G02'],
-                    'Short': ['A', 'C'],
-                    'Long': ['Alpha', 'Charlie']
-                })
-            }
-        }
+        result = standardize_names(df_dict, census_metadata, "identification", "abbreviation_column_name",
+                                   "long_column_name")
 
-        result = column_readable(prev_csv_pl_df, xlsx_pl_df)
+        assert isinstance(result, dict)
+        for key in result:
+            assert isinstance(result[key], pl.LazyFrame)
+            assert isinstance(expected_df_dict[key], pl.LazyFrame)
 
-        assert result['file_G01'].columns == ['Alpha', 'B']
-        assert result['file_G02'].columns == ['Charlie', 'D']
+            result_df = result[key].collect()
+            expected_df = expected_df_dict[key].collect()
 
-        # xlsx_pl_df is empty
-
-    def test_xlsx_pl_df_is_empty(self):
-        prev_csv_pl_df = {
-            'file_G01': pl.DataFrame({'A': [1, 2], 'B': [3, 4]}).lazy(),
-            'file_G02': pl.DataFrame({'C': [5, 6], 'D': [7, 8]}).lazy()
-        }
-
-        xlsx_pl_df = {
-            'Metadata_2021_GCP_DataPack_R1_R2.xlsx': {
-                'Cell Descriptors Information': pl.DataFrame({
-                    'DataPackfile': [],
-                    'Short': [],
-                    'Long': []
-                })
-            }
-        }
-
-        result = column_readable(prev_csv_pl_df, xlsx_pl_df)
-
-        assert result == prev_csv_pl_df
-
-    # Renames columns in prev_csv_pl_df based on the mappings
-    def test_renames_columns(self):
-        prev_csv_pl_df = {
-            'file_G01': LazyFrame({}),
-            'file_G02': LazyFrame({})
-        }
-        xlsx_pl_df = {
-            'Metadata_2021_GCP_DataPack_R1_R2.xlsx': {
-                'Cell Descriptors Information': pl.DataFrame({
-                    'DataPackfile': ['G01', 'G02'],
-                    'Short': ['short_1', 'short_2'],
-                    'Long': ['long_1', 'long_2']
-                })
-            }
-        }
-
-        # Exercise
-        updated_prev_csv_pl_df = column_readable(prev_csv_pl_df, xlsx_pl_df)
-
-        # Verify
-        assert isinstance(updated_prev_csv_pl_df, dict)
-        assert isinstance(updated_prev_csv_pl_df['file_G01'], LazyFrame)
-        assert isinstance(updated_prev_csv_pl_df['file_G02'], LazyFrame)
-
-    # Handles multiple rows in xlsx_pl_df correctly
-    def test_handles_multiple_rows(self):
-        prev_csv_pl_df = {
-            'file_G01_data': LazyFrame({'col1': [1, 2], 'short_1': [3, 4]}),
-            'file_G02_data': LazyFrame({'col2': [5, 6], 'short_2': [7, 8]})
-        }
-        xlsx_pl_df = {
-            'Metadata_2021_GCP_DataPack_R1_R2.xlsx': {
-                'Cell Descriptors Information': pl.DataFrame({
-                    'DataPackfile': ['G01', 'G02'],
-                    'Short': ['short_1', 'short_2'],
-                    'Long': ['long_1', 'long_2']
-                })
-            }
-        }
-
-        # Exercise
-        updated_prev_csv_pl_df = column_readable(prev_csv_pl_df, xlsx_pl_df)
-
-        # Verify
-        assert isinstance(updated_prev_csv_pl_df, dict)
-        assert isinstance(updated_prev_csv_pl_df['file_G01_data'], LazyFrame)
-        assert isinstance(updated_prev_csv_pl_df['file_G02_data'], LazyFrame)
-        assert 'long_1' in updated_prev_csv_pl_df['file_G01_data'].columns
-        assert 'long_2' in updated_prev_csv_pl_df['file_G02_data'].columns
+            assert result_df.to_pandas().equals(expected_df.to_pandas())
