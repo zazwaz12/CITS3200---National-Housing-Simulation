@@ -30,7 +30,7 @@ class __InterceptHandler(logging.Handler):
             level, record.getMessage()
         )
 
-def read_config(config_path: str = 'config.yml') -> Dict[str, Any]:
+def read_config(config_path: str = 'configurations.yml') -> Dict[str, Any]:
     """
     Read YAML configuration file and return as a dictionary.
     
