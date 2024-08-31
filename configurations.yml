@@ -1,0 +1,19 @@
+logging:
+  log_file: "./logs/out_{time}.log"
+  format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"
+  backtrace: true
+  diagnose: true
+  level: "DEBUG"
+  retention: "7 days"
+
+paths:
+  census_path: "./path/to/census_data"
+  gnaf_path: "./path/to/gnaf_data"
+
+crs: "EPSG:7844"
+num_cores: 4
+num_iterations: 10
+
+shapefile_path: "/content/SA1_2021_AUST_GDA2020.shp"
+csv_path: "/content/houses-sample.csv"
+output_csv_path: "/content/houses_with_areas.csv"

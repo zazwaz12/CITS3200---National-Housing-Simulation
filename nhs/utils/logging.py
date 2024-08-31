@@ -1,17 +1,12 @@
-"""
-Functions for logging
-"""
-
 from functools import wraps
 import inspect
 import logging
 from loguru import logger
-from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union
+from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union, Dict
 import warnings
-
+import yaml
 
 T = TypeVar("T")
-
 
 class __InterceptHandler(logging.Handler):
     """
@@ -35,20 +30,45 @@ class __InterceptHandler(logging.Handler):
             level, record.getMessage()
         )
 
-
-def config_logger() -> None:
+def read_config(config_path: str = 'config.yml') -> Dict[str, Any]:
     """
-    Configure loguru logger settings and set it as as the default logger
+    Read YAML configuration file and return as a dictionary.
+    
+    Args:
+        config_path (str): Path to the configuration file. Defaults to 'config.yml'.
+    
+    Returns:
+        Dict[str, Any]: Configuration settings as a dictionary.
+    
+    Raises:
+        FileNotFoundError: If the configuration file is not found.
+        yaml.YAMLError: If there's an error parsing the YAML file.
+    """
+    try:
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file)
+        logger.info(f"Configuration loaded from {config_path}")
+        return config
+    except FileNotFoundError:
+        logger.error(f"Configuration file not found: {config_path}")
+        raise
+    except yaml.YAMLError as e:
+        logger.error(f"Error parsing configuration file: {e}")
+        raise
+
+def config_logger(configurations: Dict[str, Any]) -> None:
+    """
+    Configure loguru logger settings and set it as the default logger
     """
 
     logger.remove()
     logger.add(
-        "./logs/out_{time}.log",
-        format="{time:YYYY-MM-DD at HH:mm:ss} {level} {message}",
-        backtrace=True,
-        diagnose=True,
-        level="DEBUG",
-        retention="7 days",
+        configurations['logging']['log_file'],
+        format=configurations['logging']['format'],
+        backtrace=configurations['logging']['backtrace'],
+        diagnose=configurations['logging']['diagnose'],
+        level=configurations['logging']['level'],
+        retention=configurations['logging']['retention'],
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
@@ -64,7 +84,6 @@ def config_logger() -> None:
         logger.warning(f"{category.__name__}: {str(message)}")
 
     warnings.showwarning = custom_showwarning
-
 
 def log_entry_exit(
     *,
