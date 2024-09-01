@@ -125,7 +125,7 @@ def main() -> None:
     final_result = parallel_process(pnts_gdf, map_data, num_cores)
     
     if final_result['area'].is_null().any() or final_result['area_code'].is_null().any():
-        logger.warning("Some points were not assigned to an SA2 area even after nearest join. Please check your data.")
+        logger.warning("Some points were not assigned to an SA1 area even after nearest join. Please check your data.")
     
     houses_with_areas = houses_df.join(final_result, on=['x', 'y'], how='left')
     
