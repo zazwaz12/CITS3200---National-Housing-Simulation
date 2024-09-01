@@ -17,8 +17,9 @@ fastexcel = "^0.11.5"
 jupyter-black = "^0.3.4"
 isort = "^5.13.2"
 pathos = "^0.3.2"
-pyright = "^1.1.316"
+pyright ="^1.1.316"
 pytest-mock = "^3.14.0"
+<<<<<<< HEAD
 numpy = "^1.26.0"
 geopandas = "^0.14.0"
 pyproj = "^3.6.0"
@@ -26,6 +27,8 @@ fiona = "^1.9.0"
 pyyaml = "^6.0.2"
 
 
+=======
+>>>>>>> parent of afb612d (feat: polars converted join script)
 
 [tool.isort]
 profile = "black"
@@ -35,7 +38,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-reportMissingTypeStubs = false
+reportMissingTypeStubs = false  # Changed from true
 strict = ["nhs"]
 reportUnknownParameterType = true
 reportUntypedFunctionDecorator = true
@@ -43,7 +46,11 @@ typeCheckingMode = "basic"
 pythonVersion = "3.12"
 include = ["**/*.py"]
 exclude = ["**/node_modules", "**/__pycache__"]
+<<<<<<< HEAD
 ignore = ["syncdata.py", "src/oldstuff", "nhs/data/join_on_sa1.py"]
+=======
+ignore = ["syncdata.py", "src/oldstuff"]  # Changed to ignore the specific file with dirsync import
+>>>>>>> parent of afb612d (feat: polars converted join script)
 defineConstant = { DEBUG = true }
 strictListInference = true
 strictDictionaryInference = true
