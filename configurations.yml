@@ -14,6 +14,6 @@ crs: "EPSG:7844"
 num_cores: 4
 num_iterations: 10
 
-shapefile_path: "/content/SA1_2021_AUST_GDA2020.shp"
-csv_path: "/content/houses-sample.csv"
-output_csv_path: "/content/houses_with_areas.csv"
+shapefile_path: "/content/input/shapefiles/SA1_2021_AUST_GDA2020.shp"
+csv_path: "/content/input/houses/houses-sample.csv"
+output_csv_path: "/content/outputhouses_with_areas.csv"
