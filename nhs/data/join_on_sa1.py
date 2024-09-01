@@ -3,14 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 from loguru import logger
 from pathos.multiprocessing import ProcessingPool as Pool
-from cytoolz import curry
+from typing import Any, List  # Importing required types
 import geopandas as gpd
 from pyproj import CRS
 import fiona
+from fiona.drvsupport import supported_drivers
+import yaml
 
 # Set the SHAPE_RESTORE_SHX option
-fiona.drvsupport.supported_drivers['ESRI Shapefile'] = 'rw'
-fiona.drvsupport.supported_drivers['SHAPE_RESTORE_SHX'] = 'YES'
+supported_drivers['ESRI Shapefile'] = 'rw'
 
 def read_config(config_path: str) -> dict:
     """Read YAML configuration file."""
@@ -39,13 +40,12 @@ def prepare_points(df: pl.DataFrame, crs: str) -> Any:
     gdf = gpd.GeoDataFrame(
         df.to_pandas(),
         geometry=gpd.points_from_xy(df['x'], df['y']),
-        crs="EPSG:7844"  # Assuming input is in WGS84, presume continuation of EPSG (as of 2021 it's 7844)
-    )
+        crs="EPSG:7844"  # Assuming input is in WGS84
+    ) # type: ignore
     projected_crs = CRS.from_string(crs)
     return gdf.to_crs(projected_crs)
 
-@curry
-def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:  # Changed parameter types to Any
+def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:
     """Process a chunk of point data, joining with area data."""
     pnts_with_area = gpd.sjoin(chunk, map_data, how="left", predicate='within')
     missing_points = pnts_with_area[pnts_with_area['SA2_NAME21'].isnull()]
@@ -59,11 +59,11 @@ def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:  # Changed paramet
     result = result.rename(columns={'SA2_NAME21': 'area', 'SA1_CODE21': 'area_code'})
     return pl.DataFrame(result.to_dict())  # Convert to dict first to ensure compatibility with Polars
 
-def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFrame:  # Changed parameter types to Any
+def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFrame:
     """Parallel process point data."""
     chunks = np.array_split(pnts_gdf, num_cores)
     with Pool(num_cores) as pool:
-        all_results = pool.map(process_chunk(map_data), chunks)
+        all_results = pool.map(lambda chunk: process_chunk(map_data, chunk), chunks)
     return pl.concat(all_results)
 
 def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFrame:
@@ -73,16 +73,22 @@ def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFr
         pl.col('y').alias('original_lat'),
         pl.col('x').alias('original_lon')
     ])
-
+    
     for _ in range(num_iterations):
-        model_df = model_df.groupby('area_code').apply(
-            lambda group: group.with_columns([
-                pl.col('x').shuffle().alias('x'),
-                pl.col('y').shuffle().alias('y')
+        # Loop over unique area_code values and shuffle x and y within each group
+        area_codes = model_df['area_code'].unique().to_list()
+        for area_code in area_codes:
+            area_df = model_df.filter(pl.col('area_code') == area_code)
+            shuffled_x = pl.Series(np.random.permutation(area_df['x']))  # Convert to Polars Series
+            shuffled_y = pl.Series(np.random.permutation(area_df['y']))  # Convert to Polars Series
+            model_df = model_df.with_columns([
+                pl.when(pl.col('area_code') == area_code).then(shuffled_x).otherwise(pl.col('x')).alias('x'),
+                pl.when(pl.col('area_code') == area_code).then(shuffled_y).otherwise(pl.col('y')).alias('y')
             ])
-        )
 
     return model_df
+
+
 
 def visualize_results(final_result_df: pl.DataFrame, area_codes: List[str]) -> None:
     """Visualize the original and final positions of points."""

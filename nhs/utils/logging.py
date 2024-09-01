@@ -1,12 +1,18 @@
-from functools import wraps
+"""
+Functions for logging
+"""
+
 import inspect
 import logging
-from loguru import logger
-from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union, Dict
 import warnings
+from functools import wraps
+from typing import Any, Callable, Literal, Optional, TextIO, Type, TypeVar, Union, Dict
 import yaml
 
+from loguru import logger
+
 T = TypeVar("T")
+
 
 class __InterceptHandler(logging.Handler):
     """
@@ -30,12 +36,13 @@ class __InterceptHandler(logging.Handler):
             level, record.getMessage()
         )
 
+
 def read_config(config_path: str = 'configurations.yml') -> Dict[str, Any]:
     """
     Read YAML configuration file and return as a dictionary.
     
     Args:
-        config_path (str): Path to the configuration file. Defaults to 'config.yml'.
+        config_path (str): Path to the configuration file. Defaults to 'configurations.yml'.
     
     Returns:
         Dict[str, Any]: Configuration settings as a dictionary.
@@ -46,7 +53,7 @@ def read_config(config_path: str = 'configurations.yml') -> Dict[str, Any]:
     """
     try:
         with open(config_path, 'r') as file:
-            config = yaml.safe_load(file)
+            config: Dict[str, Any] = yaml.safe_load(file)
         logger.info(f"Configuration loaded from {config_path}")
         return config
     except FileNotFoundError:
@@ -55,6 +62,7 @@ def read_config(config_path: str = 'configurations.yml') -> Dict[str, Any]:
     except yaml.YAMLError as e:
         logger.error(f"Error parsing configuration file: {e}")
         raise
+
 
 def config_logger(configurations: Dict[str, Any]) -> None:
     """
@@ -84,6 +92,7 @@ def config_logger(configurations: Dict[str, Any]) -> None:
         logger.warning(f"{category.__name__}: {str(message)}")
 
     warnings.showwarning = custom_showwarning
+
 
 def log_entry_exit(
     *,
