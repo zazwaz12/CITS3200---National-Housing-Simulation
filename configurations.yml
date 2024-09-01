@@ -16,4 +16,4 @@ num_iterations: 10
 
 shapefile_path: "/content/input/shapefiles/SA1_2021_AUST_GDA2020.shp"
 csv_path: "/content/input/houses/houses-sample.csv"
-output_csv_path: "/content/outputhouses_with_areas.csv"
+output_csv_path: "/content/output/houses_with_areas.csv"
