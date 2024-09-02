@@ -29,7 +29,9 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 
 @logger.catch()
 @log_entry_exit()
-def read_xlsx(file_path: str, sheet_id: None | int = 1) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
+def read_xlsx(
+    file_path: str, sheet_id: None | int = 1
+) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
     Function returns lazyFrame if sheet_id = 1 and 0 returns dictionary, so default sheet_id is 1.
@@ -41,8 +43,7 @@ def read_xlsx(file_path: str, sheet_id: None | int = 1) -> dict[str, pl.LazyFram
     return frames.lazy()
 
 
-def __get_spreadsheet_reader(
-        file_extension: str) -> Callable[..., pl.LazyFrame | None]:
+def __get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
     """
@@ -54,7 +55,8 @@ def __get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-        file_dir_pattern: str, extension: Literal["csv", "psv"]) -> dict[str, pl.LazyFrame | None]:
+    file_dir_pattern: str, extension: Literal["csv", "psv"]
+) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
     If a file cannot be read, the value will be None.
@@ -135,7 +137,16 @@ def standardize_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: 
 
     Examples
     --------
-    >>> def standardize_names({"files_identify1_with_abbreviated_names": <LazyFrame>,"files_identify2_with_abbreviated_names": <LazyFrame>},"standard_sheet1's" <LazyFrame>, "identification", "abbreviation_column_name", "Long_column_name")
+    >>> def standardize_names(
+    ...     {
+                "name1": <LazyFrame>,
+    ...         "name2": <LazyFrame>},
+    ...         "name3" <LazyFrame>,
+    ...     },
+    ...     "identification",
+    ...     "abbreviation_column_name",
+    ...     "Long_column_name"
+    ... )
     {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
     """
     result_dict = {}
