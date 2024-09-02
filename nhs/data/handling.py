@@ -1,5 +1,5 @@
 import os
-from typing import Callable, Literal, Dict
+from typing import Callable, Literal
 
 import polars as pl
 from loguru import logger
@@ -29,7 +29,9 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 
 @logger.catch()
 @log_entry_exit()
-def read_xlsx(file_path: str, sheet_id: None | int = 1) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
+def read_xlsx(
+    file_path: str, sheet_id: None | int = 1
+) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
     Function returns lazyFrame if sheet_id = 1 and 0 returns dictionary, so default sheet_id is 1.
@@ -41,8 +43,7 @@ def read_xlsx(file_path: str, sheet_id: None | int = 1) -> dict[str, pl.LazyFram
     return frames.lazy()
 
 
-def __get_spreadsheet_reader(
-        file_extension: str) -> Callable[..., pl.LazyFrame | None]:
+def __get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
     """
@@ -54,7 +55,8 @@ def __get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-        file_dir_pattern: str, extension: Literal["csv", "psv"]) -> dict[str, pl.LazyFrame | None]:
+    file_dir_pattern: str, extension: Literal["csv", "psv"]
+) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV, or XLSX files.
     If a file cannot be read, the value will be None.
@@ -106,39 +108,56 @@ def read_spreadsheets(
 
 
 @log_entry_exit(level="INFO")
-def standardize_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: pl.LazyFrame | None,
-                      census_code_col: str, abbreviation_column_name: str, long_column_name: str) -> dict[str, pl.LazyFrame | None]:
+def standardize_names(
+    df_dict: dict[str, pl.LazyFrame],
+    census_metadata: pl.LazyFrame,
+    census_code_col: str,
+    abbreviation_column_name: str,
+    long_column_name: str,
+) -> dict[str, pl.LazyFrame | None]:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
 
-    This function will
-        1. Expand abbreviated names.
-        2. Converting to lower case.
-
-    If any parameters are None, this function returns prev_csv_pl_df without change. Keys in df_dict must have format 'G{int + letter}'.
-
+    This function will expand abbreviated names using a census metadata frame containing
+    mappings of abbreviated names to full names in the columns `abbreviation_column_name` and
+    `long_column_name`. The names are also converted to snake_case.
 
     Parameters:
     --------
     df_dict : dict[str, pl.LazyFrame]
-        A dictionary containing census data as value and filename as key or None. a dictionary of name-dataframe pair. Names must exist in the census_metadata[census_code_col]. All column names in the dataframes in df_dict with keys in format 'G{int + letter}'.
-    census_metadata : [pl.LazyFrame | None]
-        Census_metadata: Census metadata lazy frame with one standard sheet has a column called identification containing list of keys in the df_dict dictionary to standarise, and columns called abbreviated.... and long_column)names containing the abbreviated and long column names for data frames in the df_dict or None. If don't have abbreviated column, long column and census_code_col then df_dict won't be changed.
+        A dictionary containing census data as value and filename as key. Names
+        must exist in `census_metadata[census_code_col]`.
+    census_metadata : pl.LazyFrame
+        Lazy frame containing a column called `census_code_col` that contains
+        the keys in `df_dict` to standardise, and columns called `abbreviation_column_name`
+        and `long_column_name` containing the abbreviated and long column names
+        for frames in the `df_dict`.
     census_code_col : str
-        Identify different files in df_dict. Could not be None, name of the column in census_metadata that contains names in the df_dict to standarise. e.g. if df_dict have the pair "G03": and "G03" exist in the census_code_col column in metada, then the lazy frame will be standarised
+        Column name in `census_metadata` that contains the keys in `df_dict` to standardise..
+        e.g. if `df_dict` have the key `"G03"` and `"G03"` exist `census_metadata[census_code_col]`
+        then the lazy frame will be standarised.
     abbreviation_column_name : str
-        Column name of abbreviated names. Could not be None, short will be the default value.
+        Column name in `census_metadata` containing the abbreviated names.
     long_column_name : str
-        Column name of expanded names. Could not be None, long will be the default value.
+        Column name in `census_metadata` containing the long, unabbreviated names.
 
     Returns:
     --------
     dict[str, pl.LazyFrame]
-        A dictionary with expanded column names based on where for each dataframe, columns with names in long_column_names are replaced with corresponding names in abbreviated... and converted to snake_case
+        A dictionary with standarised column names.
 
     Examples
     --------
-    >>> def standardize_names({"files_identify1_with_abbreviated_names": <LazyFrame>,"files_identify2_with_abbreviated_names": <LazyFrame>},"standard_sheet1's" <LazyFrame>, "identification", "abbreviation_column_name", "Long_column_name")
+    >>> def standardize_names(
+    ...     {
+                "name1": <LazyFrame>,
+    ...         "name2": <LazyFrame>},
+    ...         "name3" <LazyFrame>,
+    ...     },
+    ...     "identification",
+    ...     "abbreviation_column_name",
+    ...     "Long_column_name"
+    ... )
     {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
     """
     result_dict = {}
