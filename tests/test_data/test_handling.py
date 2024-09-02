@@ -164,4 +164,4 @@ class TestColumnReadable:
             result_df = result[key].collect()
             expected_df = expected_df_dict[key].collect()
 
-            assert result_df.to_pandas().equals(expected_df.to_pandas())
+            assert result_df.equals(expected_df)
