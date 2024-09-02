@@ -111,9 +111,9 @@ def read_spreadsheets(
 def standardize_names(
     df_dict: dict[str, pl.LazyFrame],
     census_metadata: pl.LazyFrame,
-    census_code_col: str,
-    abbreviation_column_name: str,
-    long_column_name: str,
+    census_code_col: str = "DataPackfile",
+    abbreviation_column_name: str = "Long",
+    long_column_name: str = "Short",
 ) -> dict[str, pl.LazyFrame | None]:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
@@ -139,7 +139,7 @@ def standardize_names(
     abbreviation_column_name : str
         Column name in `census_metadata` containing the abbreviated names.
     long_column_name : str
-        Column name in `census_metadata` containing the long, unabbreviated names.
+        Column name in `census_metadata` containing the unabbreviated names.
 
     Returns:
     --------
@@ -148,17 +148,20 @@ def standardize_names(
 
     Examples
     --------
-    >>> def standardize_names(
-    ...     {
-                "name1": <LazyFrame>,
-    ...         "name2": <LazyFrame>},
-    ...         "name3" <LazyFrame>,
-    ...     },
-    ...     "identification",
-    ...     "abbreviation_column_name",
-    ...     "Long_column_name"
-    ... )
-    {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
+    >>> frames = {
+    ...     "file_identify1": pl.LazyFrame({"SHORT1": [1, 2, 3], "SHORT2": [4, 5, 6]})
+    ...     "file_identify2": pl.LazyFrame({"SHORT1": [1, 2, 3], "SHORT2": [4, 5, 6]})
+    ... }
+    >>> metadata = pl.LazyFrame({
+    ...     "file_names": ["file_identify1"],
+    ...     "abbreviated": ["SHORT1", "SHORT2"],
+    ...     "unabbreviated": ["LONG 1", "LONG 2"]
+    ... })
+    >>> frames_out = standardize_names(dfs, metadata, "file_names", "abbreviated", "unabbreviated")
+    >>> frames_out["file_identify1"].columns
+    ["long_1", "long_2"]
+    >>> frames_out["file_identify2"].columns # No change, name not in `metadata["file_names"]`
+    ["SHORT1", "SHORT2"]
     """
     result_dict = {}
     for row in census_metadata.collect().iter_rows(named=True):
