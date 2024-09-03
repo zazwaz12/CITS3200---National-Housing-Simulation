@@ -15,11 +15,15 @@ get_reader = nhs.data.handling.get_spreadsheet_reader
 
 def convert_to_parquet(input_dir: str, output_dir: str):
     paths = list_files(input_dir)
-    paths = filter(lambda x: x.endswith((".xlsx", ".xls", ".csv")), paths)
+    paths = filter(lambda x: x.endswith((".xlsx", ".xls", ".csv", ".psv")), paths)
 
     for path in tqdm(paths, desc="Converting spreadsheets to Parquet"):
         relative_path = Path(path).relative_to(input_dir)
         output_file_path = Path(output_dir) / relative_path.with_suffix(".parquet")
+
+        if output_file_path.exists():
+            logger.warning(f"File {output_file_path} already exists. Skipping.")
+            continue
 
         output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
