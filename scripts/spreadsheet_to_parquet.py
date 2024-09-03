@@ -2,12 +2,13 @@
 Produce a directory of parquet files from a directory of spreadsheets
 """
 
-from tqdm import tqdm
 import argparse
 from pathlib import Path
-from loguru import logger
+
 import polars as pl
 from context import nhs
+from loguru import logger
+from tqdm import tqdm
 
 list_files = nhs.utils.path.list_files
 get_reader = nhs.data.handling.get_spreadsheet_reader
