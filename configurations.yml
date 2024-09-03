@@ -1,0 +1,19 @@
+logging:
+  log_file: "./logs/out_{time}.log"
+  format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"
+  backtrace: true
+  diagnose: true
+  level: "DEBUG"
+  retention: "7 days"
+
+paths:
+  census_path: "./path/to/census_data"
+  gnaf_path: "./path/to/gnaf_data"
+  shapefile_path: "path/to/shapefile.shp"
+
+
+crs: "EPSG:7844"
+num_cores: 4
+num_iterations: 10
+enable_random_distribution: true  # Set to false to skip random distribution
+enable_visualization: true  # Set to false to skip visualization
