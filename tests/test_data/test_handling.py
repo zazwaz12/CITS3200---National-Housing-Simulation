@@ -57,7 +57,7 @@ class TestReadSpreadsheets:
         assert isinstance(result["e1"], pl.LazyFrame)
         assert isinstance(result["e2"], pl.LazyFrame)
 
-    #Read one xlsx file with default sheet_id.
+    # Read one xlsx file with default sheet_id.
     def test_read_xlsx_with_default_sheet_id(self, mocker):
         mocker.patch(
             LIST_FILES_PATCH,
@@ -80,7 +80,7 @@ class TestReadSpreadsheets:
         mocker.patch("polars.read_excel", side_effect=FileNotFoundError)
         result = read_xlsx("Path/to/xlsx/", 1)
         assert result is None
-        mocker.patch('polars.read_excel', side_effect=Exception("File not found"))
+        mocker.patch("polars.read_excel", side_effect=Exception("File not found"))
         result2 = read_xlsx("Path/to/xlsx/", 0)
         assert result2 is None
 
@@ -90,12 +90,11 @@ class TestReadSpreadsheets:
         mock_lazy_frame2 = mocker.Mock(spec=pl.LazyFrame)
         mock_lazy_frame1.lazy.return_value = mock_lazy_frame1
         mock_lazy_frame2.lazy.return_value = mock_lazy_frame2
+        mocker.patch(LIST_FILES_PATCH, return_value="Path/to/xlsx/file.xlsx")
         mocker.patch(
-            LIST_FILES_PATCH,
-            return_value="Path/to/xlsx/file.xlsx"
+            "polars.read_excel",
+            return_value={"Sheet1": mock_lazy_frame1, "Sheet2": mock_lazy_frame2},
         )
-        mocker.patch('polars.read_excel',
-                     return_value={'Sheet1': mock_lazy_frame1, 'Sheet2': mock_lazy_frame2})
 
         result = read_xlsx("Path/to/xlsx/file.xlsx", 0)
 
@@ -107,25 +106,35 @@ class TestReadSpreadsheets:
     # Successfully read multiple sheets from an .xlsx file and return a dictionary of LazyFrames.
     def test_read_multiple_sheets_with_sheet_id_equals_0(self, mocker):
         mock_sheet_data = {
-            'Cell Descriptors Information': pl.DataFrame({
-                'DataPackfile': ['G01', 'G02'],
-                'Short': ['A', 'C'],
-                'Long': ['Alpha', 'Charlie']
-            }),
-            'Table Number, Name, Population': pl.DataFrame({
-                'DataPackfile': ['G03', 'G04'],
-                'Short': ['B', 'D'],
-                'Long': ['Banana', 'Ddddd']
-            })
+            "Cell Descriptors Information": pl.DataFrame(
+                {
+                    "DataPackfile": ["G01", "G02"],
+                    "Short": ["A", "C"],
+                    "Long": ["Alpha", "Charlie"],
+                }
+            ),
+            "Table Number, Name, Population": pl.DataFrame(
+                {
+                    "DataPackfile": ["G03", "G04"],
+                    "Short": ["B", "D"],
+                    "Long": ["Banana", "Ddddd"],
+                }
+            ),
         }
 
         mock_lazy_frame_data = {k: v.lazy() for k, v in mock_sheet_data.items()}
 
-        mocker.patch(LIST_FILES_PATCH, return_value="Path/to/xlsx/Metadata_2021_GCP_DataPack_R1_R2.xlsx")
+        mocker.patch(
+            LIST_FILES_PATCH,
+            return_value="Path/to/xlsx/Metadata_2021_GCP_DataPack_R1_R2.xlsx",
+        )
 
-        mocker.patch('polars.read_excel', return_value=mock_lazy_frame_data)
+        mocker.patch("polars.read_excel", return_value=mock_lazy_frame_data)
 
-        expected_keys = ['Cell Descriptors Information', 'Table Number, Name, Population']
+        expected_keys = [
+            "Cell Descriptors Information",
+            "Table Number, Name, Population",
+        ]
 
         result = read_xlsx("Path/to/xlsx/", 0)
 
@@ -141,20 +150,27 @@ class TestColumnReadable:
     def test_standardize_names_valid_parameters(self, mocker):
         df_dict = {
             "G01": pl.LazyFrame({"short_col": [1, 2, 3]}),
-            "G02": pl.LazyFrame({"short_col": [4, 5, 6]})
+            "G02": pl.LazyFrame({"short_col": [4, 5, 6]}),
         }
-        census_metadata = pl.LazyFrame({
-            "identification": ["G01", "G02"],
-            "abbreviation_column_name": ["short_col", "short_col"],
-            "long_column_name": ["long_col", "long_col"]
-        })
+        census_metadata = pl.LazyFrame(
+            {
+                "identification": ["G01", "G02"],
+                "abbreviation_column_name": ["short_col", "short_col"],
+                "long_column_name": ["long_col", "long_col"],
+            }
+        )
         expected_df_dict = {
             "G01": pl.LazyFrame({"long_col": [1, 2, 3]}),
-            "G02": pl.LazyFrame({"long_col": [4, 5, 6]})
+            "G02": pl.LazyFrame({"long_col": [4, 5, 6]}),
         }
 
-        result = standardize_names(df_dict, census_metadata, "identification", "abbreviation_column_name",
-                                   "long_column_name")
+        result = standardize_names(
+            df_dict,
+            census_metadata,
+            "identification",
+            "abbreviation_column_name",
+            "long_column_name",
+        )
 
         assert isinstance(result, dict)
         for key in result:

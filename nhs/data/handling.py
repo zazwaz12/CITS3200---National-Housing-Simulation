@@ -30,7 +30,7 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 @logger.catch()
 @log_entry_exit()
 def read_xlsx(
-        file_path: str, sheet_id: None | int = 1
+    file_path: str, sheet_id: None | int = 1
 ) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
@@ -39,7 +39,7 @@ def read_xlsx(
     """
     frames = pl.read_excel(file_path, sheet_id=sheet_id)
     if isinstance(frames, dict):
-        return {name: df.lazy() for name, df in frames.items()}  #type: ignore
+        return {name: df.lazy() for name, df in frames.items()}  # type: ignore
     return frames.lazy()
 
 
@@ -55,7 +55,7 @@ def __get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame 
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-        file_dir_pattern: str, extension: Literal["csv", "psv"]
+    file_dir_pattern: str, extension: Literal["csv", "psv"]
 ) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
@@ -106,10 +106,13 @@ def read_spreadsheets(
 
 
 @log_entry_exit(level="INFO")
-def standardize_names(df_dict: dict[str, pl.LazyFrame], census_metadata: pl.LazyFrame,
-                      census_code_col: str = "DataPackfile", abbreviation_column_name: str = "Short",
-                      long_column_name: str = "Long") -> dict[
-    str, pl.LazyFrame]:
+def standardize_names(
+    df_dict: dict[str, pl.LazyFrame],
+    census_metadata: pl.LazyFrame,
+    census_code_col: str = "DataPackfile",
+    abbreviation_column_name: str = "Short",
+    long_column_name: str = "Long",
+) -> dict[str, pl.LazyFrame]:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
 
@@ -161,7 +164,7 @@ def standardize_names(df_dict: dict[str, pl.LazyFrame], census_metadata: pl.Lazy
         key = row[census_code_col]
         short = row[abbreviation_column_name]
         long = row[long_column_name]
-        result_dict.setdefault(key, {})[short] = long.lower().replace(' ', '_')  #type: ignore
+        result_dict.setdefault(key, {})[short] = long.lower().replace(" ", "_")  # type: ignore
 
     for key in df_dict:
         value = df_dict[key].rename(result_dict[key])
