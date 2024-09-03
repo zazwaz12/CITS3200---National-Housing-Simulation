@@ -74,7 +74,6 @@ def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:
     )  # Convert to dict first to ensure compatibility with Polars
 
 
-
 def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFrame:
     """Parallel process point data."""
     chunks = np.array_split(pnts_gdf, num_cores)
