@@ -129,7 +129,7 @@ def standardize_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: 
     abbreviation_column_name : str
         Column name of abbreviated names. Could not be None, short will be the default value.
     long_column_name : str
-        Column name of expanded names. Could not be None, long will be the default value.
+        Column name in `census_metadata` containing the unabbreviated names. Could not be None, long will be the default value.
 
     Returns:
     --------
@@ -138,17 +138,20 @@ def standardize_names(df_dict: dict[str, pl.LazyFrame | None], census_metadata: 
 
     Examples
     --------
-    >>> def standardize_names(
-    ...     {
-                "name1": <LazyFrame>,
-    ...         "name2": <LazyFrame>},
-    ...         "name3" <LazyFrame>,
-    ...     },
-    ...     "identification",
-    ...     "abbreviation_column_name",
-    ...     "Long_column_name"
-    ... )
-    {"file_identify1_with_expanded_names": <LazyFrame>, "file_identify2_with_expanded_names": <LazyFrame>}
+    >>> frames = {
+    ...     "file_identify1": pl.LazyFrame({"SHORT1": [1, 2, 3], "SHORT2": [4, 5, 6]})
+    ...     "file_identify2": pl.LazyFrame({"SHORT1": [1, 2, 3], "SHORT2": [4, 5, 6]})
+    ... }
+    >>> metadata = pl.LazyFrame({
+    ...     "file_names": ["file_identify1"],
+    ...     "abbreviated": ["SHORT1", "SHORT2"],
+    ...     "unabbreviated": ["LONG 1", "LONG 2"]
+    ... })
+    >>> frames_out = standardize_names(dfs, metadata, "file_names", "abbreviated", "unabbreviated")
+    >>> frames_out["file_identify1"].columns
+    ["long_1", "long_2"]
+    >>> frames_out["file_identify2"].columns # No change, name not in `metadata["file_names"]`
+    ["SHORT1", "SHORT2"]
     """
     result_dict = {}
     for row in census_metadata.collect().iter_rows(named=True):
