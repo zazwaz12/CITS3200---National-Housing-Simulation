@@ -151,21 +151,29 @@ def main() -> None:
         pl.Series("attribute", np.random.randint(1, 11, size=len(houses_with_areas)))
     )
     
-    area_codes = houses_with_attributes['area_code'].unique().to_list()[:4]
-    result_dfs = []
+    # Check if random distribution is enabled in the config
+    if config.get('enable_random_distribution', False):
+        area_codes = houses_with_attributes['area_code'].unique().to_list()[:4]
+        result_dfs = []
 
-    for area_code in area_codes:
-        logger.info(f"Running random distribution for area code: {area_code}")
-        area_df = houses_with_attributes.filter(pl.col('area_code') == area_code)
-        result_df = random_distribution(area_df, num_iterations=config.get('num_iterations', 10))
-        result_dfs.append(result_df)
+        for area_code in area_codes:
+            logger.info(f"Running random distribution for area code: {area_code}")
+            area_df = houses_with_attributes.filter(pl.col('area_code') == area_code)
+            result_df = random_distribution(area_df, num_iterations=config.get('num_iterations', 10))
+            result_dfs.append(result_df)
 
-    final_result_df = pl.concat(result_dfs)
+        final_result_df = pl.concat(result_dfs)
     
-    visualize_results(final_result_df, area_codes)
+        visualize_results(final_result_df, area_codes)
     
-    logger.info("Random distribution completed.")
-    logger.info(final_result_df.head(20))
+        logger.info("Random distribution completed.")
+        logger.info(final_result_df.head(20))
+    else:
+        logger.info("Random distribution skipped as per configuration.")
+
+
+if __name__ == "__main__":
+    main()
 
 
 if __name__ == "__main__":

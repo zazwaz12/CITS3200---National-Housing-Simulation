@@ -9,11 +9,10 @@ logging:
 paths:
   census_path: "./path/to/census_data"
   gnaf_path: "./path/to/gnaf_data"
+  shapefile_path: "path/to/shapefile.shp"
+
 
 crs: "EPSG:7844"
 num_cores: 4
 num_iterations: 10
-
-shapefile_path: "/content/input/shapefiles/SA1_2021_AUST_GDA2020.shp"
-csv_path: "/content/input/houses/houses-sample.csv"
-output_csv_path: "/content/output/houses_with_areas.csv"
+enable_random_distribution: true  # Set to false to skip random distribution
