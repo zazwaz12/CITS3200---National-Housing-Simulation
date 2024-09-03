@@ -38,7 +38,16 @@ def read_xlsx(file_path: str) -> pl.LazyFrame | None:
     return pl.read_excel(file_path).lazy()
 
 
-def __get_spreadsheet_reader(
+@logger.catch()
+@log_entry_exit()
+def read_parquet(file_path: str) -> pl.LazyFrame | None:
+    """
+    Load a .parquet file into a polars `LazyFrame`, returning None if exception occurs
+    """
+    return pl.scan_parquet(file_path, parallel="auto")
+
+
+def get_spreadsheet_reader(
     file_extension: str,
 ) -> Callable[[str], pl.LazyFrame | None]:
     """
@@ -48,12 +57,13 @@ def __get_spreadsheet_reader(
         ".psv": read_psv,
         ".csv": read_csv,
         ".xlsx": read_xlsx,
+        ".parquet": read_parquet,
     }[file_extension]
 
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-    file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx"]
+    file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx", "parquet"]
 ) -> dict[str, pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV, or XLSX files.
@@ -93,7 +103,7 @@ def read_spreadsheets(
     """
     files = list_files(os.path.dirname(file_dir_pattern))
     files = list(filter(lambda x: x.endswith(f".{extension}"), files))
-    reader = __get_spreadsheet_reader(f".{extension}")
+    reader = get_spreadsheet_reader(f".{extension}")
 
     if "{key}" not in file_dir_pattern:
         keys = map(os.path.basename, files)
@@ -104,3 +114,17 @@ def read_spreadsheets(
         )
 
     return {key: val for key, val in zip(keys, map(reader, files))}
+
+
+@log_entry_exit(level="INFO")
+def to_parquet(
+    df: pl.DataFrame | pl.LazyFrame,
+    file_path: str,
+    compression: Literal["gzip", "lz4", "zstd"] = "lz4",
+) -> None:
+    """
+    Write a polars DataFrame to a parquet file
+    """
+    if isinstance(df, pl.LazyFrame):
+        df = df.collect()
+    df.write_parquet(file_path, compression=compression)
