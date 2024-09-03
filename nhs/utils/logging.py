@@ -2,13 +2,13 @@
 Functions for logging
 """
 
-from functools import wraps
 import inspect
 import logging
-from loguru import logger
-from typing import Any, Callable, TypeVar, Literal, Optional, TextIO, Type, Union
 import warnings
+from functools import wraps
+from typing import Any, Callable, Literal, Optional, TextIO, Type, TypeVar, Union
 
+from loguru import logger
 
 T = TypeVar("T")
 
