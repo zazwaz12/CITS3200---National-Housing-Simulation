@@ -20,17 +20,20 @@ def read_config(config_path: str) -> dict:
     logger.info(f"Configuration loaded: {config}")
     return config
 
+
 def read_shapefile(path: str) -> int:
     """Read shapefile and return total number of rows."""
     total_rows = len(pl.read_parquet(path))
     logger.info(f"Total number of rows in the shapefile: {total_rows}")
     return total_rows
 
+
 def read_csv(path: str) -> pl.DataFrame:
     """Read CSV file and return as Polars DataFrame."""
     df = pl.read_csv(path)
     logger.info(df.head())
     return df
+
 
 def prepare_points(df: pl.DataFrame, crs: str) -> Any:
     """Prepare points data for geospatial analysis."""
@@ -44,6 +47,7 @@ def prepare_points(df: pl.DataFrame, crs: str) -> Any:
     ) # type: ignore
     projected_crs = CRS.from_string(crs)
     return gdf.to_crs(projected_crs)
+
 
 def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:
     """Process a chunk of point data, joining with area data."""
@@ -59,6 +63,7 @@ def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:
     result = result.rename(columns={'SA2_NAME21': 'area', 'SA1_CODE21': 'area_code'})
     return pl.DataFrame(result.to_dict())  # Convert to dict first to ensure compatibility with Polars
 
+
 def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFrame:
     """Parallel process point data."""
     chunks = np.array_split(pnts_gdf, num_cores)
@@ -66,8 +71,9 @@ def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFra
         all_results = pool.map(lambda chunk: process_chunk(map_data, chunk), chunks)
     return pl.concat(all_results)
 
+
 def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFrame:
-    """Randomly redistribute points within their respective areas."""
+    """Randomly shuffle lat-long pairs within their respective areas."""
     model_df = df.clone()
     model_df = model_df.with_columns([
         pl.col('y').alias('original_lat'),
@@ -75,19 +81,17 @@ def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFr
     ])
     
     for _ in range(num_iterations):
-        # Loop over unique area_code values and shuffle x and y within each group
+        # Loop over unique area_code values and shuffle lat-long pairs within each group
         area_codes = model_df['area_code'].unique().to_list()
         for area_code in area_codes:
             area_df = model_df.filter(pl.col('area_code') == area_code)
-            shuffled_x = pl.Series(np.random.permutation(area_df['x']))  # Convert to Polars Series
-            shuffled_y = pl.Series(np.random.permutation(area_df['y']))  # Convert to Polars Series
+            shuffled_pairs = area_df[['x', 'y']].sample(frac=1).to_dict(as_series=False)
             model_df = model_df.with_columns([
-                pl.when(pl.col('area_code') == area_code).then(shuffled_x).otherwise(pl.col('x')).alias('x'),
-                pl.when(pl.col('area_code') == area_code).then(shuffled_y).otherwise(pl.col('y')).alias('y')
+                pl.when(pl.col('area_code') == area_code).then(pl.Series(shuffled_pairs['x'])).otherwise(pl.col('x')).alias('x'),
+                pl.when(pl.col('area_code') == area_code).then(pl.Series(shuffled_pairs['y'])).otherwise(pl.col('y')).alias('y')
             ])
 
     return model_df
-
 
 
 def visualize_results(final_result_df: pl.DataFrame, area_codes: List[str]) -> None:
@@ -112,6 +116,7 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: List[str]) -> N
 
         plt.tight_layout()
         plt.show()
+
 
 def main() -> None:
     config_path = "configurations.yaml"
@@ -161,6 +166,7 @@ def main() -> None:
     
     logger.info("Random distribution completed.")
     logger.info(final_result_df.head(20))
+
 
 if __name__ == "__main__":
     main()
