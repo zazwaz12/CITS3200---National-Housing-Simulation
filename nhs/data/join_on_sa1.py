@@ -74,7 +74,6 @@ def process_chunk(map_data: Any, chunk: Any) -> pl.DataFrame:
     )  # Convert to dict first to ensure compatibility with Polars
 
 
-
 def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFrame:
     """Parallel process point data."""
     chunks = np.array_split(pnts_gdf, num_cores)
@@ -92,15 +91,27 @@ def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFr
 
     for _ in range(num_iterations):
         # Loop over unique area_code values and shuffle x and y within each group
-        area_codes = model_df['area_code'].unique().to_list()
+        area_codes = model_df["area_code"].unique().to_list()
         for area_code in area_codes:
-            area_df = model_df.filter(pl.col('area_code') == area_code)
-            shuffled_x = pl.Series(np.random.permutation(area_df['x']))  # Convert to Polars Series
-            shuffled_y = pl.Series(np.random.permutation(area_df['y']))  # Convert to Polars Series
-            model_df = model_df.with_columns([
-                pl.when(pl.col('area_code') == area_code).then(shuffled_x).otherwise(pl.col('x')).alias('x'),
-                pl.when(pl.col('area_code') == area_code).then(shuffled_y).otherwise(pl.col('y')).alias('y')
-            ])
+            area_df = model_df.filter(pl.col("area_code") == area_code)
+            shuffled_x = pl.Series(
+                np.random.permutation(area_df["x"])
+            )  # Convert to Polars Series
+            shuffled_y = pl.Series(
+                np.random.permutation(area_df["y"])
+            )  # Convert to Polars Series
+            model_df = model_df.with_columns(
+                [
+                    pl.when(pl.col("area_code") == area_code)
+                    .then(shuffled_x)
+                    .otherwise(pl.col("x"))
+                    .alias("x"),
+                    pl.when(pl.col("area_code") == area_code)
+                    .then(shuffled_y)
+                    .otherwise(pl.col("y"))
+                    .alias("y"),
+                ]
+            )
 
     return model_df
 
@@ -180,20 +191,22 @@ def main() -> None:
     houses_with_attributes = houses_with_areas.with_columns(
         pl.Series("attribute", np.random.randint(1, 11, size=len(houses_with_areas)))
     )
-    
-    area_codes = houses_with_attributes['area_code'].unique().to_list()[:4]
+
+    area_codes = houses_with_attributes["area_code"].unique().to_list()[:4]
     result_dfs = []
 
     for area_code in area_codes:
         logger.info(f"Running random distribution for area code: {area_code}")
-        area_df = houses_with_attributes.filter(pl.col('area_code') == area_code)
-        result_df = random_distribution(area_df, num_iterations=config.get('num_iterations', 10))
+        area_df = houses_with_attributes.filter(pl.col("area_code") == area_code)
+        result_df = random_distribution(
+            area_df, num_iterations=config.get("num_iterations", 10)
+        )
         result_dfs.append(result_df)
 
     final_result_df = pl.concat(result_dfs)
-    
+
     visualize_results(final_result_df, area_codes)
-    
+
     logger.info("Random distribution completed.")
     logger.info(final_result_df.head(20))
 
