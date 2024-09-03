@@ -1,3 +1,5 @@
+import os
+
 from pytest_mock import MockerFixture
 
 from ..context import nhs
@@ -26,6 +28,8 @@ class TestListFiles:
             "/path/file$pec!al.txt",
             "/path/subdir/file3.txt",
         ]
+        result = [os.path.normpath(path) for path in result]
+        expected = [os.path.normpath(path) for path in expected]
         assert result == expected
 
     # empty directory returns no files
@@ -64,4 +68,8 @@ class TestListFiles:
 
         result = list(list_files("/path"))
         expected = ["/path/file1.txt", "/path/file2.txt", "/path/subdir/file3.txt"]
+
+        result = [os.path.normpath(path) for path in result]
+        expected = [os.path.normpath(path) for path in expected]
+
         assert result == expected
