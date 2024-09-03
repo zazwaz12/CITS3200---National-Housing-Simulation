@@ -6,9 +6,9 @@ import inspect
 import logging
 import warnings
 from functools import wraps
-from typing import Any, Callable, Literal, Optional, TextIO, Type, TypeVar, Union, Dict
-import yaml
+from typing import Any, Callable, Dict, Literal, Optional, TextIO, Type, TypeVar, Union
 
+import yaml
 from loguru import logger
 
 T = TypeVar("T")
@@ -37,22 +37,22 @@ class __InterceptHandler(logging.Handler):
         )
 
 
-def read_config(config_path: str = 'configurations.yml') -> Dict[str, Any]:
+def read_config(config_path: str = "configurations.yml") -> Dict[str, Any]:
     """
     Read YAML configuration file and return as a dictionary.
-    
+
     Args:
         config_path (str): Path to the configuration file. Defaults to 'configurations.yml'.
-    
+
     Returns:
         Dict[str, Any]: Configuration settings as a dictionary.
-    
+
     Raises:
         FileNotFoundError: If the configuration file is not found.
         yaml.YAMLError: If there's an error parsing the YAML file.
     """
     try:
-        with open(config_path, 'r') as file:
+        with open(config_path, "r") as file:
             config: Dict[str, Any] = yaml.safe_load(file)
         logger.info(f"Configuration loaded from {config_path}")
         return config
@@ -71,12 +71,12 @@ def config_logger(configurations: Dict[str, Any]) -> None:
 
     logger.remove()
     logger.add(
-        configurations['logging']['log_file'],
-        format=configurations['logging']['format'],
-        backtrace=configurations['logging']['backtrace'],
-        diagnose=configurations['logging']['diagnose'],
-        level=configurations['logging']['level'],
-        retention=configurations['logging']['retention'],
+        configurations["logging"]["log_file"],
+        format=configurations["logging"]["format"],
+        backtrace=configurations["logging"]["backtrace"],
+        diagnose=configurations["logging"]["diagnose"],
+        level=configurations["logging"]["level"],
+        retention=configurations["logging"]["retention"],
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
