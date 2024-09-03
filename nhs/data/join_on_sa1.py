@@ -86,20 +86,20 @@ def parallel_process(pnts_gdf: Any, map_data: Any, num_cores: int) -> pl.DataFra
 def random_distribution(df: pl.DataFrame, num_iterations: int = 10) -> pl.DataFrame:
     """Randomly shuffle lat-long pairs within their respective areas."""
     model_df = df.clone()
-    model_df = model_df.with_columns(
-        [pl.col("y").alias("original_lat"), pl.col("x").alias("original_lon")]
-    )
+    model_df = model_df.with_columns([
+        pl.col('y').alias('original_lat'),
+        pl.col('x').alias('original_lon')
+    ])
 
     for _ in range(num_iterations):
-        # Loop over unique area_code values and shuffle x and y within each group
+        # Loop over unique area_code values and shuffle lat-long pairs within each group
         area_codes = model_df['area_code'].unique().to_list()
         for area_code in area_codes:
             area_df = model_df.filter(pl.col('area_code') == area_code)
-            shuffled_x = pl.Series(np.random.permutation(area_df['x']))  # Convert to Polars Series
-            shuffled_y = pl.Series(np.random.permutation(area_df['y']))  # Convert to Polars Series
+            shuffled_pairs = area_df[['x', 'y']].sample(frac=1).to_dict(as_series=False)
             model_df = model_df.with_columns([
-                pl.when(pl.col('area_code') == area_code).then(shuffled_x).otherwise(pl.col('x')).alias('x'),
-                pl.when(pl.col('area_code') == area_code).then(shuffled_y).otherwise(pl.col('y')).alias('y')
+                pl.when(pl.col('area_code') == area_code).then(pl.Series(shuffled_pairs['x'])).otherwise(pl.col('x')).alias('x'),
+                pl.when(pl.col('area_code') == area_code).then(pl.Series(shuffled_pairs['y'])).otherwise(pl.col('y')).alias('y')
             ])
 
     return model_df
@@ -147,55 +147,59 @@ def main() -> None:
     config_path = "configurations.yaml"
     config = read_config(config_path)
 
-    shapefile_path = config["shapefile_path"]
-    csv_path = config["csv_path"]
-    crs = config["crs"]
-
+    shapefile_path = config['shapefile_path']
+    csv_path = config['csv_path']
+    crs = config['crs']
+    
     total_rows = read_shapefile(shapefile_path)
     houses_df = read_csv(csv_path)
-
+    
     pnts_gdf = prepare_points(houses_df, crs)
     map_data = gpd.read_file(shapefile_path).to_crs(pnts_gdf.crs)
-
-    num_cores = config.get("num_cores", 4)  # Default to 4 if not specified
+    
+    num_cores = config.get('num_cores', 4)  # Default to 4 if not specified
     final_result = parallel_process(pnts_gdf, map_data, num_cores)
-
-    if (
-        final_result["area"].is_null().any()
-        or final_result["area_code"].is_null().any()
-    ):
-        logger.warning(
-            "Some points were not assigned to an SA1 area even after nearest join. Please check your data."
-        )
-
-    houses_with_areas = houses_df.join(final_result, on=["x", "y"], how="left")
-
-    output_csv_path = config["output_csv_path"]
+    
+    if final_result['area'].is_null().any() or final_result['area_code'].is_null().any():
+        logger.warning("Some points were not assigned to an SA1 area even after nearest join. Please check your data.")
+    
+    houses_with_areas = houses_df.join(final_result, on=['x', 'y'], how='left')
+    
+    output_csv_path = config['output_csv_path']
     houses_with_areas.write_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
-
-    missing_area_count = final_result["area"].is_null().sum()
+    
+    missing_area_count = final_result['area'].is_null().sum()
     logger.info(f"Number of missing values in the 'area' column: {missing_area_count}")
-
+    
     houses_with_attributes = houses_with_areas.with_columns(
         pl.Series("attribute", np.random.randint(1, 11, size=len(houses_with_areas)))
     )
     
-    area_codes = houses_with_attributes['area_code'].unique().to_list()[:4]
-    result_dfs = []
+    # Check if random distribution is enabled in the config
+    if config.get('enable_random_distribution', False):
+        area_codes = houses_with_attributes['area_code'].unique().to_list()[:4]
+        result_dfs = []
 
-    for area_code in area_codes:
-        logger.info(f"Running random distribution for area code: {area_code}")
-        area_df = houses_with_attributes.filter(pl.col('area_code') == area_code)
-        result_df = random_distribution(area_df, num_iterations=config.get('num_iterations', 10))
-        result_dfs.append(result_df)
+        for area_code in area_codes:
+            logger.info(f"Running random distribution for area code: {area_code}")
+            area_df = houses_with_attributes.filter(pl.col('area_code') == area_code)
+            result_df = random_distribution(area_df, num_iterations=config.get('num_iterations', 10))
+            result_dfs.append(result_df)
 
-    final_result_df = pl.concat(result_dfs)
-    
-    visualize_results(final_result_df, area_codes)
-    
-    logger.info("Random distribution completed.")
-    logger.info(final_result_df.head(20))
+        final_result_df = pl.concat(result_dfs)
+
+        # Check if visualization is enabled in the config
+        if config.get('enable_visualization', False):
+            visualize_results(final_result_df, area_codes)
+            logger.info("Visualization completed.")
+        else:
+            logger.info("Visualization skipped as per configuration.")
+
+        logger.info("Random distribution completed.")
+        logger.info(final_result_df.head(20))
+    else:
+        logger.info("Random distribution skipped as per configuration.")
 
 
 if __name__ == "__main__":
