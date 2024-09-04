@@ -1,4 +1,4 @@
-logging:
+logging: # "See https://loguru.readthedocs.io/en/stable/api/logger.html"
   log_file: "./logs/out_{time}.log"  # Path and naming convention for logs (incl. timestamp)
   format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"  # Format for log entries with date, level, and message
   backtrace: true  # TRUE for detailed backtrace logging for debugging
@@ -6,7 +6,6 @@ logging:
   level: "DEBUG"  # Log level; can be set to DEBUG, INFO, WARNING, ERROR, etc.
   retention: "7 days"  # Log retention period; logs older than 7 days will be deleted
 
-# "See https://loguru.readthedocs.io/en/stable/api/logger.html"
 
 paths:
   census_path: "./path/to/census_data"  # Path to the census data files
