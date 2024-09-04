@@ -7,7 +7,7 @@ from fiona.drvsupport import supported_drivers
 from loguru import logger
 
 from ..nhs import config as user_config
-from ..nhs.data import join_on_sa1
+from ..nhs.data import geography
 
 
 def main() -> None:
@@ -46,11 +46,11 @@ def main() -> None:
     # total_rows = join_on_sa1.read_shapefile(shapefile_path)
     houses_df = handling.read_csv(csv_path)
 
-    pnts_gdf = join_on_sa1.prepare_points(houses_df, crs)
+    pnts_gdf = geography.prepare_points(houses_df, crs)
     map_data = gpd.read_file(shapefile_path).to_crs(pnts_gdf.crs)  # type: ignore
 
     num_cores = config.get("num_cores", 4)  # Default to 4 if not specified
-    final_result = join_on_sa1.parallel_process(pnts_gdf, map_data, num_cores)
+    final_result = geography.parallel_process(pnts_gdf, map_data, num_cores)
 
     if (
         final_result["area"].is_null().any()
@@ -77,7 +77,7 @@ def main() -> None:
         for area_code in area_codes:
             logger.info(f"Running random distribution for area code: {area_code}")
             area_df = houses_with_areas.filter(pl.col("area_code") == area_code)
-            result_df = join_on_sa1.random_distribution(
+            result_df = geography.random_distribution(
                 area_df.collect(), num_iterations=config.get("num_iterations", 10)
             )
             result_dfs.append(result_df)
@@ -86,7 +86,7 @@ def main() -> None:
 
         # Check if visualization is enabled in the config
         if config.get("enable_visualization", False):
-            join_on_sa1.visualize_results(final_result_df, area_codes)
+            geography.visualize_results(final_result_df, area_codes)
             logger.info("Visualization completed.")
         else:
             logger.info("Visualization skipped as per configuration.")

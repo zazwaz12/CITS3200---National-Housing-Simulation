@@ -46,7 +46,7 @@ typeCheckingMode = "basic"
 pythonVersion = "3.12"
 include = ["**/*.py"]
 exclude = ["**/node_modules", "**/__pycache__"]
-ignore = ["syncdata.py", "src/oldstuff", "nhs/data/join_on_sa1.py"]
+ignore = ["syncdata.py", "src/oldstuff", "nhs/data/geography.py"]
 defineConstant = { DEBUG = true }
 strictListInference = true
 strictDictionaryInference = true
