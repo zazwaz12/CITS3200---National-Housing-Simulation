@@ -8,7 +8,6 @@ import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, Literal, Optional, TextIO, Type, TypeVar, Union
 
-import yaml
 from loguru import logger
 
 T = TypeVar("T")
@@ -35,33 +34,6 @@ class __InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(
             level, record.getMessage()
         )
-
-
-def read_config(config_path: str = "configurations.yml") -> Dict[str, Any]:
-    """
-    Read YAML configuration file and return as a dictionary.
-
-    Args:
-        config_path (str): Path to the configuration file. Defaults to 'configurations.yml'.
-
-    Returns:
-        Dict[str, Any]: Configuration settings as a dictionary.
-
-    Raises:
-        FileNotFoundError: If the configuration file is not found.
-        yaml.YAMLError: If there's an error parsing the YAML file.
-    """
-    try:
-        with open(config_path, "r") as file:
-            config: Dict[str, Any] = yaml.safe_load(file)
-        logger.info(f"Configuration loaded from {config_path}")
-        return config
-    except FileNotFoundError:
-        logger.error(f"Configuration file not found: {config_path}")
-        raise
-    except yaml.YAMLError as e:
-        logger.error(f"Error parsing configuration file: {e}")
-        raise
 
 
 def config_logger(configurations: Dict[str, Any]) -> None:

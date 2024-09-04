@@ -1,19 +1,22 @@
 logging:
-  log_file: "./logs/out_{time}.log"
-  format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"
-  backtrace: true
-  diagnose: true
-  level: "DEBUG"
-  retention: "7 days"
+  log_file: "./logs/out_{time}.log"  # Path and naming convention for logs (incl. timestamp)
+  format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"  # Format for log entries with date, level, and message
+  backtrace: true  # TRUE for detailed backtrace logging for debugging
+  diagnose: true  # TRUE for extra diagnostic information
+  level: "DEBUG"  # Log level; can be set to DEBUG, INFO, WARNING, ERROR, etc.
+  retention: "7 days"  # Log retention period; logs older than 7 days will be deleted
 
 paths:
-  census_path: "./path/to/census_data"
-  gnaf_path: "./path/to/gnaf_data"
-  shapefile_path: "path/to/shapefile.shp"
+  census_path: "./path/to/census_data"  # Path to the census data files
+  gnaf_path: "./path/to/gnaf_data"  # Path to the GNAF (Geocoded National Address File) data
+  shapefile_path: "path/to/shapefile.shp"  # Path to the shapefile used for geospatial analysis
 
+crs: "EPSG:7844"  # Default Coordinate Reference System (CRS) for spatial data
+num_cores: 4  # Number of CPU cores to use for parallel processing
+num_iterations: 10  # Number of iterations to run for analysis or simulations
+enable_random_distribution: false  # FALSE to skip random distribution
+enable_visualization: false  # FALSE to false to skip visualization
 
-crs: "EPSG:7844"
-num_cores: 4
-num_iterations: 10
-enable_random_distribution: true  # Set to false to skip random distribution
-enable_visualization: true  # Set to false to skip visualization
+# Column names for areas and area codes
+area_column: "SA2_NAME21"  # The column in your data that contains SA2(!) area names
+area_code_column: "SA1_CODE21"  # The column in your data that contains SA1(!) area codes

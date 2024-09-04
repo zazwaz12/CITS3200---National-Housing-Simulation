@@ -25,7 +25,7 @@
       "poetry install",
 
        "if git diff --name-only HEAD~1 HEAD | grep -q 'poetry.lock'; then",
-      "    echo \"poetry.lock was modified, fixing python paths...\"", 
+      "    echo \"poetry.lock was modified, fixing python paths...\"",
       // Python modules assume path for C/C++ libraries, use fix-python to change link
       "    fix-python --venv .venv --libs .nix/libs.nix &> /dev/null",
       "fi"
