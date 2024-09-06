@@ -1,8 +1,11 @@
 from typing import List
+
 import polars as pl
 
 
-def filter_sa1_regions(lf: pl.LazyFrame, sa1_column: str = "SA1_CODE_2021", region_codes: List[str] = []) -> pl.LazyFrame:
+def filter_sa1_regions(
+    lf: pl.LazyFrame, sa1_column: str = "SA1_CODE_2021", region_codes: List[str] = []
+) -> pl.LazyFrame:
     """
     Filters the LazyFrame to include only rows with specified SA1 area codes.
 
@@ -22,6 +25,5 @@ def filter_sa1_regions(lf: pl.LazyFrame, sa1_column: str = "SA1_CODE_2021", regi
     """
     if not region_codes:
         return lf  # If no region codes are provided, return the original LazyFrame
-    
-    return lf.filter(pl.col(sa1_column).is_in(region_codes))
 
+    return lf.filter(pl.col(sa1_column).is_in(region_codes))
