@@ -19,35 +19,29 @@ class TestFilterSa1RegionCodes:
 
     def test_filter_with_valid_region_codes(self, sample_lazyframe):
         # Filtering with valid region codes
-        result = filter_sa1_regions(sample_lazyframe, ["123456", "901234"], "SA1_CODE_2021").collect()
-    
-        expected_data = {
-            "SA1_CODE_2021": ["123456", "901234"],
-            "value": [10, 40]
-        }
+        result = filter_sa1_regions(
+            sample_lazyframe, ["123456", "901234"], "SA1_CODE_2021"
+        ).collect()
+
+        expected_data = {"SA1_CODE_2021": ["123456", "901234"], "value": [10, 40]}
 
         expected = pl.DataFrame(expected_data)
         assert result.to_dicts() == expected.to_dicts()
 
-
     def test_filter_with_empty_region_codes(self, sample_lazyframe):
         # Test with empty region codes (should return an empty LazyFrame)
         result = filter_sa1_regions(sample_lazyframe, [], "SA1_CODE_2021").collect()
-        
+
         # Expect an empty DataFrame when no region codes are provided
-        expected = pl.DataFrame({
-            "SA1_CODE_2021": [],
-            "value": []
-        })
+        expected = pl.DataFrame({"SA1_CODE_2021": [], "value": []})
 
         assert result.to_dicts() == expected.to_dicts()
 
     def test_filter_with_no_matching_codes(self, sample_lazyframe):
         # Test with region codes that don't match any rows (should return an empty DataFrame)
-        result = filter_sa1_regions(sample_lazyframe, ["999999"], "SA1_CODE_2021").collect()
-    
-        expected = pl.DataFrame({
-            "SA1_CODE_2021": [],
-            "value": []
-        })
+        result = filter_sa1_regions(
+            sample_lazyframe, ["999999"], "SA1_CODE_2021"
+        ).collect()
+
+        expected = pl.DataFrame({"SA1_CODE_2021": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
