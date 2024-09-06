@@ -1,18 +1,19 @@
-import pytest
 import polars as pl
+import pytest
 
 from ..context import nhs
 
 filter_sa1_regions = nhs.data.filter.filter_sa1_regions
 
+
 class TestFilterSa1RegionCodes:
-  
+
     # Fixture to create a sample LazyFrame
     @pytest.fixture
     def sample_lazyframe(self):
         data = {
             "SA1_CODE_2021": ["123456", "789012", "345678", "901234", "567890"],
-            "value": [10, 20, 30, 40, 50]
+            "value": [10, 20, 30, 40, 50],
         }
         return pl.DataFrame(data).lazy()
 
