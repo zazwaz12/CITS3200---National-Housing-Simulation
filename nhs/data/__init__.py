@@ -1,3 +1,4 @@
+from .filter import filter_sa1_regions
 from .handling import (
     read_csv,
     read_psv,
@@ -12,4 +13,5 @@ __all__ = [
     "read_csv",
     "read_xlsx",
     "standardize_names",
+    "filter_sa1_regions",
 ]
