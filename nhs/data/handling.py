@@ -54,7 +54,7 @@ def read_parquet(file_path: str) -> pl.LazyFrame | None:
 
 
 
-def __get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | None]:
+def get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
     """
