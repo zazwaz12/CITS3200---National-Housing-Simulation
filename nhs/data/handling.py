@@ -43,7 +43,6 @@ def read_xlsx(
     return frames.lazy()
 
 
-
 @logger.catch()
 @log_entry_exit()
 def read_parquet(file_path: str) -> pl.LazyFrame | None:
@@ -53,8 +52,9 @@ def read_parquet(file_path: str) -> pl.LazyFrame | None:
     return pl.scan_parquet(file_path, parallel="auto")
 
 
-
-def get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | None]:
+def get_spreadsheet_reader(
+    file_extension: str,
+) -> Callable[..., dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
     """
@@ -69,7 +69,7 @@ def get_spreadsheet_reader(file_extension: str) -> Callable[..., pl.LazyFrame | 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
     file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx", "parquet"]
-) -> dict[str, pl.LazyFrame | None]:
+) -> dict[str, dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
     If a file cannot be read, the value will be None.
@@ -130,6 +130,7 @@ def to_parquet(
     if isinstance(df, pl.LazyFrame):
         df = df.collect()
     df.write_parquet(file_path, compression=compression)
+
 
 def standardize_names(
     df_dict: dict[str, pl.LazyFrame],
