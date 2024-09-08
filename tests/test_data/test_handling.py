@@ -3,7 +3,7 @@ from gzip import READ
 import polars as pl
 from pytest_mock import MockerFixture
 
-from ..context import nhs
+import nhs.data.handling
 
 read_spreadsheets = nhs.data.handling.read_spreadsheets
 read_xlsx = nhs.data.handling.read_xlsx

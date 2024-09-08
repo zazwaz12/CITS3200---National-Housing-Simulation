@@ -1,7 +1,7 @@
 import polars as pl
 import pytest
 
-from ..context import nhs
+import nhs.data.filter
 
 filter_sa1_regions = nhs.data.filter.filter_sa1_regions
 

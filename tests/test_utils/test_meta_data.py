@@ -1,7 +1,7 @@
 import polars as pl
-from ..context import nhs
+import nhs.utils.meta_data
 
-file_shapes_reporting = nhs.utils.meta_data.file_shapes_report
+file_shapes_reporting =nhs.utils.meta_data.file_shapes_reporting
 
 def create_sample_lazyframes():
     # Sample data for testing
