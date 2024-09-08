@@ -58,7 +58,7 @@ class TestReadSpreadsheets:
         assert isinstance(result["e2"], pl.LazyFrame)
 
     # Read one xlsx file with default sheet_id.
-    def test_read_xlsx_with_default_sheet_id(self, mocker):
+    def test_read_xlsx_with_default_sheet_id(self, mocker: MockerFixture):
         mocker.patch(
             LIST_FILES_PATCH,
             return_value="Path/to/xlsx/test.xlsx",
@@ -72,7 +72,7 @@ class TestReadSpreadsheets:
         assert isinstance(result, pl.LazyFrame)
 
     # Read non_existent_file_path with different sheet_id.
-    def test_non_existent_file_path(self, mocker):
+    def test_non_existent_file_path(self, mocker: MockerFixture):
         mocker.patch(
             LIST_FILES_PATCH,
             return_value="Path/to/xlsx/non_existent_file.xlsx",
@@ -85,7 +85,7 @@ class TestReadSpreadsheets:
         assert result2 is None
 
     # Successfully read multiple sheets from an .xlsx file and return a dictionary of LazyFrames
-    def test_read_multiple_sheets(self, mocker):
+    def test_read_multiple_sheets(self, mocker: MockerFixture):
         mock_lazy_frame1 = mocker.Mock(spec=pl.LazyFrame)
         mock_lazy_frame2 = mocker.Mock(spec=pl.LazyFrame)
         mock_lazy_frame1.lazy.return_value = mock_lazy_frame1
@@ -104,7 +104,7 @@ class TestReadSpreadsheets:
             assert isinstance(value, pl.LazyFrame)
 
     # Successfully read multiple sheets from an .xlsx file and return a dictionary of LazyFrames.
-    def test_read_multiple_sheets_with_sheet_id_equals_0(self, mocker):
+    def test_read_multiple_sheets_with_sheet_id_equals_0(self, mocker: MockerFixture):
         mock_sheet_data = {
             "Cell Descriptors Information": pl.DataFrame(
                 {
@@ -147,7 +147,7 @@ class TestReadSpreadsheets:
 
 class TestColumnReadable:
     # Standardize column names correctly when all parameters are valid
-    def test_standardize_names_valid_parameters(self, mocker):
+    def test_standardize_names_valid_parameters(self, mocker: MockerFixture):
         df_dict = {
             "G01": pl.LazyFrame({"short_col": [1, 2, 3]}),
             "G02": pl.LazyFrame({"short_col": [4, 5, 6]}),

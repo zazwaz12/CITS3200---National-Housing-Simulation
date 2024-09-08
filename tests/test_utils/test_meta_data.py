@@ -30,13 +30,9 @@ def test_file_shapes_reporting():
     # Call the file_shapes_reporting function
     shapes = file_shapes_reporting(files_dict)
 
-    # Output the shapes for verification
-    for file_name, shape in shapes.items():
-        print(f"{file_name}: {shape}")
-
     # Assertions to verify the output
-    assert shapes["file1"] == (3, 3), "Shape mismatch for file1"
-    assert shapes["file2"] == (2, 3), "Shape mismatch for file2"
+    assert shapes["file1"] == "3,3", "Shape mismatch for file1"
+    assert shapes["file2"] == "2,3", "Shape mismatch for file2"
     print("All tests passed!")
 
 # Run the test
