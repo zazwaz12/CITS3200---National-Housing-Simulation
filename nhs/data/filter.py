@@ -23,8 +23,12 @@ def filter_sa1_regions(
     """
     return lf.filter(pl.col(sa1_column).is_in(region_codes))
 
+
+
+
+
 def filter_building_types(
-    lf: pl.LazyFrame, building_column: str = "CODE", building_types: List[str] = []
+    lf: pl.LazyFrame, building_types: List[str], building_column: str = "CODE"
 ) -> pl.LazyFrame:
     """
     Filters the LazyFrame to include only rows with specified building types.
@@ -43,7 +47,5 @@ def filter_building_types(
     pl.LazyFrame
         A LazyFrame containing only rows with the specified building types.
     """
-    if not building_types:
-        return lf  # If no building types are provided, return the original LazyFrame
     
     return lf.filter(pl.col(building_column).is_in(building_types))
