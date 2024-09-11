@@ -20,18 +20,13 @@ get_reader = nhs.data.handling.get_spreadsheet_reader
 def save_parquet(path: str, input_dir: str, output_dir: str):
     # Define relative output file path
     relative_path = Path(path).relative_to(input_dir)
-    output_dir = input_dir.replace("FilesIn", "AppStaging")
     output_file_path = Path(output_dir) / relative_path.with_suffix(".parquet")
 
     # Skip if file already exists
     if output_file_path.exists():
         logger.warning(f"File {output_file_path} already exists. Skipping.")
         return
-
-    if "Standard" in str(path) and "DEFAULT_GEOCODE" not in str(path):
-        logger.warning(f"Only taking DEFAULT GEOCODE from GNAF for now. Skipping.")
-        return
-
+        
     # Create output directories if not exist
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
