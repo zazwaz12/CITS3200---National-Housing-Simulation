@@ -120,3 +120,30 @@ def placeholder_matches(
     x = filter(lambda match: match is not None, x)
     x = map(lambda re_match: re_match.groups() if re_match else (), x)
     return list(x)
+
+def match_files_by_keywords(file_list: list[str], keywords: list[str]) -> list[str]:
+    """
+    Match files that contain only the specified keywords in their names.
+
+    Parameters
+    ----------
+    file_list : list[str]
+        List of file names to search through.
+    keywords : list[str]
+        List of keywords to match in file names.
+
+    Returns
+    -------
+    list[str]
+        List of files that match the keywords.
+    """
+
+    if not keywords:
+        return []  # Return an empty list if no keywords are provided
+
+    # Create a regex pattern that requires all keywords to be present in the filename
+    pattern = r".*".join([re.escape(keyword) for keyword in keywords])  # Escape special characters in keywords
+    regex = re.compile(f".*{pattern}.*")  # Match files that contain all keywords in any order
+    
+    # Return files that match the regex pattern
+    return [file for file in file_list if regex.search(file)]

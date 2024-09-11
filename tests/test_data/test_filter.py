@@ -1,5 +1,7 @@
 import polars as pl
 import pytest
+import unittest
+import pandas as pd
 
 import nhs.data.filter
 
@@ -45,3 +47,77 @@ class TestFilterSa1RegionCodes:
 
         expected = pl.DataFrame({"SA1_CODE_2021": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
+
+
+# Sample data for tests
+data = {
+    "name": ["Alice", "Bob", "Charlie"],
+    "age": [25, 30, 35],
+    "city": ["New York", "Los Angeles", "Chicago"]
+}
+
+def filter_relevant_column(df: pl.LazyFrame, columns: list[str]) -> pl.LazyFrame:
+    """
+    Filter columns from a LazyFrame based on the provided column names.
+    If a column does not exist, it will be ignored.
+    """
+    existing_columns = [col for col in columns if col in df.columns]
+    return df.select(existing_columns)
+
+class TestFilterRelevantColumn(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.df = pl.DataFrame(data).lazy()
+
+    def assertFrameEqual(self, df1: pl.LazyFrame, df2: pl.LazyFrame):
+        """Helper function to assert two Polars DataFrames are equal."""
+        df1_collected = df1.collect().to_pandas()
+        df2_collected = df2.collect().to_pandas()
+
+        # Compare shapes
+        self.assertEqual(df1_collected.shape, df2_collected.shape)
+
+        # Sort columns for comparison
+        df1_collected = df1_collected.sort_index(axis=1)
+        df2_collected = df2_collected.sort_index(axis=1)
+
+        # Compare contents
+        pd.testing.assert_frame_equal(df1_collected, df2_collected)
+
+    def test_filter_relevant_column_basic(self):
+        columns_to_retain = ["name", "city"]
+        filtered_df = filter_relevant_column(self.df, columns_to_retain)
+        expected_df = pl.DataFrame({
+            "name": ["Alice", "Bob", "Charlie"],
+            "city": ["New York", "Los Angeles", "Chicago"]
+        }).lazy()
+
+        self.assertFrameEqual(filtered_df, expected_df)
+
+    def test_filter_relevant_column_columns_not_present(self):
+        columns_to_retain = ["name", "country"]
+        filtered_df = filter_relevant_column(self.df, columns_to_retain)
+        expected_df = pl.DataFrame({
+            "name": ["Alice", "Bob", "Charlie"]
+        }).lazy()
+
+        self.assertFrameEqual(filtered_df, expected_df)
+
+    def test_filter_relevant_column_empty_columns_list(self):
+        columns_to_retain = []
+        filtered_df = filter_relevant_column(self.df, columns_to_retain)
+        filtered_collected = filtered_df.collect().to_pandas()
+        
+        # Adjusted expected shape
+        self.assertEqual(filtered_collected.shape, (0, 0))  # Expect 0 rows and 0 columns
+
+    def test_filter_relevant_column_no_columns(self):
+        columns_to_retain = ["age", "name", "city"]
+        filtered_df = filter_relevant_column(self.df, columns_to_retain)
+        expected_df = pl.DataFrame(data).lazy()  # Expect the whole DataFrame
+
+        self.assertFrameEqual(filtered_df, expected_df)
+
+if __name__ == "__main__":
+    unittest.main()

@@ -74,3 +74,22 @@ files = [
 
 filtered_files = filter_files_selection(files, state="ACT", data_type="ADDRESS_DEFAULT_GEOCODE")
 print(filtered_files)
+
+def filter_relevant_column(df: pl.LazyFrame, columns: list[str]) -> pl.LazyFrame:
+    """
+    Filter columns from a LazyFrame based on the provided column names.
+
+    Parameters
+    ----------
+    df : pl.LazyFrame
+        The Polars LazyFrame to filter.
+    columns : list[str]
+        List of column names to retain in the LazyFrame.
+
+    Returns
+    -------
+    pl.LazyFrame
+        A LazyFrame containing only the specified columns.
+    """
+    existing_columns = [col for col in columns if col in df.columns]
+    return df.select(existing_columns)
