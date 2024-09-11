@@ -26,7 +26,7 @@ def save_parquet(path: str, input_dir: str, output_dir: str):
     if output_file_path.exists():
         logger.warning(f"File {output_file_path} already exists. Skipping.")
         return
-        
+
     # Create output directories if not exist
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
