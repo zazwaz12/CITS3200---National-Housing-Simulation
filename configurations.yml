@@ -25,7 +25,7 @@ data:
   output_path: "./output"
   # Default Coordinate Reference System (CRS) for spatial data
   crs: "EPSG:7844"
-  # The column in your data that contains SA2(!) area names
+  # The column in your data that contains SA2(!) area names, as SA1 area names don't exist
   sa2_area_column: "SA2_NAME21"
   # The column in your data that contains SA1(!) area codes
   sa1_area_code_column: "SA1_CODE21"
