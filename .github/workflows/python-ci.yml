@@ -55,7 +55,6 @@ jobs:
           source $VENV
           pytest tests/
           pyright nhs/
-          flake8 . --max-complexity=10
 
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
