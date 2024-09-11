@@ -55,13 +55,13 @@ def main():
     )
 
     parser.add_argument(
-        "input", default=os.path.normpath("./FilesIn"), type=str, help="Input Directory"
+        "input", default=os.path.normpath("./FilesIn"), type=str, help="Path to directory containing input."
     )
     parser.add_argument(
         "output",
         default=os.path.normpath("./Appstaging"),
         type=str,
-        help="Output Directory",
+        help="Path to directory containing output",
     )
 
     # Execute conversion
