@@ -55,7 +55,10 @@ def main():
     )
 
     parser.add_argument(
-        "input", default=os.path.normpath("./FilesIn"), type=str, help="Path to directory containing input."
+        "input",
+        default=os.path.normpath("./FilesIn"),
+        type=str,
+        help="Path to directory containing input.",
     )
     parser.add_argument(
         "output",
