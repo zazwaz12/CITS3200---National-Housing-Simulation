@@ -58,13 +58,13 @@ def main():
         "input",
         default=os.path.normpath("./FilesIn"),
         type=str,
-        help="Path to directory containing input.",
+        help="Path to the input directory containing XLSX, XLS, CSV, and PSV spreadsheets to convert.",
     )
     parser.add_argument(
         "output",
         default=os.path.normpath("./Appstaging"),
         type=str,
-        help="Path to directory containing output",
+        help="Path to the output directory where Parquet files will be saved.",
     )
 
     # Execute conversion
