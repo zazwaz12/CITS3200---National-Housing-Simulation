@@ -1,4 +1,4 @@
-from ..context import nhs
+import nhs.utils.string
 
 capture_placeholders = nhs.utils.string.capture_placeholders
 placeholder_matches = nhs.utils.string.placeholder_matches
