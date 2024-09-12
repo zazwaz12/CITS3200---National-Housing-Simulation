@@ -6,6 +6,13 @@ demo.*
 /logs/
 syncdata.py
 .vscode/
+*.parquet
+*.csv
+*.pkl
+*.zip
+*.psv
+*.xlsx
+*.xls
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
