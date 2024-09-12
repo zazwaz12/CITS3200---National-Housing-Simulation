@@ -1,21 +1,24 @@
-import polars as pl
-import nhs.utils.meta_data
 import unittest
 
-file_shapes_reporting =nhs.utils.meta_data.file_shapes_reporting
+import polars as pl
+
+import nhs.utils.meta_data
+
+file_shapes_reporting = nhs.utils.meta_data.file_shapes_reporting
+
 
 def create_sample_lazyframes():
     # Sample data for testing
     data1 = {
         "name": ["Alice", "Bob", "Charlie"],
         "age": [30, 25, 35],
-        "city": ["New York", "Los Angeles", "Chicago"]
+        "city": ["New York", "Los Angeles", "Chicago"],
     }
 
     data2 = {
         "product": ["Laptop", "Smartphone"],
         "price": [1200, 800],
-        "quantity": [10, 20]
+        "quantity": [10, 20],
     }
 
     # Convert the sample data into LazyFrames
@@ -23,6 +26,7 @@ def create_sample_lazyframes():
     lf2 = pl.DataFrame(data2).lazy()
 
     return {"file1": lf1, "file2": lf2}
+
 
 def test_file_shapes_reporting():
     # Create sample LazyFrames

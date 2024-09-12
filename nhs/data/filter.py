@@ -1,11 +1,11 @@
-#from nhs.utils.string import placeholder_matches
+# from nhs.utils.string import placeholder_matches
+import os
+import sys
+
 import polars as pl
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from nhs.utils.string import placeholder_matches
-
 
 
 def filter_sa1_regions(
@@ -30,10 +30,9 @@ def filter_sa1_regions(
     """
     return lf.filter(pl.col(sa1_column).is_in(region_codes))
 
+
 def filter_files_selection(
-    files: list[str],
-    state: str = "*",
-    data_type: str = "*"
+    files: list[str], state: str = "*", data_type: str = "*"
 ) -> list[str]:
     """
     Filter files based on state and data type restrictions.
@@ -61,19 +60,23 @@ def filter_files_selection(
     print(matches)
     # Extract the filenames from the matches
     filtered_files = [file for file in files if any(match for match in matches)]
-    
+
     return filtered_files
+
 
 # Example usage:
 files = [
     "Standard/ACT_ADDRESS_DEFAULT_GEOCODE.psv",
     "Standard/NSW_LOCATION_GEOCODE.psv",
     "Standard/ACT_OTHER.psv",
-    "Standard/QLD_ADDRESS.psv"
+    "Standard/QLD_ADDRESS.psv",
 ]
 
-filtered_files = filter_files_selection(files, state="ACT", data_type="ADDRESS_DEFAULT_GEOCODE")
+filtered_files = filter_files_selection(
+    files, state="ACT", data_type="ADDRESS_DEFAULT_GEOCODE"
+)
 print(filtered_files)
+
 
 def filter_relevant_column(df: pl.LazyFrame, columns: list[str]) -> pl.LazyFrame:
     """

@@ -1,7 +1,8 @@
+import unittest
+
+import pandas as pd
 import polars as pl
 import pytest
-import unittest
-import pandas as pd
 
 import nhs.data.filter
 
@@ -53,8 +54,9 @@ class TestFilterSa1RegionCodes:
 data = {
     "name": ["Alice", "Bob", "Charlie"],
     "age": [25, 30, 35],
-    "city": ["New York", "Los Angeles", "Chicago"]
+    "city": ["New York", "Los Angeles", "Chicago"],
 }
+
 
 def filter_relevant_column(df: pl.LazyFrame, columns: list[str]) -> pl.LazyFrame:
     """
@@ -63,6 +65,7 @@ def filter_relevant_column(df: pl.LazyFrame, columns: list[str]) -> pl.LazyFrame
     """
     existing_columns = [col for col in columns if col in df.columns]
     return df.select(existing_columns)
+
 
 class TestFilterRelevantColumn(unittest.TestCase):
 
@@ -88,19 +91,19 @@ class TestFilterRelevantColumn(unittest.TestCase):
     def test_filter_relevant_column_basic(self):
         columns_to_retain = ["name", "city"]
         filtered_df = filter_relevant_column(self.df, columns_to_retain)
-        expected_df = pl.DataFrame({
-            "name": ["Alice", "Bob", "Charlie"],
-            "city": ["New York", "Los Angeles", "Chicago"]
-        }).lazy()
+        expected_df = pl.DataFrame(
+            {
+                "name": ["Alice", "Bob", "Charlie"],
+                "city": ["New York", "Los Angeles", "Chicago"],
+            }
+        ).lazy()
 
         self.assertFrameEqual(filtered_df, expected_df)
 
     def test_filter_relevant_column_columns_not_present(self):
         columns_to_retain = ["name", "country"]
         filtered_df = filter_relevant_column(self.df, columns_to_retain)
-        expected_df = pl.DataFrame({
-            "name": ["Alice", "Bob", "Charlie"]
-        }).lazy()
+        expected_df = pl.DataFrame({"name": ["Alice", "Bob", "Charlie"]}).lazy()
 
         self.assertFrameEqual(filtered_df, expected_df)
 
@@ -108,9 +111,11 @@ class TestFilterRelevantColumn(unittest.TestCase):
         columns_to_retain = []
         filtered_df = filter_relevant_column(self.df, columns_to_retain)
         filtered_collected = filtered_df.collect().to_pandas()
-        
+
         # Adjusted expected shape
-        self.assertEqual(filtered_collected.shape, (0, 0))  # Expect 0 rows and 0 columns
+        self.assertEqual(
+            filtered_collected.shape, (0, 0)
+        )  # Expect 0 rows and 0 columns
 
     def test_filter_relevant_column_no_columns(self):
         columns_to_retain = ["age", "name", "city"]
@@ -118,6 +123,7 @@ class TestFilterRelevantColumn(unittest.TestCase):
         expected_df = pl.DataFrame(data).lazy()  # Expect the whole DataFrame
 
         self.assertFrameEqual(filtered_df, expected_df)
+
 
 if __name__ == "__main__":
     unittest.main()
