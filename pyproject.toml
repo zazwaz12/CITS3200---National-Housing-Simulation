@@ -20,6 +20,7 @@ pathos = "^0.3.2"
 pyright ="^1.1.316"
 pytest-mock = "^3.14.0"
 pre-commit = "^3.4.0"
+pandas = "^2.2.2"
 
 [tool.isort]
 profile = "black"
