@@ -55,6 +55,7 @@ jobs:
           source $VENV
           pytest tests/
           pyright nhs/
+
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 
