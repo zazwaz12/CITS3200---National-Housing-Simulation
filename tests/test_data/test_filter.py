@@ -48,8 +48,6 @@ class TestFilterSa1RegionCodes:
         assert result.to_dicts() == expected.to_dicts()
 
 
-
-
 class TestFilterBuildingTypes:
 
     # Fixture to create a sample LazyFrame for building type tests
@@ -85,9 +83,7 @@ class TestFilterBuildingTypes:
 
     def test_filter_with_empty_building_types(self, sample_lazyframe_building):
         # Test with empty building types (should return an empty LazyFrame)
-        result = filter_building_types(
-            sample_lazyframe_building, [], "CODE"
-        ).collect()
+        result = filter_building_types(sample_lazyframe_building, [], "CODE").collect()
 
         expected_data = {
             "CODE": [],

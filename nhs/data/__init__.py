@@ -1,8 +1,4 @@
-from .filter import (
-    filter_sa1_regions,
-    filter_building_types,
-)
-
+from .filter import filter_building_types, filter_sa1_regions
 from .handling import (
     read_csv,
     read_psv,
