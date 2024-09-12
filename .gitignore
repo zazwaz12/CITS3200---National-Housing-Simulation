@@ -1,3 +1,6 @@
+.devenv/
+.direnv/
+.devenv.flake.nix
 .nix/fix-python
 .devbox/
 .rclone/
