@@ -55,7 +55,11 @@ jobs:
           source $VENV
           pytest tests/
           pyright nhs/
+<<<<<<< HEAD
           flake8 . --max-complexity=10
+=======
+
+>>>>>>> bye-devbox
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
 

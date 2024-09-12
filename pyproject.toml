@@ -27,9 +27,7 @@ pyyaml = "^6.0.2"
 typing-extensions = "*"  # Add this for typing.List support
 flake8 = "^7.1.1"
 pre-commit = "^3.4.0"
-
-[tool.poetry.group.dev.dependencies]
-flake8 = "^7.1.1"
+pandas = "^2.2.2"
 
 [tool.isort]
 profile = "black"
