@@ -1,19 +1,24 @@
 import geopandas as gpd  # type: ignore
 import matplotlib.pyplot as plt
-import numpy as np
 import polars as pl
 from pathos.multiprocessing import ProcessingPool as Pool  # type: ignore
 from pyproj import CRS
+from loguru import logger
 
 
-def to_geo_dataframe(df: pl.LazyFrame, crs: str) -> gpd.GeoDataFrame:
+def to_geo_dataframe(
+    df: pl.LazyFrame,
+    crs: str,
+    longitude_col: str = "LONGITUDE",
+    latitude_col: str = "LATITUDE",
+) -> gpd.GeoDataFrame:
     """
     Transform point data into a GeoDataFrame with a specified coordinate reference system.
 
     Parameters
     ----------
     df : pl.LazyFrame
-        A Polars LazyFrame containing two columns `'LONGITUDE'` and `'LATITUDE'`,
+        A Polars LazyFrame containing two columns `longitude_col` and `latitude_col`
         which represent geographic coordinates of the points in the data.
     crs : str
         The coordinate reference system (CRS) in which the output geospatial data
@@ -31,19 +36,12 @@ def to_geo_dataframe(df: pl.LazyFrame, crs: str) -> gpd.GeoDataFrame:
     Notes
     -----
     - CRS (Coordinate Reference System) is needed to define how spatial data (like
-      longitude and latitude) relates to the Earth's surface. We use CRS 7844 as
-      that's what's specified in the ABS 2021 datapack.
-    - 'EPSG:7844' is an example of a CRS in the EPSG system (European Petroleum
-      Survey Group). This is a standardized system for defining geospatial
-      coordinates.
-    - WGS84 (EPSG:4326) is a widely used geographic CRS, representing coordinates as
-      latitude and longitude on a spherical model of the Earth.
+      longitude and latitude) relates to the Earth's surface, e.g. "EPSG:7844".
     """
 
-    df = df.rename({"LONGITUDE": "x", "LATITUDE": "y"})
     points = gpd.GeoDataFrame(
         df.collect().to_pandas(),
-        geometry=gpd.points_from_xy(df["x"], df["y"]),  # type: ignore
+        geometry=gpd.points_from_xy(df[longitude_col], df[latitude_col]),  # type: ignore
     )
     projected_crs = CRS.from_string(crs)
     return points.to_crs(projected_crs)  # type: ignore
@@ -54,9 +52,9 @@ def join_areas_with_points(
     points: gpd.GeoDataFrame,
     area_column: str = "SA2_NAME21",
     area_code_column: str = "SA1_CODE21",
-) -> pl.DataFrame:
+) -> pl.LazyFrame:
     """
-    Join point data with spatial areas based on their geographic coordinates.
+    Spatially join point data with spatial areas based on their geographic coordinates.
 
     Parameters
     ----------
@@ -65,7 +63,6 @@ def join_areas_with_points(
         (e.g., districts or regions), including geometry (polygons) and area-specific
         attributes such as `area_column` and `area_code_column`, which represent area
         names and codes.
-
     points : gpd.GeoDataFrame
         A GeoPandas GeoDataFrame containing point data (e.g., latitude and longitude)
         to join with the corresponding areas in `area_data`. This should contain a
@@ -73,49 +70,43 @@ def join_areas_with_points(
 
     Returns
     -------
-    pl.DataFrame
-        A Polars DataFrame with the point data from `points`, joined with the
+    pl.LazyFrame
+        A Polars LazyFrame with the point data from `points`, joined with the
         appropriate area data from `area_data`. The output includes the original
-        coordinates `('x', 'y')` and the corresponding area names `area_column` and
-        area codes `area_code_column` renamed as 'area' and 'area_code', respectively.
+        coordinates `('LONGITUDE', 'LATITUDE')` and the corresponding area names
+        `area_column` and area codes `area_code_column`.
 
     Notes
     -----
     - If any points cannot be matched with an area (i.e., points that do not fall
       within any polygon), a nearest neighbor spatial join is performed to assign
       the closest area.
-    - The final result includes only the 'x', 'y' coordinates and the corresponding
-      area information, and it is returned as a Polars DataFrame.
+    - The final result includes only the 'LONGITUDE', 'LATITUDE' coordinates and the corresponding
+      area information.
     """
 
     pnts_with_area: gpd.GeoDataFrame = gpd.sjoin(points, area_data, how="left", predicate="within")  # type: ignore
     missing_points = pnts_with_area[pnts_with_area[area_column].isnull()]  # type: ignore
 
+    # Perform a nearest join for points that couldn't be attributed to areas
     if not missing_points.empty:  # type: ignore
-        nearest_join = gpd.sjoin_nearest(
-            missing_points[["geometry"]], area_data, how="left"
+        logger.warning(
+            "Some residences couldn't be attributed to areas. Projection may not be accurate for all points."
         )
-        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[
+        nearest_join = gpd.sjoin_nearest(
+            missing_points[["geometry"]], area_data, how="left"  # type: ignore
+        )
+        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[  # type: ignore
             area_column
         ]
-        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[
+        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[  # type: ignore
             area_code_column
         ]
 
-    result = pnts_with_area[["x", "y", "SA2_NAME21", "SA1_CODE21"]]
-    result = result.rename(columns={"SA2_NAME21": "area", "SA1_CODE21": "area_code"})
+    result = pnts_with_area[["LONGITUDE", "LATITUDE", area_column, area_code_column]]  # type: ignore
+    result = result.rename(columns={area_column: "area", area_code_column: "area_code"})  # type: ignore
     # Convert to dict first to ensure compatibility with Polars
-    return pl.DataFrame(result.to_dict())
-
-
-def parallel_process(
-    gdf: gpd.GeoDataFrame, map_data: gpd.GeoDataFrame, num_cores: int
-) -> pl.DataFrame:
-    """Parallel process point data."""
-    chunks = np.array_split(gdf, num_cores)
-    with Pool(num_cores) as pool:
-        all_results = pool.map(lambda chunk: process_chunk(map_data, chunk), chunks)
-    return pl.concat(all_results)
+    return pl.LazyFrame(result.to_dict())  # type: ignore
 
 
 def shuffle_coordinates(
@@ -146,35 +137,35 @@ def shuffle_coordinates(
     )
 
 
-def assign_shuffled_coordinates(
-    df: pl.DataFrame, area_code: str, shuffled_coords: list[tuple[float, float]]
-) -> pl.DataFrame:
+def assign_coordinates(
+    df: pl.LazyFrame, area_code: str, coords: list[tuple[float, float]]
+) -> pl.LazyFrame:
     """
-    Assign shuffled coordinates to the dataframe for a specific area_code.
+    Assign coordinates to the dataframe for a specific `area_code`.
 
     Parameters
     ----------
-    df : pl.DataFrame
-        Input dataframe containing 'x', 'y', and 'area_code' columns.
+    df : pl.LazyFrame
+        Input LazyFrame containing 'LONGITUDE', 'LATITUDE', and 'area_code' columns.
     area_code : str
         The area code to which shuffled coordinates should be assigned.
-    shuffled_coords : list[tuple[float, float]]
-        List of shuffled coordinate pairs.
+    coords: list[tuple[float, float]]
+        List of coordinate pairs.
 
     Returns
     -------
-    pl.DataFrame
-        Dataframe with shuffled coordinates assigned for the specified area_code.
+    pl.LazyFrame
+        Dataframe with coordinates assigned for the specified `area_code`.
     """
 
     return df.with_columns(
         [
             pl.when(pl.col("area_code") == area_code)
-            .then(pl.Series([coord[0] for coord in shuffled_coords]))
+            .then(pl.Series([coord[0] for coord in coords]))
             .otherwise(pl.col("x"))
             .alias("x"),
             pl.when(pl.col("area_code") == area_code)
-            .then(pl.Series([coord[1] for coord in shuffled_coords]))
+            .then(pl.Series([coord[1] for coord in coords]))
             .otherwise(pl.col("y"))
             .alias("y"),
         ]

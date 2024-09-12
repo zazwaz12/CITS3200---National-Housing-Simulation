@@ -4,12 +4,15 @@ import geopandas as gpd
 import polars as pl
 from fiona.drvsupport import supported_drivers
 from loguru import logger
+import numpy as np
 
 from .context import nhs
 
 config = nhs.config
 geography = nhs.data.geography
 read_csv = nhs.data.read_csv
+parallel_map = nhs.utils.parallel.parallel_map
+join_areas_with_points = nhs.data.join_areas_with_points
 
 
 
@@ -32,52 +35,30 @@ def main(config_path: str) -> None:
     gdf = geography.to_geo_dataframe(houses_df, data_config["crs"])
     map_data: gpd.GeoDataFrame = gpd.read_file(data_config["shapefile_path"]).to_crs(gdf.crs)
 
-    num_cores = simulation_config["num_cores"]
-    final_result = geography.parallel_process(gdf, map_data, num_cores)
 
+    chunks = np.array_split(gdf, simulation_config["num_cores"])
+    final_result = parallel_map(chunks, lambda chunk: join_areas_with_points(chunk, map_data), simulation_config["num_cores"]) # type: ignore
+    final_result = pl.concat(final_result)
+
+    # Check if any points were not assigned to an SA1 area 
     if (
-        final_result["area"].is_null().any()
-        or final_result["area_code"].is_null().any()
+        final_result["area"].is_null().any() # type: ignore
+        or final_result["area_code"].is_null().any() # type: ignore
     ):
         logger.warning(
             "Some points were not assigned to an SA1 area even after nearest join. Please check your data."  # noqa: E501
         )
 
-    houses_with_areas = houses_df.join(final_result, on=["x", "y"], how="left")
+    # joins output from area-point mapping to orignial data
+    houses_with_areas = houses_df.join(final_result, on=["x", "y"], how="left") # type: ignore
+
+    missing_area_count = final_result["area"].is_null().sum() # type: ignore
+    logger.info(f"Number of missing values in the 'area' column: {missing_area_count}")
 
     output_csv_path = data_config["output_csv_path"]
     houses_with_areas.collect().write_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
 
-    missing_area_count = final_result["area"].is_null().sum()
-    logger.info(f"Number of missing values in the 'area' column: {missing_area_count}")
-
-    if not simulation_config["enable_random_distribution"]:
-        logger.info("Random distribution skipped as per configuration.")
-        return
-
-    area_codes = houses_with_areas["area_code"].unique().collect.to_list()[:4]
-    result_dfs = []
-
-    for area_code in area_codes:
-        logger.info(f"Running random distribution for area code: {area_code}")
-        area_df = houses_with_areas.filter(pl.col("area_code") == area_code)
-        result_df = geography.random_distribution(
-            area_df.collect(), num_iterations=config.get("num_iterations", 10)
-        )
-        result_dfs.append(result_df)
-
-    final_result_df = pl.concat(result_dfs)
-
-    # Check if visualization is enabled in the config
-    if config.get("enable_visualization", False):
-        geography.visualize_results(final_result_df, area_codes)
-        logger.info("Visualization completed.")
-    else:
-        logger.info("Visualization skipped as per configuration.")
-
-    logger.info("Random distribution completed.")
-    logger.info(final_result_df.head(20))
 
 
 if __name__ == "__main__":

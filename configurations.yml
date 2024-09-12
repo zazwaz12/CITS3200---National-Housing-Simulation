@@ -16,14 +16,18 @@ logging:
 # Paths to data files and resources
 data:
   # Path to the census data files
-  census_path: "./path/to/census_data"
+  census_path: "./DataFiles/AppStaging/census"
   # Path to the GNAF (Geocoded National Address File) data
-  gnaf_path: "./path/to/gnaf_data"
+  gnaf_path: "./DataFiles/AppStaging/standard/"
   # Path to the shapefile used for geospatial analysis
-  shapefile_path: "path/to/shapefile.shp"
-  # Path of the output
-  output_path: "./output"
-  # Default Coordinate Reference System (CRS) for spatial data
+  shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
+  # Path of the output CSV
+  output_path: "./DataFiles/FilesOut/"
+  # Coordinate Reference System (CRS) for spatial data
+  # use CRS 7844 - specified in the ABS 2021 datapack
+  # 'EPSG:7844' is a CRS in the European Petroleum Survey Group system
+  # for defining geospatial coordinates
+  # SEE ALSO WGS84 (EPSG:4326) - represent latitude and longitude on spherical Earth
   crs: "EPSG:7844"
   # The column in your data that contains SA2(!) area names
   sa2_area_column: "SA2_NAME21"

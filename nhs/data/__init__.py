@@ -6,7 +6,7 @@ from .handling import (
     read_xlsx,
     standardize_names,
 )
-from .geography import assign_shuffled_coordinates
+from .geography import assign_shuffled_coordinates, join_areas_with_points
 
 __all__ = [
     "read_spreadsheets",
@@ -16,4 +16,5 @@ __all__ = [
     "standardize_names",
     "filter_sa1_regions",
     "assign_shuffled_coordinates",
+    "join_areas_with_points",
 ]

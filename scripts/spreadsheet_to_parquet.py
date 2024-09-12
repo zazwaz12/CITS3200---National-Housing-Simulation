@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 list_files = nhs.utils.path.list_files
 get_reader = nhs.data.handling.get_spreadsheet_reader
+parse_config = nhs.config.parse_config
 
 
 @logger.catch()
