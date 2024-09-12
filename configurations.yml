@@ -16,19 +16,20 @@ logging:
 # Paths to data files and resources
 data:
   # Path to the census data files
-  census_path: "./path/to/census_data"
+  census_path: "./DataFiles/AppStaging/census"
   # Path to the GNAF (Geocoded National Address File) data
-  gnaf_path: "./path/to/gnaf_data"
+  gnaf_path: "./DataFiles/AppStaging/standard/"
   # Path to the shapefile used for geospatial analysis
-  shapefile_path: "path/to/shapefile.shp"
-  # Path of the output
-  output_path: "./output"
+  shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
+  # Path of the output CSV
+  output_path: "./DataFiles/FilesOut/"
   # Default Coordinate Reference System (CRS) for spatial data
   crs: "EPSG:7844"
-  # The column in your data that contains SA2(!) area names, as SA1 area names don't exist
+  # The column in your data that contains SA2(!) area names
   sa2_area_column: "SA2_NAME21"
   # The column in your data that contains SA1(!) area codes
   sa1_area_code_column: "SA1_CODE21"
+ 
 
 simulation:
   # Number of CPU cores to use for parallel processing

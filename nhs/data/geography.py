@@ -1,4 +1,4 @@
-import geopandas as gpd  # type: ignore
+import geopandas as gpd # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -93,29 +93,29 @@ def join_areas_with_points(
 
     if not missing_points.empty:  # type: ignore
         nearest_join = gpd.sjoin_nearest(
-            missing_points[["geometry"]], area_data, how="left"
+            missing_points[["geometry"]], area_data, how="left" # type: ignore
         )
-        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[
+        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[ # type: ignore
             area_column
         ]
-        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[
+        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[ # type: ignore
             area_code_column
         ]
 
-    result = pnts_with_area[["x", "y", "SA2_NAME21", "SA1_CODE21"]]
-    result = result.rename(columns={"SA2_NAME21": "area", "SA1_CODE21": "area_code"})
+    result = pnts_with_area[["x", "y", "SA2_NAME21", "SA1_CODE21"]]  # type: ignore
+    result = result.rename(columns={"SA2_NAME21": "area", "SA1_CODE21": "area_code"})  # type: ignore
     # Convert to dict first to ensure compatibility with Polars
-    return pl.DataFrame(result.to_dict())
+    return pl.DataFrame(result.to_dict())  # type: ignore
 
 
 def parallel_process(
     gdf: gpd.GeoDataFrame, map_data: gpd.GeoDataFrame, num_cores: int
 ) -> pl.DataFrame:
     """Parallel process point data."""
-    chunks = np.array_split(gdf, num_cores)
+    chunks = np.array_split(gdf, num_cores)  # type: ignore
     with Pool(num_cores) as pool:
-        all_results = pool.map(lambda chunk: process_chunk(map_data, chunk), chunks)
-    return pl.concat(all_results)
+        all_results = pool.map(lambda chunk: process_chunk(map_data, chunk), chunks)  # type: ignore
+    return pl.concat(all_results)  # type: ignore
 
 
 def shuffle_coordinates(
@@ -259,9 +259,9 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
     for area_code in area_codes:
         area_result_df = final_result_df.filter(pl.col("area_code") == area_code)
 
-        plt.figure(figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        plt.scatter(
+        plt.figure(figsize=(12, 6))  # type: ignore
+        plt.subplot(1, 2, 1)  # type: ignore
+        plt.scatter(  # type: ignore
             area_result_df["original_lon"],
             area_result_df["original_lat"],
             c=area_result_df["attribute"].to_numpy(),
@@ -269,12 +269,12 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
             s=50,
             alpha=0.7,
         )
-        plt.title(f"Original Positions for Area Code: {area_code}")
-        plt.xlabel("Original Longitude")
-        plt.ylabel("Original Latitude")
+        plt.title(f"Original Positions for Area Code: {area_code}")  # type: ignore
+        plt.xlabel("Original Longitude")  # type: ignore
+        plt.ylabel("Original Latitude")  # type: ignore
 
-        plt.subplot(1, 2, 2)
-        plt.scatter(
+        plt.subplot(1, 2, 2)  # type: ignore
+        plt.scatter(  # type: ignore
             area_result_df["x"],
             area_result_df["y"],
             c=area_result_df["attribute"].to_numpy(),
@@ -282,11 +282,11 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
             s=50,
             alpha=0.7,
         )
-        plt.title(
+        plt.title(  # type: ignore
             f"Final Positions after Random Distribution for Area Code: {area_code}"
         )
-        plt.xlabel("Final Longitude")
-        plt.ylabel("Final Latitude")
+        plt.xlabel("Final Longitude")  # type: ignore
+        plt.ylabel("Final Latitude") # type: ignore 
 
         plt.tight_layout()
-        plt.show()
+        plt.show() # type: ignore
