@@ -97,9 +97,11 @@ def join_areas_with_points(
             missing_points[["geometry"]], area_data, how="left"  # type: ignore
         )
         pnts_with_area.loc[missing_points.index, area_column] = nearest_join[  # type: ignore
+        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[ # type: ignore
             area_column
         ]
         pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[  # type: ignore
+        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[ # type: ignore
             area_code_column
         ]
 
@@ -250,9 +252,9 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
     for area_code in area_codes:
         area_result_df = final_result_df.filter(pl.col("area_code") == area_code)
 
-        plt.figure(figsize=(12, 6))
-        plt.subplot(1, 2, 1)
-        plt.scatter(
+        plt.figure(figsize=(12, 6))  # type: ignore
+        plt.subplot(1, 2, 1)  # type: ignore
+        plt.scatter(  # type: ignore
             area_result_df["original_lon"],
             area_result_df["original_lat"],
             c=area_result_df["attribute"].to_numpy(),
@@ -260,12 +262,12 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
             s=50,
             alpha=0.7,
         )
-        plt.title(f"Original Positions for Area Code: {area_code}")
-        plt.xlabel("Original Longitude")
-        plt.ylabel("Original Latitude")
+        plt.title(f"Original Positions for Area Code: {area_code}")  # type: ignore
+        plt.xlabel("Original Longitude")  # type: ignore
+        plt.ylabel("Original Latitude")  # type: ignore
 
-        plt.subplot(1, 2, 2)
-        plt.scatter(
+        plt.subplot(1, 2, 2)  # type: ignore
+        plt.scatter(  # type: ignore
             area_result_df["x"],
             area_result_df["y"],
             c=area_result_df["attribute"].to_numpy(),
@@ -273,7 +275,7 @@ def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> N
             s=50,
             alpha=0.7,
         )
-        plt.title(
+        plt.title(  # type: ignore
             f"Final Positions after Random Distribution for Area Code: {area_code}"
         )
         plt.xlabel("Final Longitude")
