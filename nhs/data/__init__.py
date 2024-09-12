@@ -5,8 +5,10 @@ from .handling import (
     read_spreadsheets,
     read_xlsx,
     standardize_names,
+    read_parquet,
+    get_spreadsheet_reader,
 )
-from .geography import assign_shuffled_coordinates, join_areas_with_points
+from .geography import assign_coordinates, join_areas_with_points
 
 __all__ = [
     "read_spreadsheets",
@@ -15,6 +17,8 @@ __all__ = [
     "read_xlsx",
     "standardize_names",
     "filter_sa1_regions",
-    "assign_shuffled_coordinates",
+    "assign_coordinates",
     "join_areas_with_points",
+    "read_parquet",
+    "get_spreadsheet_reader",
 ]

@@ -7,7 +7,7 @@ from loguru import logger
 
 
 def to_geo_dataframe(
-    df: pl.LazyFrame,
+    lf: pl.LazyFrame,
     crs: str,
     longitude_col: str = "LONGITUDE",
     latitude_col: str = "LATITUDE",
@@ -17,7 +17,7 @@ def to_geo_dataframe(
 
     Parameters
     ----------
-    df : pl.LazyFrame
+    lf : pl.LazyFrame
         A Polars LazyFrame containing two columns `longitude_col` and `latitude_col`
         which represent geographic coordinates of the points in the data.
     crs : str
@@ -38,13 +38,12 @@ def to_geo_dataframe(
     - CRS (Coordinate Reference System) is needed to define how spatial data (like
       longitude and latitude) relates to the Earth's surface, e.g. "EPSG:7844".
     """
-
-    points = gpd.GeoDataFrame(
-        df.collect().to_pandas(),
+    df = lf.collect().to_pandas()
+    return gpd.GeoDataFrame(
+        df,
         geometry=gpd.points_from_xy(df[longitude_col], df[latitude_col]),  # type: ignore
+        crs=CRS.from_string(crs),
     )
-    projected_crs = CRS.from_string(crs)
-    return points.to_crs(projected_crs)  # type: ignore
 
 
 def join_areas_with_points(
@@ -97,18 +96,16 @@ def join_areas_with_points(
             missing_points[["geometry"]], area_data, how="left"  # type: ignore
         )
         pnts_with_area.loc[missing_points.index, area_column] = nearest_join[  # type: ignore
-        pnts_with_area.loc[missing_points.index, area_column] = nearest_join[ # type: ignore
             area_column
         ]
         pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[  # type: ignore
-        pnts_with_area.loc[missing_points.index, area_code_column] = nearest_join[ # type: ignore
             area_code_column
         ]
 
     result = pnts_with_area[["LONGITUDE", "LATITUDE", area_column, area_code_column]]  # type: ignore
     result = result.rename(columns={area_column: "area", area_code_column: "area_code"})  # type: ignore
     # Convert to dict first to ensure compatibility with Polars
-    return pl.LazyFrame(result.to_dict())  # type: ignore
+    return pl.LazyFrame(result)
 
 
 def shuffle_coordinates(
