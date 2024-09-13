@@ -1,7 +1,9 @@
 import polars as pl
 import re
+from nhs.utils.logging import log_entry_exit
 
 
+@log_entry_exit(level="INFO")
 def category_system(category_required: str, data_pack_file: pl.LazyFrame):
     """
         Filters a `LazyFrame` based on the provided category string to get list contain strings relate to category_required.
@@ -100,14 +102,14 @@ def category_for_age_and_gender(data_pack_file: pl.LazyFrame, gender: str, compa
         │ Age 30-40  │ Male data                     │
         └────────────┴───────────────────────────┘
         """
-    comparison_mapping = {
-        'over': lambda x, y: x > y,
-        'more than': lambda x, y: x > y,
-        'greater than': lambda x, y: x > y,
-        'above': lambda x, y: x > y,
-        'under': lambda x, y: x < y,
-        'less than': lambda x, y: x < y,
-        'below': lambda x, y: x < y
+    comparison_mapping = {                               # type: ignore
+        'over': lambda expr, value: expr > value,         # type: ignore
+        'more than': lambda expr, value: expr > value,            # type: ignore
+        'greater than': lambda expr, value: expr > value,             # type: ignore
+        'above': lambda expr, value: expr > value,                  # type: ignore
+        'under': lambda expr, value: expr < value,                 # type: ignore
+        'less than': lambda expr, value: expr < value,             # type: ignore
+        'below': lambda expr, value: expr < value                 # type: ignore
     }
 
     filtered_lf = (
@@ -127,7 +129,7 @@ def category_for_age_and_gender(data_pack_file: pl.LazyFrame, gender: str, compa
             (pl.col('Long').str.contains('Age'))
         )
         .filter(
-            comparison_mapping[comparison_operator](pl.col('first_num'), age) &
+            comparison_mapping[comparison_operator](pl.col('first_num'), age) &  # type: ignore
             comparison_mapping[comparison_operator](pl.col('second_num'), age)
         )
         .select([col for col in data_pack_file.collect_schema().names() if col not in ['first_num', 'second_num']])
