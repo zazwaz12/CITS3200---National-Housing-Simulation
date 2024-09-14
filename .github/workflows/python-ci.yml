@@ -53,14 +53,8 @@ jobs:
       - name: Run tests and type checking
         run: |
           source $VENV
-          echo '{
-            "typeCheckingMode": "basic",
-            "reportMissingTypeStubs": false,
-            "reportMissingImports": false,
-            "reportMissingTypeArgument": false
-          }' > pyrightconfig.json
-          pytest tests/
-          pyright nhs/
+          poetry run pytest tests/
+          poetry run pyright nhs/
 
         env:
           VENV: ${{ github.workspace }}/.venv/bin/activate
