@@ -1,5 +1,5 @@
 from .filter import filter_sa1_regions
-from .geography import join_coords_with_area
+from .geography import join_coords_with_area, read_shapefile
 from .handling import (
     get_spreadsheet_reader,
     read_csv,
@@ -20,4 +20,5 @@ __all__ = [
     "join_coords_with_area",
     "read_parquet",
     "get_spreadsheet_reader",
+    "read_shapefile",
 ]
