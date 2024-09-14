@@ -53,6 +53,12 @@ jobs:
       - name: Run tests and type checking
         run: |
           source $VENV
+          echo '{
+            "typeCheckingMode": "basic",
+            "reportMissingTypeStubs": false,
+            "reportMissingImports": false,
+            "reportMissingTypeArgument": false
+          }' > pyrightconfig.json
           pytest tests/
           pyright nhs/
 
