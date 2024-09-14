@@ -107,13 +107,13 @@ def category_for_age_and_gender(
     ... }).lazy()
     >>> category_for_age_and_gender(data_pack_file, 'male', 'over', 30).collect()
     shape: (1, 2)
-    ┌────────────┬───────────────────────────┐
+    ┌────────────┬───────────────────────────────────┐
     │ Long       │ Columnheadingdescriptioninprofile │
-    │ ---        │ ---                           │
-    │ str        │ str                           │
-    ├────────────┼───────────────────────────┤
-    │ Age 30-40  │ Male data                     │
-    └────────────┴───────────────────────────┘
+    │ ---        │ ---                               │
+    │ str        │ str                               │
+    ├────────────┼───────────────────────────────────┤
+    │ Age 30-40  │ Male data                         │
+    └────────────┴───────────────────────────────────┘
     """
     comparison_mapping = {  # type: ignore
         "over": lambda expr, value: expr > value,  # type: ignore

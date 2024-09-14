@@ -6,6 +6,10 @@ from .handling import (
     read_xlsx,
     standardize_names,
 )
+from .category_system import (
+    category_system,
+    category_for_age_and_gender
+)
 
 __all__ = [
     "read_spreadsheets",
@@ -14,4 +18,6 @@ __all__ = [
     "read_xlsx",
     "standardize_names",
     "filter_sa1_regions",
+    "category_system",
+    "category_for_age_and_gender"
 ]
