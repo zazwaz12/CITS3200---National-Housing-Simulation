@@ -1,8 +1,8 @@
 from gzip import READ
 
 import polars as pl
-from pytest_mock import MockerFixture
 import pytest
+from pytest_mock import MockerFixture
 
 from ..context import nhs
 
@@ -187,24 +187,32 @@ class TestColumnReadable:
 
 class TestSpecifyRowToBeHeader:
     def test_header_row_at_the_start(self):
-        df = pl.LazyFrame({'A': ['Header1', 'Data1'], 'B': ['Header2', 'Data2'], 'C': ['Header3', 'Data3']})
+        df = pl.LazyFrame(
+            {
+                "A": ["Header1", "Data1"],
+                "B": ["Header2", "Data2"],
+                "C": ["Header3", "Data3"],
+            }
+        )
         result = specify_row_to_be_header(0, df).collect()
-        expected = pl.DataFrame({'Header1': ['Data1'], 'Header2': ['Data2'], 'Header3': ['Data3']})
+        expected = pl.DataFrame(
+            {"Header1": ["Data1"], "Header2": ["Data2"], "Header3": ["Data3"]}
+        )
         assert result.equals(expected)
 
     def test_raises_index_error_for_out_of_bounds_row(self):
-        df = pl.LazyFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
+        df = pl.LazyFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]})
         with pytest.raises(IndexError):
             specify_row_to_be_header(10, df)
 
     def test_basic_functionality(self):
-        df = pl.LazyFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
+        df = pl.LazyFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]})
         result = specify_row_to_be_header(1, df).collect()
-        expected = pl.DataFrame({'2': [3], '5': [6], '8': [9]})
+        expected = pl.DataFrame({"2": [3], "5": [6], "8": [9]})
         assert result.equals(expected)
 
     def test_single_row_lazy_frame(self):
-        df = pl.LazyFrame({'A': [1], 'B': [2], 'C': [3]})
+        df = pl.LazyFrame({"A": [1], "B": [2], "C": [3]})
         result = specify_row_to_be_header(0, df).collect()
         expected = pl.DataFrame(schema={"1": pl.Int64, "2": pl.Int64, "3": pl.Int64})
         assert result.equals(expected)

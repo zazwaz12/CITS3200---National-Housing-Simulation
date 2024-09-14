@@ -30,7 +30,7 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 @logger.catch()
 @log_entry_exit()
 def read_xlsx(
-        file_path: str, sheet_id: None | int = 1
+    file_path: str, sheet_id: None | int = 1
 ) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
@@ -53,7 +53,7 @@ def read_parquet(file_path: str) -> pl.LazyFrame | None:
 
 
 def get_spreadsheet_reader(
-        file_extension: str,
+    file_extension: str,
 ) -> Callable[..., dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
     """
     Maps file extension to corresponding reader function
@@ -68,7 +68,7 @@ def get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-        file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx", "parquet"]
+    file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx", "parquet"]
 ) -> dict[str, dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
@@ -120,9 +120,9 @@ def read_spreadsheets(
 
 @log_entry_exit(level="INFO")
 def to_parquet(
-        df: pl.DataFrame | pl.LazyFrame,
-        file_path: str,
-        compression: Literal["gzip", "lz4", "zstd"] = "lz4",
+    df: pl.DataFrame | pl.LazyFrame,
+    file_path: str,
+    compression: Literal["gzip", "lz4", "zstd"] = "lz4",
 ) -> None:
     """
     Write a polars DataFrame to a parquet file
@@ -133,11 +133,11 @@ def to_parquet(
 
 
 def standardize_names(
-        df_dict: dict[str, pl.LazyFrame],
-        census_metadata: pl.LazyFrame,
-        census_code_col: str = "DataPackfile",
-        abbreviation_column_name: str = "Short",
-        long_column_name: str = "Long",
+    df_dict: dict[str, pl.LazyFrame],
+    census_metadata: pl.LazyFrame,
+    census_code_col: str = "DataPackfile",
+    abbreviation_column_name: str = "Short",
+    long_column_name: str = "Long",
 ) -> dict[str, pl.LazyFrame]:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
@@ -200,54 +200,58 @@ def standardize_names(
 
 def specify_row_to_be_header(row: int, df: pl.LazyFrame) -> pl.LazyFrame:
     """
-        Specify a row to be the header of a LazyFrame and rename columns using the original headers.
+    Specify a row to be the header of a LazyFrame and rename columns using the original headers.
 
-        This function sets the specified row of a LazyFrame as the new header by collecting the row values,
-        slicing the LazyFrame to exclude the new header row, and renaming the columns using the original headers.
+    This function sets the specified row of a LazyFrame as the new header by collecting the row values,
+    slicing the LazyFrame to exclude the new header row, and renaming the columns using the original headers.
 
-        Parameters
-        ----------
-        row : int
-            The index of the row to be used as the new header. Zero-based indexing is used.
-        df : pl.LazyFrame
-            The LazyFrame from which the new header is to be set.
+    Parameters
+    ----------
+    row : int
+        The index of the row to be used as the new header. Zero-based indexing is used.
+    df : pl.LazyFrame
+        The LazyFrame from which the new header is to be set.
 
-        Returns
-        -------
-        pl.LazyFrame
-            A new LazyFrame with the specified row set as the header and columns renamed accordingly.
+    Returns
+    -------
+    pl.LazyFrame
+        A new LazyFrame with the specified row set as the header and columns renamed accordingly.
 
-        Raises
-        ------
-        IndexError
-            If the specified `row` index is out of bounds.
+    Raises
+    ------
+    IndexError
+        If the specified `row` index is out of bounds.
 
-        Notes
-        -----
-        - This function first collects the specified row to use its values as column names.
-        - It slices the LazyFrame to start from the row immediately after the new header row and renames the columns using the original column names.
-        - The new header row is printed to the console.
+    Notes
+    -----
+    - This function first collects the specified row to use its values as column names.
+    - It slices the LazyFrame to start from the row immediately after the new header row and renames the columns using the original column names.
+    - The new header row is printed to the console.
 
-        Examples
-        --------
-        >>> df = pl.LazyFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
-        >>> specify_row_to_be_header(1, df).collect()
-        shape: (1, 3)
-        ┌─────┬─────┬─────┐
-        │ 2   │ 5   │ 8   │
-        │ --- │ --- │ --- │
-        │ i64 │ i64 │ i64 │
-        ╞═════╪═════╪═════│
-        │  3  │  6  │  9  │
-        └─────┴─────┴─────┘
+    Examples
+    --------
+    >>> df = pl.LazyFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
+    >>> specify_row_to_be_header(1, df).collect()
+    shape: (1, 3)
+    ┌─────┬─────┬─────┐
+    │ 2   │ 5   │ 8   │
+    │ --- │ --- │ --- │
+    │ i64 │ i64 │ i64 │
+    ╞═════╪═════╪═════│
+    │  3  │  6  │  9  │
+    └─────┴─────┴─────┘
 
-        The new header will be printed to the console:
-        (2, 5, 8)
-        """
+    The new header will be printed to the console:
+    (2, 5, 8)
+    """
     df_collected = df.collect()
     if row < 0 or row >= len(df_collected):
-        raise IndexError(f"Row index {row} is out of bounds. Valid indices are from 0 to {len(df_collected) - 1}.")
+        raise IndexError(
+            f"Row index {row} is out of bounds. Valid indices are from 0 to {len(df_collected) - 1}."
+        )
     new_header = df.collect().row(row)
     new_header = [str(name) for name in new_header]
-    new_df = df.slice(row+1).rename({original_name: new for original_name, new in zip(df.columns, new_header)})
+    new_df = df.slice(row + 1).rename(
+        {original_name: new for original_name, new in zip(df.columns, new_header)}
+    )
     return new_df.lazy()
