@@ -65,6 +65,8 @@ def read_shapefile(shapefile_dir: str, crs: str) -> gpd.GeoDataFrame:
 def _failed_join_strategy(
         unmapped_coords: pd.Series, # type: ignore
         coords_with_area: gpd.GeoDataFrame,
+        coords: gpd.GeoDataFrame,
+        area_polygons: gpd.GeoDataFrame,
         strategy: Any,
 ):
     """
@@ -130,7 +132,7 @@ def join_coords_with_area(
     """
     coords_with_area: gpd.GeoDataFrame = gpd.sjoin(coords, area_polygons, how="left", predicate="within")  # type: ignore
 
-    area_polygons_only_column = area_polygons.columns.difference(coords.columns)  # type: ignore
+    area_polygons_only_column = coords_with_area.columns.difference(coords.columns)  # type: ignore
     # unmapped coords will have rows with all null values for area polygon columns
     unmapped_coords = coords_with_area[area_polygons_only_column].isnull().all(axis=1)  # type: ignore
     if not unmapped_coords.all():  # type: ignore
@@ -138,7 +140,7 @@ def join_coords_with_area(
             f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}" # type: ignore
         )
 
-    coords_with_area = _failed_join_strategy(unmapped_coords, coords_with_area, failed_join_strategy) # type: ignore
+    coords_with_area = _failed_join_strategy(unmapped_coords, coords_with_area, coords, area_polygons, failed_join_strategy) # type: ignore
 
     # Convert to Pandas Dataframe to avoid "geometry" warnings
     output = pd.DataFrame(coords_with_area)
