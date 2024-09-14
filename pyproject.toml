@@ -42,7 +42,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
 reportMissingTypeStubs = false
-strict = ["nhs"]
 reportUnknownParameterType = false
 reportUntypedFunctionDecorator = false
 typeCheckingMode = "basic"
