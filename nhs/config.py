@@ -1,8 +1,8 @@
-from loguru import logger
-from typing import Any, TextIO
 import sys
+from typing import Any, TextIO
 
 import yaml
+from loguru import logger
 
 
 @logger.catch(reraise=True)

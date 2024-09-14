@@ -1,9 +1,10 @@
 from typing import Any, Literal
+
 import geopandas as gpd  # type: ignore
 import pandas as pd
 import polars as pl
-from pyproj import CRS
 from loguru import logger
+from pyproj import CRS
 
 
 def to_geo_dataframe(
@@ -62,12 +63,13 @@ def read_shapefile(shapefile_dir: str, crs: str) -> gpd.GeoDataFrame:
     """
     return gpd.read_file(shapefile_dir).to_crs(CRS.from_string(crs))  # type: ignore
 
+
 def _failed_join_strategy(
-        unmapped_coords: pd.Series, # type: ignore
-        coords_with_area: gpd.GeoDataFrame,
-        coords: gpd.GeoDataFrame,
-        area_polygons: gpd.GeoDataFrame,
-        strategy: Any,
+    unmapped_coords: pd.Series,  # type: ignore
+    coords_with_area: gpd.GeoDataFrame,
+    coords: gpd.GeoDataFrame,
+    area_polygons: gpd.GeoDataFrame,
+    strategy: Any,
 ):
     """
     Apply strategy to handle coordinates that could not be attributed to an area polygon.
@@ -79,19 +81,21 @@ def _failed_join_strategy(
                 coords[unmapped_coords], area_polygons, how="left"  # type: ignore
             )
         case "filter":
-            coords_with_area = coords_with_area[~unmapped_coords] # type: ignore
+            coords_with_area = coords_with_area[~unmapped_coords]  # type: ignore
         case None:
             pass
         case _:
-            logger.warning(f"Invalid strategy {strategy} specified for join_coords_with_area, skipping...")
-        
+            logger.warning(
+                f"Invalid strategy {strategy} specified for join_coords_with_area, skipping..."
+            )
+
     return coords_with_area
 
 
 def join_coords_with_area(
     coords: gpd.GeoDataFrame,
     area_polygons: gpd.GeoDataFrame,
-    failed_join_strategy: Literal["join_nearest", "filter"] | None = None
+    failed_join_strategy: Literal["join_nearest", "filter"] | None = None,
 ) -> pl.LazyFrame:
     """
     Spatially join `coords` with `area_polygons` rows that contain the points in `coords`.
@@ -137,10 +141,10 @@ def join_coords_with_area(
     unmapped_coords = coords_with_area[area_polygons_only_column].isnull().all(axis=1)  # type: ignore
     if not unmapped_coords.all():  # type: ignore
         logger.warning(
-            f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}" # type: ignore
+            f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}"  # type: ignore
         )
 
-    coords_with_area = _failed_join_strategy(unmapped_coords, coords_with_area, coords, area_polygons, failed_join_strategy) # type: ignore
+    coords_with_area = _failed_join_strategy(unmapped_coords, coords_with_area, coords, area_polygons, failed_join_strategy)  # type: ignore
 
     # Convert to Pandas Dataframe to avoid "geometry" warnings
     output = pd.DataFrame(coords_with_area)

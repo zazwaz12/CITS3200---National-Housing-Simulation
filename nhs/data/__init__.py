@@ -1,14 +1,14 @@
 from .filter import filter_sa1_regions
+from .geography import join_coords_with_area
 from .handling import (
+    get_spreadsheet_reader,
     read_csv,
+    read_parquet,
     read_psv,
     read_spreadsheets,
     read_xlsx,
     standardize_names,
-    read_parquet,
-    get_spreadsheet_reader,
 )
-from .geography import join_coords_with_area
 
 __all__ = [
     "read_spreadsheets",
