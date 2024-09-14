@@ -1,8 +1,8 @@
 from loguru import logger
 
-from . import data, utils
+from . import config, data, logging, utils
 
 logger.disable("nhs")
 
 
-__all__ = ["data", "utils"]
+__all__ = ["data", "utils", "config", "logging"]

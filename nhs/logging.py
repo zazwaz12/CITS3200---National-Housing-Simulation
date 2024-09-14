@@ -36,19 +36,18 @@ class __InterceptHandler(logging.Handler):
         )
 
 
-def config_logger() -> None:
+def config_logger(logger_config: dict[str, Any]) -> None:
     """
-    Configure loguru logger settings and set it as as the default logger
+    Configure loguru logger settings and set it as the default logger
     """
 
     logger.remove()
     logger.add(
-        "./logs/out_{time}.log",
-        format="{time:YYYY-MM-DD at HH:mm:ss} {level} {message}",
-        backtrace=True,
-        diagnose=True,
-        level="DEBUG",
-        retention="7 days",
+        logger_config["log_file"],
+        format=logger_config["format"],
+        backtrace=logger_config["backtrace"],
+        diagnose=logger_config["diagnose"],
+        level=logger_config["level"],
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)
