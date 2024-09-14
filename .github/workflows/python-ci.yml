@@ -53,7 +53,7 @@ jobs:
       - name: Run tests and type checking
         run: |
           source $VENV
-          pytest tests/
+          pytest tests/ --config pyproject.toml
           pyright nhs/
 
         env:
