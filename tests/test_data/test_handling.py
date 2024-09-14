@@ -1,6 +1,7 @@
 from gzip import READ
 
 import polars as pl
+import pytest
 from pytest_mock import MockerFixture
 
 from ..context import nhs
@@ -8,6 +9,7 @@ from ..context import nhs
 read_spreadsheets = nhs.data.handling.read_spreadsheets
 read_xlsx = nhs.data.handling.read_xlsx
 standardize_names = nhs.data.handling.standardize_names
+specify_row_to_be_header = nhs.data.handling.specify_row_to_be_header
 LIST_FILES_PATCH = "nhs.data.handling.list_files"
 READ_PSV_PATCH = "nhs.data.handling.read_psv"
 READ_CSV_PATCH = "nhs.data.handling.read_csv"
@@ -181,3 +183,36 @@ class TestColumnReadable:
             expected_df = expected_df_dict[key].collect()
 
             assert result_df.equals(expected_df)
+
+
+class TestSpecifyRowToBeHeader:
+    def test_header_row_at_the_start(self):
+        df = pl.LazyFrame(
+            {
+                "A": ["Header1", "Data1"],
+                "B": ["Header2", "Data2"],
+                "C": ["Header3", "Data3"],
+            }
+        )
+        result = specify_row_to_be_header(0, df).collect()
+        expected = pl.DataFrame(
+            {"Header1": ["Data1"], "Header2": ["Data2"], "Header3": ["Data3"]}
+        )
+        assert result.equals(expected)
+
+    def test_raises_index_error_for_out_of_bounds_row(self):
+        df = pl.LazyFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]})
+        with pytest.raises(IndexError):
+            specify_row_to_be_header(10, df)
+
+    def test_basic_functionality(self):
+        df = pl.LazyFrame({"A": [1, 2, 3], "B": [4, 5, 6], "C": [7, 8, 9]})
+        result = specify_row_to_be_header(1, df).collect()
+        expected = pl.DataFrame({"2": [3], "5": [6], "8": [9]})
+        assert result.equals(expected)
+
+    def test_single_row_lazy_frame(self):
+        df = pl.LazyFrame({"A": [1], "B": [2], "C": [3]})
+        result = specify_row_to_be_header(0, df).collect()
+        expected = pl.DataFrame(schema={"1": pl.Int64, "2": pl.Int64, "3": pl.Int64})
+        assert result.equals(expected)

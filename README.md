@@ -4,7 +4,7 @@ Repository for the National Housing Simulation project, involving mapping data p
 
 ## Install
 
-You can install project dependencies using either `poetry` or `devbox`.
+You can install project dependencies using either `poetry` or `devenv`.
 
 ### Poetry
 
@@ -15,12 +15,26 @@ poetry shell     # Activate the virtual environment
 poetry install   # Install the dependencies from pyproject.toml
 ```
 
-## Devbox
+## Devenv
 
-[Devbox](https://github.com/jetify-com/devbox) is used to create development shells where the dependencies are declared in `devbox.json` file. It can manage non-Python dependencies which will only be accessible in the shell (i.e. not installed globally). It is internally powered by Nix where the list of Nix packages can be found at [Nixhub.io](https://www.nixhub.io/).
+[Devenv](https://devenv.sh/) is used to create isolated development shells where the dependencies are declared in `devenv.nix` file with input channels defined in `devenv.yaml` and are version-locked in `devenv.lock`. Dependencies and programs installed in the shell are only accessible in the shell. It is internally powered by Nix where the list of Nix packages can be found at [NixOS Packages](https://search.nixos.org/packages).
 
-First, install [Devbox](https://www.jetify.com/devbox/docs/installing_devbox/). Then, from the top-most directory of the project, run
+First, install `devenv` and `nix`. Then, from the top-most directory of the project, run the following command to let `devenv` install the required dependencies locally, install the requirements, and activate the virtual environment.
 
 ```bash
-devbox shell  # activate the dev shell
+devenv shell
+exit # Exit the devenv shell
 ```
+
+### Auto-activation with `direnv` (Optional)
+
+**Warning: `direnv` allow the execution of any arbitrary bash code in `.envrc`, please examine `.envrc` before you proceed!**
+
+[`direnv`](https://direnv.net/) is used to automatically activate `devenv` when you enter into the folder containing this repository. First, install it via the [official installation guide](https://direnv.net/docs/installation.html) and [hook it into your shell](https://direnv.net/docs/hook.html) (hint: run `echo $SHELL` to see what shell you are using). Then, inside the project directory where `.envrc` is in the same folder, run...
+
+```bash
+direnv allow  # allow execution of .envrc automatically
+direnv disallow # stop automatically executing .envrc upon entering the project folder
+```
+
+and it will automatically activate `devenv` which will then install the necessary dependencies.
