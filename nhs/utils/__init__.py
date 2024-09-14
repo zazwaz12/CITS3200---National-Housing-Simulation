@@ -1,3 +1,4 @@
-from . import logging, path, string, parallel
+from .. import logging
+from . import path, string
 
-__all__ = ["logging", "path", "string", "parallel"]
+__all__ = ["logging", "path", "string"]

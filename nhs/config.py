@@ -1,5 +1,6 @@
 from loguru import logger
-from typing import Any
+from typing import Any, TextIO
+import sys
 
 import yaml
 
@@ -33,4 +34,11 @@ def logger_config(config_path: str = "configurations.yml") -> dict[str, Any]:
     """
     Parse a YAML configuration file at `config_path` and return the logger settings as a dictionary.
     """
-    return parse_config(config_path)["logger"]
+
+    def _map_log_file(log_file: str) -> str | TextIO:
+        mapping = {"stdout": sys.stdout, "stderr": sys.stderr}
+        return mapping.get(log_file, log_file)
+
+    config = parse_config(config_path)["logging"]
+    config["log_file"] = _map_log_file(config["log_file"])
+    return config

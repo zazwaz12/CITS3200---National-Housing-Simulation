@@ -2,16 +2,15 @@
 # "See https://loguru.readthedocs.io/en/stable/api/logger.html"
 logging:
   # Path and naming convention for logs (including timestamp)
-  log_file: "./logs/out_{time}.log"
-  format: "{time:YYYY-MM-DD at HH:mm:ss} {level} {message}"
+  log_file: "stdout"
+  # Format of the log messages
+  format: "<green>{time:YYYY-MM-DD at HH:mm:ss}</green> <level>{level: <8} {message}</level>"
   # TRUE for detailed backtrace logging for debugging
   backtrace: true
   # extra diagnostic information
   diagnose: true
   # Log level; ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
-  level: "DEBUG"
-  # Log retention period; logs older than this will be deleted
-  retention: "7 days"
+  level: "INFO"
 
 # Paths to data files and resources
 data:

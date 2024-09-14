@@ -6,7 +6,7 @@ import inspect
 import logging
 import warnings
 from functools import wraps
-from typing import Any, Callable, Dict, Literal, Optional, TextIO, Type, TypeVar, Union
+from typing import Any, Callable, Literal, Optional, TextIO, Type, TypeVar, Union
 
 from loguru import logger
 
@@ -36,19 +36,18 @@ class __InterceptHandler(logging.Handler):
         )
 
 
-def config_logger(configurations: Dict[str, Any]) -> None:
+def config_logger(logger_config: dict[str, Any]) -> None:
     """
     Configure loguru logger settings and set it as the default logger
     """
 
     logger.remove()
     logger.add(
-        configurations["logging"]["log_file"],
-        format=configurations["logging"]["format"],
-        backtrace=configurations["logging"]["backtrace"],
-        diagnose=configurations["logging"]["diagnose"],
-        level=configurations["logging"]["level"],
-        retention=configurations["logging"]["retention"],
+        logger_config["log_file"],
+        format=logger_config["format"],
+        backtrace=logger_config["backtrace"],
+        diagnose=logger_config["diagnose"],
+        level=logger_config["level"],
     )
 
     logging.basicConfig(handlers=[__InterceptHandler()], level=0, force=True)

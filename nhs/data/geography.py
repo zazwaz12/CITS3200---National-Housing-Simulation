@@ -1,5 +1,6 @@
+from typing import Any, Literal
 import geopandas as gpd  # type: ignore
-import matplotlib.pyplot as plt
+import pandas as pd
 import polars as pl
 from pyproj import CRS
 from loguru import logger
@@ -61,11 +62,34 @@ def read_shapefile(shapefile_dir: str, crs: str) -> gpd.GeoDataFrame:
     """
     return gpd.read_file(shapefile_dir).to_crs(CRS.from_string(crs))  # type: ignore
 
+def _failed_join_strategy(
+        unmapped_coords: pd.Series, # type: ignore
+        coords_with_area: gpd.GeoDataFrame,
+        strategy: Any,
+):
+    """
+    Apply strategy to handle coordinates that could not be attributed to an area polygon.
+    """
+    match strategy:
+        case "join_nearest":
+            # Perform a nearest join for coordinates that couldn't be attributed to areas
+            coords_with_area[unmapped_coords] = gpd.sjoin_nearest(
+                coords[unmapped_coords], area_polygons, how="left"  # type: ignore
+            )
+        case "filter":
+            coords_with_area = coords_with_area[~unmapped_coords] # type: ignore
+        case None:
+            pass
+        case _:
+            logger.warning(f"Invalid strategy {strategy} specified for join_coords_with_area, skipping...")
+        
+    return coords_with_area
+
 
 def join_coords_with_area(
     coords: gpd.GeoDataFrame,
     area_polygons: gpd.GeoDataFrame,
-    join_nearest_on_null: bool = False,
+    failed_join_strategy: Literal["join_nearest", "filter"] | None = None
 ) -> pl.LazyFrame:
     """
     Spatially join `coords` with `area_polygons` rows that contain the points in `coords`.
@@ -91,17 +115,18 @@ def join_coords_with_area(
         A GeoPandas DataFrame containing a column with spatial polygon data that
         represents areas (e.g., districts or regions). Typically created from
         reading a shapefile using `nhs.data.read_shapefile`.
-    join_nearest_on_null : bool, optional
-        Whether to assign coordinates that do not fall within any area to the nearest
-        area polygon. Defaults to False.
+    failed_join_strategy : Literal["join_nearest", "filter"], optional
+        Strategy to handle coordinates that could not be attributed to an area polygon.
+        If "join_nearest", the coordinates are assigned to the nearest area polygon.
+        If "filter", the coordinates are filtered out. Defaults to None.
 
     Returns
     -------
     pl.LazyFrame
-        A Polars LazyFrame with the point data from `coords`, joined with the
-        appropriate area data from `area_polygons`. The output includes the original
-        coordinates `('LONGITUDE', 'LATITUDE')` and the corresponding area names
-        `area_column` and area codes `area_code_column`.
+        A Polars LazyFrame spatially joined from `coords` and `area_polygons`. The
+        `"geometry"` column is converted to the "Well-Known Text" (WKT) format in the
+        `"geometry_wkt"` column for compatibility with Polars and `"geometry"` column
+        is dropped.
     """
     coords_with_area: gpd.GeoDataFrame = gpd.sjoin(coords, area_polygons, how="left", predicate="within")  # type: ignore
 
@@ -110,158 +135,12 @@ def join_coords_with_area(
     unmapped_coords = coords_with_area[area_polygons_only_column].isnull().all(axis=1)  # type: ignore
     if not unmapped_coords.all():  # type: ignore
         logger.warning(
-            f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates to their nearest area polygon." if join_nearest_on_null else ""}" # type: ignore
+            f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}" # type: ignore
         )
 
-    # Perform a nearest join for coordinates that couldn't be attributed to areas
-    if join_nearest_on_null:
-        coords_with_area[unmapped_coords] = gpd.sjoin_nearest(
-            coords[unmapped_coords], area_polygons, how="left"  # type: ignore
-        )
+    coords_with_area = _failed_join_strategy(unmapped_coords, coords_with_area, failed_join_strategy) # type: ignore
 
-    return pl.LazyFrame(coords_with_area)
-
-def assign_coordinates(
-    df: pl.LazyFrame, area_code: str, coords: list[tuple[float, float]]
-) -> pl.LazyFrame:
-    """
-    Assign coordinates to the dataframe for a specific `area_code`.
-
-    Parameters
-    ----------
-    df : pl.LazyFrame
-        Input LazyFrame containing 'LONGITUDE', 'LATITUDE', and 'area_code' columns.
-    area_code : str
-        The area code to which shuffled coordinates should be assigned.
-    coords: list[tuple[float, float]]
-        List of coordinate pairs.
-
-    Returns
-    -------
-    pl.LazyFrame
-        Dataframe with coordinates assigned for the specified `area_code`.
-    """
-
-    return df.with_columns(
-        [
-            pl.when(pl.col("area_code") == area_code)
-            .then(pl.Series([coord[0] for coord in coords]))
-            .otherwise(pl.col("x"))
-            .alias("x"),
-            pl.when(pl.col("area_code") == area_code)
-            .then(pl.Series([coord[1] for coord in coords]))
-            .otherwise(pl.col("y"))
-            .alias("y"),
-        ]
-    )
-
-
-def random_distribution(
-    df: pl.DataFrame, num_iterations: int = 10, seed: int = 42
-) -> pl.DataFrame:
-    """
-    Randomly shuffle lat-long pairs within their respective areas, maintaining uniqueness.
-
-    This function shuffles coordinates within each area_code, ensuring that the number of unique
-    coordinates remains the same before and after shuffling. It uses a seed for reproducibility.
-
-    This was used in testing for Schelling's model of segregation, which worked with very limited
-    success (something like 30minutes to move 5 people).
-
-    Remains here in case of future expansion into distributions.
-
-    Args:
-        df (pl.DataFrame): Input dataframe containing 'x', 'y', and 'area_code' columns.
-        num_iterations (int, optional): Number of shuffling iterations. Defaults to 10.
-        seed (int, optional): Seed for the random number generator. Defaults to 42.
-
-    Returns:
-        pl.DataFrame: Dataframe with shuffled coordinates, maintaining original uniqueness within each area_code.
-    """  # noqa: E501
-    model_df = df.clone()
-    model_df = model_df.with_columns(
-        [pl.col("y").alias("original_lat"), pl.col("x").alias("original_lon")]
-    )
-
-    area_codes = model_df["area_code"].unique().to_list()
-
-    for _ in range(num_iterations):
-        for area_code in area_codes:
-            area_df = model_df.filter(pl.col("area_code") == area_code)
-            unique_coords = area_df[["x", "y"]].unique().to_numpy().tolist()
-            shuffled_coords = shuffle_coordinates(unique_coords, seed)
-
-            # Create a mapping from original to shuffled coordinates
-            coord_map = dict(zip(unique_coords, shuffled_coords))
-
-            # Apply the mapping to maintain uniqueness
-            model_df = model_df.with_columns(
-                [
-                    pl.when(pl.col("area_code") == area_code)
-                    .then(
-                        pl.struct(["x", "y"]).map_elements(
-                            lambda c: coord_map.get((c["x"], c["y"]), (c["x"], c["y"]))
-                        )
-                    )
-                    .otherwise(pl.struct(["x", "y"]))
-                ]
-            ).unnest("literal")
-
-    return model_df
-
-
-def visualize_results(final_result_df: pl.DataFrame, area_codes: list[str]) -> None:
-    """
-    Visualize the original and final positions of points for given area codes.
-
-    This function creates a side-by-side scatter plot comparison for each area code,
-    showing the original geographic coordinates and their corresponding randomized
-    positions.
-
-    Parameters:
-    -----------
-    final_result_df : pl.DataFrame
-        A Polars DataFrame containing the data with columns 'area_code', 'original_lon',
-        'original_lat', 'x', 'y', and 'attribute'.
-    area_codes : List[str]
-        A list of area codes for which to visualize the results.
-
-    Returns:
-    --------
-    None
-        Displays plots but does not return any value.
-    """  # noqa: E501
-    for area_code in area_codes:
-        area_result_df = final_result_df.filter(pl.col("area_code") == area_code)
-
-        plt.figure(figsize=(12, 6))  # type: ignore
-        plt.subplot(1, 2, 1)  # type: ignore
-        plt.scatter(  # type: ignore
-            area_result_df["original_lon"],
-            area_result_df["original_lat"],
-            c=area_result_df["attribute"].to_numpy(),
-            cmap="tab10",
-            s=50,
-            alpha=0.7,
-        )
-        plt.title(f"Original Positions for Area Code: {area_code}")  # type: ignore
-        plt.xlabel("Original Longitude")  # type: ignore
-        plt.ylabel("Original Latitude")  # type: ignore
-
-        plt.subplot(1, 2, 2)  # type: ignore
-        plt.scatter(  # type: ignore
-            area_result_df["x"],
-            area_result_df["y"],
-            c=area_result_df["attribute"].to_numpy(),
-            cmap="tab10",
-            s=50,
-            alpha=0.7,
-        )
-        plt.title(  # type: ignore
-            f"Final Positions after Random Distribution for Area Code: {area_code}"
-        )
-        plt.xlabel("Final Longitude")
-        plt.ylabel("Final Latitude")
-
-        plt.tight_layout()
-        plt.show()
+    # Convert to Pandas Dataframe to avoid "geometry" warnings
+    output = pd.DataFrame(coords_with_area)
+    output["geometry"] = coords_with_area["geometry"].apply(lambda x: x.wkt)  # type: ignore
+    return pl.LazyFrame(output)

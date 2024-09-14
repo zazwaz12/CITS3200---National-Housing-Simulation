@@ -1,4 +1,5 @@
 import argparse
+from typing import Literal
 
 from debugpy.public_api import configure
 import geopandas as gpd
@@ -19,20 +20,19 @@ from loguru import logger
 config = nhs.config
 geography = nhs.data.geography
 read_parquet = nhs.data.read_parquet
-parallel_map = nhs.utils.parallel.parallel_map
 join_coords_with_area = nhs.data.join_coords_with_area
 
 
 
-def main(config_path: str) -> None:
+def main(config_path: str, strategy: Literal["join_nearest", "filter"] | None) -> None:
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
     try:
         data_config = config.data_config(config_path)
         logger_config = config.logger_config(config_path)
-    except Exception:
-        logger.critical(f"Failed to load configuration at {config_path}, terminating...")
+    except Exception as e:
+        logger.critical(f"Failed to load configuration at {config_path} with exception {e}, terminating...")
         exit(1)
     logger.enable("nhs")
     nhs.logging.config_logger(logger_config)
@@ -47,24 +47,14 @@ def main(config_path: str) -> None:
     house_coords = geography.to_geo_dataframe(houses_df, data_config["crs"])
     
     logger.info(f"Reading from {data_config['shapefile_path']}...")
-    area_polygons: gpd.GeoDataFrame = gpd.read_file(data_config["shapefile_path"]).to_crs(house_coords.crs)
+    area_polygons: gpd.GeoDataFrame = geography.read_shapefile(data_config["shapefile_path"], data_config["crs"])
 
     logger.info("Joining areas with points...")
-    final_result = join_coords_with_area(house_coords, area_polygons)
-
-    have_unassigned_point = np.any(final_result.select(pl.col("area", "area_code").is_null().any()).collect().to_numpy())
-    # Check if any points were not assigned to an SA1 area 
-    if have_unassigned_point:
-        logger.warning(
-            "Some points were not assigned to an SA1 area even after nearest join. Please check your data."  # noqa: E501
-        )
-    missing_area_count =  final_result.select(pl.col("area").is_null().sum()).collect().item()
-    logger.info(f"Number of missing values in the 'area' column: {missing_area_count}")
+    joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
 
     # joins output from area-point mapping to orignial data
-    houses_with_areas = houses_df.join(final_result, on=["LONGITUDE", "LATITUDE"], how="left") # type: ignore
-    output_csv_path = os.path.join(data_config["output_path"], "house_data_with_areas")
-    houses_with_areas.sink_csv(output_csv_path)
+    output_csv_path = os.path.join(data_config["output_path"], "house_data_with_areas.csv")
+    joined_coords.sink_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
 
 
@@ -77,7 +67,10 @@ if __name__ == "__main__":
         "-c", "--config_path", type=str, help="Path to the configuration YAML file",
         default="configurations.yml"
     )
+    parser.add_argument(
+        "-s", "--strategy", type=str, help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken.",
+    )
     # TODO: extend to work with multiple files
     args = parser.parse_args()
 
-    main(args.config_path)
+    main(args.config_path, args.strategy)
