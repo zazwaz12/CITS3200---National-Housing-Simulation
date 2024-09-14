@@ -1,3 +1,4 @@
+from .category_system import category_for_age_and_gender, category_system
 from .filter import filter_sa1_regions
 from .handling import (
     read_csv,
@@ -5,10 +6,6 @@ from .handling import (
     read_spreadsheets,
     read_xlsx,
     standardize_names,
-)
-from .category_system import (
-    category_system,
-    category_for_age_and_gender
 )
 
 __all__ = [
@@ -19,5 +16,5 @@ __all__ = [
     "standardize_names",
     "filter_sa1_regions",
     "category_system",
-    "category_for_age_and_gender"
+    "category_for_age_and_gender",
 ]
