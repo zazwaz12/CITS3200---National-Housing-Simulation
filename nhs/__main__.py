@@ -3,12 +3,8 @@ Ran when nhs is used as a standalone module
 """
 
 from loguru import logger
-from yaml import safe_load
-
-from nhs.utils.logging import config_logger
-
-with open("configurations.yml", "r") as f:
-    configurations = safe_load(f)
+from .config import logger_config
+from .logging import config_logger
 
 logger.enable("nhs")
-config_logger(configurations)
+config_logger(logger_config())

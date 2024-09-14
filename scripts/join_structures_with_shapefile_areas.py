@@ -1,5 +1,6 @@
 import argparse
 
+from debugpy.public_api import configure
 import geopandas as gpd
 import polars as pl
 from fiona.drvsupport import supported_drivers
@@ -8,12 +9,18 @@ import numpy as np
 import os
 
 from context import nhs
+from nhs.data.geography import join_coords_with_area
+
+from loguru import logger
+
+
+
 
 config = nhs.config
 geography = nhs.data.geography
 read_parquet = nhs.data.read_parquet
 parallel_map = nhs.utils.parallel.parallel_map
-join_areas_with_points = nhs.data.join_areas_with_points
+join_coords_with_area = nhs.data.join_coords_with_area
 
 
 
@@ -23,10 +30,12 @@ def main(config_path: str) -> None:
 
     try:
         data_config = config.data_config(config_path)
-        simulation_config = config.simulation_config(config_path)
+        logger_config = config.logger_config(config_path)
     except Exception:
         logger.critical(f"Failed to load configuration at {config_path}, terminating...")
         exit(1)
+    logger.enable("nhs")
+    nhs.logging.config_logger(logger_config)
         
     # TODO: REMOVE hardcoding
     logger.info(f"Reading from {data_config['gnaf_path']}/TAS_ADDRESS_DEFAULT_GEOCODE_psv.parquet...")
@@ -35,15 +44,13 @@ def main(config_path: str) -> None:
         logger.critical(f"Failed to load CSV file at {data_config["gnaf_path"]}, terminating...")
         exit(1)
     logger.info("Converting to GeoDataFrame...")
-    gdf = geography.to_geo_dataframe(houses_df, data_config["crs"])
+    house_coords = geography.to_geo_dataframe(houses_df, data_config["crs"])
     
     logger.info(f"Reading from {data_config['shapefile_path']}...")
-    map_data: gpd.GeoDataFrame = gpd.read_file(data_config["shapefile_path"]).to_crs(gdf.crs)
+    area_polygons: gpd.GeoDataFrame = gpd.read_file(data_config["shapefile_path"]).to_crs(house_coords.crs)
 
-    logger.info(f"Joining areas with points using {simulation_config['num_cores']} cores...")
-    chunks = np.array_split(gdf, simulation_config["num_cores"])
-    final_result = parallel_map(chunks, lambda chunk: join_areas_with_points(chunk, map_data), simulation_config["num_cores"]) # type: ignore
-    final_result = pl.concat(final_result)
+    logger.info("Joining areas with points...")
+    final_result = join_coords_with_area(house_coords, area_polygons)
 
     have_unassigned_point = np.any(final_result.select(pl.col("area", "area_code").is_null().any()).collect().to_numpy())
     # Check if any points were not assigned to an SA1 area 
@@ -56,8 +63,8 @@ def main(config_path: str) -> None:
 
     # joins output from area-point mapping to orignial data
     houses_with_areas = houses_df.join(final_result, on=["LONGITUDE", "LATITUDE"], how="left") # type: ignore
-    output_csv_path = data_config["output_path"]
-    houses_with_areas.collect().write_csv(os.path.join(output_csv_path, "houses_with_areas.csv"))
+    output_csv_path = os.path.join(data_config["output_path"], "house_data_with_areas")
+    houses_with_areas.sink_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
 
 

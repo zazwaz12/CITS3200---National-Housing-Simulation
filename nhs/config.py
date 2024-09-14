@@ -27,3 +27,10 @@ def simulation_config(config_path: str = "configurations.yml") -> dict[str, Any]
     Parse a YAML configuration file at `config_path` and return the simulation settings as a dictionary.
     """
     return parse_config(config_path)["simulation"]
+
+
+def logger_config(config_path: str = "configurations.yml") -> dict[str, Any]:
+    """
+    Parse a YAML configuration file at `config_path` and return the logger settings as a dictionary.
+    """
+    return parse_config(config_path)["logger"]

@@ -8,7 +8,7 @@ from .handling import (
     read_parquet,
     get_spreadsheet_reader,
 )
-from .geography import assign_coordinates, join_areas_with_points
+from .geography import assign_coordinates, join_coords_with_area
 
 __all__ = [
     "read_spreadsheets",
@@ -18,7 +18,7 @@ __all__ = [
     "standardize_names",
     "filter_sa1_regions",
     "assign_coordinates",
-    "join_areas_with_points",
+    "join_coords_with_area",
     "read_parquet",
     "get_spreadsheet_reader",
 ]
