@@ -4,8 +4,8 @@ from .handling import (
     read_psv,
     read_spreadsheets,
     read_xlsx,
+    specify_row_to_be_header,
     standardize_names,
-    specify_row_to_be_header
 )
 
 __all__ = [
@@ -15,5 +15,5 @@ __all__ = [
     "read_xlsx",
     "standardize_names",
     "filter_sa1_regions",
-    "specify_row_to_be_header"
+    "specify_row_to_be_header",
 ]
