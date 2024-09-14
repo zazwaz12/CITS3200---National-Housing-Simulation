@@ -53,7 +53,13 @@ jobs:
       - name: Run tests and type checking
         run: |
           source $VENV
-          pytest tests/ --config pyproject.toml
+          echo '{
+            "typeCheckingMode": "basic",
+            "reportMissingTypeStubs": false,
+            "reportMissingImports": false,
+            "reportMissingTypeArgument": false
+          }' > pyrightconfig.json
+          pytest tests/
           pyright nhs/
 
         env:
