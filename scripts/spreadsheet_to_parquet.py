@@ -11,9 +11,12 @@ from context import nhs
 from loguru import logger
 from tqdm import tqdm
 
+from nhs.config import logger_config
+
 # Utility functions for file listing and reading spreadsheets
 list_files = nhs.utils.path.list_files
 get_reader = nhs.data.handling.get_spreadsheet_reader
+logger_config = nhs.config.logger_config
 
 
 @logger.catch()
@@ -38,7 +41,16 @@ def save_parquet(path: str, input_dir: str, output_dir: str):
     df.collect().write_parquet(output_file_path)
 
 
-def convert_to_parquet(input: str, output: str):
+def convert_to_parquet(input: str, output: str, config_path: str):
+    logger.enable("nhs")
+    try:
+        nhs.logging.config_logger(logger_config(config_path))
+    except Exception as e:
+        logger.critical(
+            f"Failed to load configuration at {config_path} with exception {e}, terminating..."
+        )
+        exit(1)
+
     # Filter for supported spreadsheet files
     paths = list_files(input)
     paths = filter(lambda x: x.endswith((".xlsx", ".xls", ".csv", ".psv")), paths)
@@ -66,10 +78,17 @@ def main():
         type=str,
         help="Path to the output directory where Parquet files will be saved.",
     )
+    parser.add_argument(
+        "-c",
+        "--config_path",
+        type=str,
+        help="Path to the configuration YAML file",
+        default="configurations.yml",
+    )
 
     # Execute conversion
     args = parser.parse_args()
-    convert_to_parquet(args.input, args.output)
+    convert_to_parquet(args.input, args.output, args.config_path)
 
 
 if __name__ == "__main__":

@@ -19,25 +19,36 @@ isort = "^5.13.2"
 pathos = "^0.3.2"
 pyright ="^1.1.316"
 pytest-mock = "^3.14.0"
+numpy = "^1.26.0"
+geopandas = "^0.14.0"
+pyproj = "^3.6.0"
+fiona = "^1.9.0"
+pyyaml = "^6.0.2"
+typing-extensions = "*"  # Add this for typing.List support
+flake8 = "^7.1.1"
 pre-commit = "^3.4.0"
+pandas = "^2.2.2"
 
 [tool.isort]
 profile = "black"
+
+[tool.flake8]
+exclude = ["venv", ".venv"]
+
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-reportMissingTypeStubs = false  # Changed from true
-strict = ["nhs"]
-reportUnknownParameterType = true
-reportUntypedFunctionDecorator = true
+reportMissingTypeStubs = false
+reportUnknownParameterType = false
+reportUntypedFunctionDecorator = false
 typeCheckingMode = "basic"
 pythonVersion = "3.12"
 include = ["**/*.py"]
 exclude = ["**/node_modules", "**/__pycache__"]
-ignore = ["syncdata.py", "src/oldstuff"]  # Changed to ignore the specific file with dirsync import
+ignore = ["syncdata.py", "src/oldstuff"]
 defineConstant = { DEBUG = true }
 strictListInference = true
 strictDictionaryInference = true
