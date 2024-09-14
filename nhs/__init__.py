@@ -1,6 +1,6 @@
 from loguru import logger
 
-from . import data, utils, config, logging
+from . import config, data, logging, utils
 
 logger.disable("nhs")
 

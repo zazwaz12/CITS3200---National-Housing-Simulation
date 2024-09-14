@@ -1,7 +1,8 @@
 import geopandas as gpd
 import polars as pl
-from shapely.geometry import Point, Polygon
 from pytest_mock import MockerFixture
+from shapely.geometry import Point, Polygon
+
 from ..context import nhs
 
 join_coords_with_area = nhs.data.geography.join_coords_with_area
