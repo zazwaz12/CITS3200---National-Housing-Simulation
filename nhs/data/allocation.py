@@ -1,8 +1,10 @@
 from functools import reduce
 import polars as pl
 from loguru import logger
+from ..logging import log_entry_exit
 
 
+@log_entry_exit()
 def join_census_with_coords(
     census: pl.LazyFrame,
     coords: pl.LazyFrame,
@@ -70,6 +72,7 @@ def join_census_with_coords(
     )
 
 
+@log_entry_exit()
 def sample_census_feature(
     census: pl.LazyFrame, code_col: str, long_col: str, lat_col: str, feature_col: str
 ):
@@ -142,6 +145,7 @@ def sample_census_feature(
     )
 
 
+@log_entry_exit()
 def _get_feat_non_feat_cols(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
     """
     Get list of feature and non-feature columns from two LazyFrames.
@@ -156,6 +160,7 @@ def _get_feat_non_feat_cols(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
     return feature_cols, non_feat_cols
 
 
+@log_entry_exit()
 def _join_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
     """
     Join two LazyFrames with sampled census features and coalesce the feature columns.
@@ -167,6 +172,7 @@ def _join_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
     ).with_columns(pl.col(*feat_cols).fill_null(False))
 
 
+@log_entry_exit()
 def _stack_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
     """
     Vertically stack two LazyFrames with sampled census features, uniting shared columns.
@@ -178,6 +184,7 @@ def _stack_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame)
     )
 
 
+@log_entry_exit()
 def randomly_assign_census_features(
     census: pl.LazyFrame,
     code_col: str,
@@ -185,6 +192,8 @@ def randomly_assign_census_features(
     lat_col: str,
     feature_cols: list[str],
     index_col: str = "person_id",
+    ignore_total: bool = True,
+    total_prefix: str = "Tot_",
 ):
     """
     Randomly assign census features to the GNAF coordinates.
@@ -206,6 +215,12 @@ def randomly_assign_census_features(
         individuals with that feature for a particular code in `code_col`.
     index_col : str
         Column name to assign the row index to.
+    ignore_total : bool
+        Whether to ignore columns that start with `total_prefix` indicating the
+        total count for a row.
+    total_prefix : str
+        Prefix used to identify columns that are totals, only used if `ignore_total`
+        is `True`. Defaults to "Tot_".
 
     Returns
     -------
@@ -252,6 +267,11 @@ def randomly_assign_census_features(
     │ 36        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
     └───────────┴──────────┴──────────┴─────────┴───────────┴───────────┴───────────┘
     """
+    if ignore_total:
+        census = census.select(
+            [col for col in census.collect_schema() if not col.startswith(total_prefix)]
+        )
+
     sampled_features = [
         sample_census_feature(census, code_col, long_col, lat_col, feat_col)
         for feat_col in feature_cols

@@ -15,7 +15,7 @@ logging:
 # Paths to data files and resources
 data:
   # Path to the census data files
-  census_path: "./DataFiles/AppStaging/census"
+  census_path: "./DataFiles/AppStaging/census/2021 Census GCP All Geographies for AUS/SA1/AUS"
   # Path folder containing the GNAF (Geocoded National Address File) data
   gnaf_path: "./DataFiles/AppStaging/Standard/"
   # Path to the shapefile used for geospatial analysis
@@ -34,11 +34,14 @@ data:
   sa1_area_code_column: "SA1_CODE21"
 
 simulation:
-  # Number of CPU cores to use for parallel processing
-  num_cores: 4
-  # Number of iterations to run for analysis or simulations
-  num_iterations: 10
-  # FALSE to skip random distribution
-  enable_random_distribution: false
+  # List of census features to be used in the simulation
+  census_features:
+    - "Age_0_4_yr_M"
+    - "Age_0_4_yr_F"
+    - "Age_0_4_yr_P"
+    - "Age_5_14_yr_M"
+    - "Age_5_14_yr_F"
+    - "Age_5_14_yr_P"
+    - "Age_15_19_yr_M"
   # FALSE to skip visualization
   enable_visualization: false

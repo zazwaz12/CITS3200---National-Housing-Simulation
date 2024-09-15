@@ -6,7 +6,10 @@ import polars as pl
 from loguru import logger
 from pyproj import CRS
 
+from ..logging import log_entry_exit
 
+
+@log_entry_exit()
 def to_geo_dataframe(
     lf: pl.LazyFrame,
     crs: str,
@@ -64,6 +67,7 @@ def read_shapefile(shapefile_dir: str, crs: str) -> gpd.GeoDataFrame:
     return gpd.read_file(shapefile_dir).to_crs(CRS.from_string(crs))  # type: ignore
 
 
+@log_entry_exit()
 def _failed_join_strategy(
     unmapped_coords: pd.Series,  # type: ignore
     coords_with_area: gpd.GeoDataFrame,
@@ -92,6 +96,7 @@ def _failed_join_strategy(
     return coords_with_area
 
 
+@log_entry_exit()
 def join_coords_with_area(
     coords: gpd.GeoDataFrame,
     area_polygons: gpd.GeoDataFrame,
