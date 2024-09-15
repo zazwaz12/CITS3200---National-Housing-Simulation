@@ -84,6 +84,7 @@ def main(
     )
     logger.debug(allocated.explain(streaming=True))
     allocated.collect().write_csv(out_path)
+    logger.info(f"Allocation complete, saved to {out_path}")
 
 
 if __name__ == "__main__":
