@@ -264,4 +264,4 @@ class TestRandomlyAssignCensusFeatures:
         # Assertions
         assert isinstance(result, pl.LazyFrame)
         collected_result = result.collect()
-        assert collected_result.shape == (0, 5)
+        assert collected_result.shape == (0, 6)

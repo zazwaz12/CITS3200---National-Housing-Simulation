@@ -128,11 +128,11 @@ def sample_census_feature(
     """
     if census.select(pl.len()).collect().item() == 0:
         logger.warning("Empty census data provided.")
-        return census
+        return census.select(pl.col(code_col, long_col, lat_col, feature_col))
 
     return (
         census.select(
-            pl.col(code_col, feature_col, long_col, lat_col)
+            pl.col(code_col, long_col, lat_col, feature_col)
             # repeat (long, lat) to ensure num coordinates is bigger than sample size
             .repeat_by(pl.col(feature_col)).flatten()
         )
