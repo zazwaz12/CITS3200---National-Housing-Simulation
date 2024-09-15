@@ -1,11 +1,12 @@
 import argparse
 import os
-from fiona.drvsupport import supported_drivers
+from typing import Literal
+
 import geopandas as gpd
-from loguru import logger
 import polars as pl
 from context import nhs
-from typing import Literal
+from fiona.drvsupport import supported_drivers
+from loguru import logger
 
 from nhs.config import simulation_config
 

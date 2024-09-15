@@ -2,9 +2,9 @@ import argparse
 import os
 from typing import Literal
 
-from attr.validators import in_
 import geopandas as gpd
 import polars as pl
+from attr.validators import in_
 from context import nhs
 from fiona.drvsupport import supported_drivers
 from loguru import logger
@@ -17,7 +17,12 @@ read_parquet = nhs.data.read_parquet
 join_coords_with_area = nhs.data.join_coords_with_area
 
 
-def main(config_path: str, in_fname: str, out_fname: str, strategy: Literal["join_nearest", "filter"] | None) -> None:
+def main(
+    config_path: str,
+    in_fname: str,
+    out_fname: str,
+    strategy: Literal["join_nearest", "filter"] | None,
+) -> None:
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
@@ -34,9 +39,7 @@ def main(config_path: str, in_fname: str, out_fname: str, strategy: Literal["joi
 
     # TODO: REMOVE hardcoding
     in_path = os.path.join(data_config["gnaf_path"], in_fname)
-    logger.info(
-        f"Reading from {in_path}..."
-    )
+    logger.info(f"Reading from {in_path}...")
     houses_df = read_parquet(in_path)
     if not isinstance(houses_df, pl.LazyFrame):
         logger.critical(
@@ -56,9 +59,7 @@ def main(config_path: str, in_fname: str, out_fname: str, strategy: Literal["joi
     joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
 
     # joins output from area-point mapping to orignial data
-    output_csv_path = os.path.join(
-        data_config["output_path"], out_fname
-    )
+    output_csv_path = os.path.join(data_config["output_path"], out_fname)
     joined_coords.sink_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
 

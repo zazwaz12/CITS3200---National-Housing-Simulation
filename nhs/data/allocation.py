@@ -1,6 +1,8 @@
 from functools import reduce
+
 import polars as pl
 from loguru import logger
+
 from ..logging import log_entry_exit
 
 
