@@ -1,5 +1,6 @@
 from functools import reduce
 import polars as pl
+from loguru import logger
 
 
 def join_census_with_coords(
@@ -14,6 +15,10 @@ def join_census_with_coords(
     Only rows with matching values in `left_code_col` and `right_code_col` of `census` and `coords`
     respectively will be included in the output.
 
+    **Note**: If `left_code_col` and `right_code_col` have different data types, then `left_code_col`
+    in `census` will be type-casted to the data type of `right_code_col` in `coords`. Output will
+    also use `left_code_col` if `left_code_col` and `right_code_col` have different names.
+
     Parameters
     ----------
     census : pl.LazyFrame
@@ -24,6 +29,37 @@ def join_census_with_coords(
         The column in the census dataframe to join on.
     right_code_col : str
         The column in the gnaf coordinate dataframe to join on.
+
+    Returns
+    -------
+    pl.LazyFrame
+        A LazyFrame containing the column `right_code_col` and the rest of the columns
+        from `census` and `coords`.
+
+    Examples
+    --------
+    >>> census = pl.LazyFrame({
+    ...     "CODE_2021": ["123", "45", "3"],
+    ...     "feature1": [24, 65, 234]
+    ... })
+    >>> coords = pl.LazyFrame({
+    ...     "CODE21": [123, 45, 3],
+    ...     "longitude": [134.56, 456.12, 21.124],
+    ...     "latitude": [-34.56, -23.12, 12.124],
+    ... })
+    >>> join_census_with_coords(
+    ...     census, coords, left_code_col="CODE_2021", right_code_col="CODE21"
+    ... ).collect()
+        shape: (3, 4)
+        ┌───────────┬──────────┬───────────┬──────────┐
+        │ CODE_2021 ┆ feature1 ┆ longitude ┆ latitude │
+        │ ---       ┆ ---      ┆ ---       ┆ ---      │
+        │ i64       ┆ i64      ┆ f64       ┆ f64      │
+        ╞═══════════╪══════════╪═══════════╪══════════╡
+        │ 123       ┆ 24       ┆ 134.56    ┆ -34.56   │
+        │ 45        ┆ 65       ┆ 456.12    ┆ -23.12   │
+        │ 3         ┆ 234      ┆ 21.124    ┆ 12.124   │
+        └───────────┴──────────┴───────────┴──────────┘
     """
     census_type_casted = census.with_columns(
         pl.col(left_code_col).cast(coords.collect_schema()[right_code_col])
@@ -64,9 +100,39 @@ def sample_census_feature(
 
     Examples
     --------
+    >>> census = pl.LazyFrame({
+    ...     "code_col": ["A", "A", "A", "B"],
+    ...     "long_col": [1.0, 2.0, 3.0, 4.0],
+    ...     "lat_col": [10.0, 20.0, 30.0, 40.0],
+    ...     "feature_col": [4, 4, 4, 2],
+    ... })
+    >>> sample_census_feature(
+    ...     census, "code_col", "long_col", "lat_col", "feature_col"
+    ... ).collect()
+    shape: (6, 4)
+    ┌──────────┬─────────────┬──────────┬─────────┐
+    │ code_col ┆ feature_col ┆ long_col ┆ lat_col │
+    │ ---      ┆ ---         ┆ ---      ┆ ---     │
+    │ str      ┆ bool        ┆ f64      ┆ f64     │
+    ╞══════════╪═════════════╪══════════╪═════════╡
+    │ A        ┆ true        ┆ 1.0      ┆ 10.0    │
+    │ A        ┆ true        ┆ 1.0      ┆ 10.0    │
+    │ A        ┆ true        ┆ 2.0      ┆ 20.0    │
+    │ A        ┆ true        ┆ 3.0      ┆ 30.0    │
+    │ B        ┆ true        ┆ 4.0      ┆ 40.0    │
+    │ B        ┆ true        ┆ 4.0      ┆ 40.0    │
+    └──────────┴─────────────┴──────────┴─────────┘
     """
+    if census.select(pl.len()).collect().item() == 0:
+        logger.warning("Empty census data provided.")
+        return census
+
     return (
-        census.select(pl.col(code_col, feature_col, long_col, lat_col))
+        census.select(
+            pl.col(code_col, feature_col, long_col, lat_col)
+            # repeat (long, lat) to ensure num coordinates is bigger than sample size
+            .repeat_by(pl.col(feature_col)).flatten()
+        )
         .filter(
             pl.int_range(pl.len()).shuffle().over(code_col) < pl.col(feature_col)
         )  # sample N rows
@@ -149,12 +215,50 @@ def randomly_assign_census_features(
         a combination of the `feature_cols` columns. Each row in the columns `feature_cols`
         is a **one-hot encoded** value (`True` or `False` indicating the presence of a
         feature for the corresponding `[code_col, long_col, lat_col]`.
+
+    Examples
+    --------
+    >>> census = pl.LazyFrame({
+    ...     "code_col": ["A", "A", "B", "B"],
+    ...     "long_col": [1.0, 1.1, 2.0, 2.1],
+    ...     "lat_col": [1.0, 1.1, 2.0, 2.1],
+    ...     "feature_1": [7, 7, 12, 12],
+    ...     "feature_2": [3, 3, 4, 4],
+    ...     "feature_3": [5, 5, 6, 6],
+    ... })
+    >>> randomly_assign_census_features(
+    ...     census,
+    ...     code_col="code_col",
+    ...     long_col="long_col",
+    ...     lat_col="lat_col",
+    ...     feature_cols=["feature_1", "feature_2", "feature_3"],
+    ... ).collect()
+    shape: (37, 7)
+    ┌───────────┬──────────┬──────────┬─────────┬───────────┬───────────┬───────────┐
+    │ person_id ┆ code_col ┆ long_col ┆ lat_col ┆ feature_1 ┆ feature_2 ┆ feature_3 │
+    │ ---       ┆ ---      ┆ ---      ┆ ---     ┆ ---       ┆ ---       ┆ ---       │
+    │ i64       ┆ str      ┆ f64      ┆ f64     ┆ bool      ┆ bool      ┆ bool      │
+    ╞═══════════╪══════════╪══════════╪═════════╪═══════════╪═══════════╪═══════════╡
+    │ 0         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
+    │ 1         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
+    │ 2         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
+    │ 3         ┆ A        ┆ 1.1      ┆ 1.1     ┆ true      ┆ false     ┆ false     │
+    │ 4         ┆ A        ┆ 1.1      ┆ 1.1     ┆ true      ┆ false     ┆ false     │
+    │ …         ┆ …        ┆ …        ┆ …       ┆ …         ┆ …         ┆ …         │
+    │ 32        ┆ B        ┆ 2.0      ┆ 2.0     ┆ false     ┆ false     ┆ true      │
+    │ 33        ┆ B        ┆ 2.0      ┆ 2.0     ┆ false     ┆ false     ┆ true      │
+    │ 34        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
+    │ 35        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
+    │ 36        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
+    └───────────┴──────────┴──────────┴─────────┴───────────┴───────────┴───────────┘
     """
     sampled_features = [
         sample_census_feature(census, code_col, long_col, lat_col, feat_col)
         for feat_col in feature_cols
     ]
     joined = reduce(_stack_sampled_census_features, sampled_features)
-    return joined.select(
-        pl.col(code_col, long_col, lat_col, *feature_cols)
-    ).with_row_index(index_col)
+    return joined.with_columns(
+        pl.int_range(pl.len()).alias(index_col)  # assign row index
+    ).select(
+        pl.col(index_col, code_col, long_col, lat_col, *feature_cols)
+    )  # reassign column order
