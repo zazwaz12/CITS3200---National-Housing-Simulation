@@ -4,7 +4,7 @@ Utility functions for working with file paths
 
 import os
 
-from nhs.utils.logging import log_entry_exit
+from ..logging import log_entry_exit
 
 
 @log_entry_exit()
