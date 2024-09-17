@@ -196,3 +196,62 @@ def standardize_names(
         value = df_dict[key].rename(result_dict[key])
         df_dict[key] = value
     return df_dict
+
+
+def specify_row_to_be_header(row: int, df: pl.LazyFrame) -> pl.LazyFrame:
+    """
+    Specify a row to be the header of a LazyFrame and rename columns using the original headers.
+
+    This function sets the specified row of a LazyFrame as the new header by collecting the row values,
+    slicing the LazyFrame to exclude the new header row, and renaming the columns using the original headers.
+
+    Parameters
+    ----------
+    row : int
+        The index of the row to be used as the new header. Zero-based indexing is used.
+    df : pl.LazyFrame
+        The LazyFrame from which the new header is to be set.
+
+    Returns
+    -------
+    pl.LazyFrame
+        A new LazyFrame with the specified row set as the header and columns renamed accordingly.
+
+    Raises
+    ------
+    IndexError
+        If the specified `row` index is out of bounds.
+
+    Notes
+    -----
+    - This function first collects the specified row to use its values as column names.
+    - It slices the LazyFrame to start from the row immediately after the new header row and renames the columns using the original column names.
+    - The new header row is printed to the console.
+
+    Examples
+    --------
+    >>> df = pl.LazyFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]})
+    >>> specify_row_to_be_header(1, df).collect()
+    shape: (1, 3)
+    ┌─────┬─────┬─────┐
+    │ 2   │ 5   │ 8   │
+    │ --- │ --- │ --- │
+    │ i64 │ i64 │ i64 │
+    ╞═════╪═════╪═════│
+    │  3  │  6  │  9  │
+    └─────┴─────┴─────┘
+
+    The new header will be printed to the console:
+    (2, 5, 8)
+    """
+    df_collected = df.collect()
+    if row < 0 or row >= len(df_collected):
+        raise IndexError(
+            f"Row index {row} is out of bounds. Valid indices are from 0 to {len(df_collected) - 1}."
+        )
+    new_header = df.collect().row(row)
+    new_header = [str(name) for name in new_header]
+    new_df = df.slice(row + 1).rename(
+        {original_name: new for original_name, new in zip(df.columns, new_header)}
+    )
+    return new_df.lazy()
