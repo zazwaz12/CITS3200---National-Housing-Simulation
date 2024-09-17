@@ -2,8 +2,8 @@ import re
 
 import polars as pl
 
+from nhs.data.handling import read_xlsx, specify_row_to_be_header
 from nhs.logging import log_entry_exit
-from nhs.data.handling import specify_row_to_be_header, read_xlsx
 
 
 @log_entry_exit(level="INFO")
@@ -47,19 +47,19 @@ def category_system(category_required: str, data_pack_file: pl.LazyFrame):
 
     def is_valid_category_list(categories):
         return (
-                len(categories) == 3
-                and re.search(gender_pattern, categories[0], re.IGNORECASE)
-                and re.search(age_op_pattern, categories[1], re.IGNORECASE)
-                and re.search(age_value_pattern, categories[2])
+            len(categories) == 3
+            and re.search(gender_pattern, categories[0], re.IGNORECASE)
+            and re.search(age_op_pattern, categories[1], re.IGNORECASE)
+            and re.search(age_value_pattern, categories[2])
         )
 
     def is_valid_marital_category_list(categories):
         return (
-                len(categories) == 4
-                and re.search(marital_status_pattern, categories[0], re.IGNORECASE)
-                and re.search(gender_pattern, categories[1], re.IGNORECASE)
-                and re.search(age_op_pattern, categories[2], re.IGNORECASE)
-                and re.search(age_value_pattern, categories[3])
+            len(categories) == 4
+            and re.search(marital_status_pattern, categories[0], re.IGNORECASE)
+            and re.search(gender_pattern, categories[1], re.IGNORECASE)
+            and re.search(age_op_pattern, categories[2], re.IGNORECASE)
+            and re.search(age_value_pattern, categories[3])
         )
 
     if is_valid_category_list(categories_list):
@@ -80,7 +80,7 @@ def category_system(category_required: str, data_pack_file: pl.LazyFrame):
                 categories_list[1],
                 categories_list[2].lower(),
                 int(categories_list[3]),
-                categories_list[0].lower()
+                categories_list[0].lower(),
             )
             .collect()["Long"]
             .to_list()
@@ -92,7 +92,11 @@ def category_system(category_required: str, data_pack_file: pl.LazyFrame):
 
 
 def category_for_age_and_gender(
-        data_pack_file: pl.LazyFrame, gender: str, comparison_operator: str, age: int, marital_status: str = 'None'
+    data_pack_file: pl.LazyFrame,
+    gender: str,
+    comparison_operator: str,
+    age: int,
+    marital_status: str = "None",
 ) -> pl.LazyFrame:
     """
     Filters a `LazyFrame` based on gender and age criteria.
@@ -178,16 +182,14 @@ def category_for_age_and_gender(
         )
     )
 
-    if marital_status != 'None':
+    if marital_status != "None":
         filtered_lf = filtered_lf.filter(
             pl.col("Columnheadingdescriptioninprofile")
             .str.to_lowercase()
             .str.contains(f"\\b{marital_status}")
         )
     else:
-        filtered_lf = filtered_lf.filter(
-            pl.col("Long").str.contains("Age")
-        )
+        filtered_lf = filtered_lf.filter(pl.col("Long").str.contains("Age"))
 
     filtered_lf = filtered_lf.select(
         [
