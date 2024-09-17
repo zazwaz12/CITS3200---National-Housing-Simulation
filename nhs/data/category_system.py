@@ -2,7 +2,7 @@ import re
 
 import polars as pl
 
-from nhs.utils.logging import log_entry_exit
+from nhs.logging import log_entry_exit
 from nhs.data.handling import specify_row_to_be_header, read_xlsx
 
 
@@ -92,7 +92,7 @@ def category_system(category_required: str, data_pack_file: pl.LazyFrame):
 
 
 def category_for_age_and_gender(
-        data_pack_file: pl.LazyFrame, gender: str, comparison_operator: str, age: int, marital_status: str = None
+        data_pack_file: pl.LazyFrame, gender: str, comparison_operator: str, age: int, marital_status: str = 'None'
 ) -> pl.LazyFrame:
     """
     Filters a `LazyFrame` based on gender and age criteria.
@@ -178,7 +178,7 @@ def category_for_age_and_gender(
         )
     )
 
-    if marital_status:
+    if marital_status != 'None':
         filtered_lf = filtered_lf.filter(
             pl.col("Columnheadingdescriptioninprofile")
             .str.to_lowercase()
@@ -200,9 +200,9 @@ def category_for_age_and_gender(
     return filtered_lf
 
 
-if __name__ == "__main__":
-    path_to_xlsx_file = 'C:/Users/IamNo/Desktop/DataFiles/FilesIn/census/Metadata/Metadata_2021_GCP_DataPack_R1_R2.xlsx'
-    df = read_xlsx(path_to_xlsx_file, 0)
-    new_df = df['Cell Descriptors Information']
-    better_df = specify_row_to_be_header(2, new_df)
-    print(category_system("widowed_female_over_30", better_df))
+# if __name__ == "__main__":
+#     path_to_xlsx_file = 'C:/Users/IamNo/Desktop/DataFiles/FilesIn/census/Metadata/Metadata_2021_GCP_DataPack_R1_R2.xlsx'
+#     df = read_xlsx(path_to_xlsx_file, 0)
+#     new_df = df['Cell Descriptors Information']
+#     better_df = specify_row_to_be_header(2, new_df)
+#     print(category_system("female_over_30", better_df))
