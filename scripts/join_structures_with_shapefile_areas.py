@@ -3,10 +3,9 @@ import os
 from typing import Literal
 
 import geopandas as gpd
-import numpy as np
 import polars as pl
+from attr.validators import in_
 from context import nhs
-from debugpy.public_api import configure
 from fiona.drvsupport import supported_drivers
 from loguru import logger
 
@@ -18,7 +17,12 @@ read_parquet = nhs.data.read_parquet
 join_coords_with_area = nhs.data.join_coords_with_area
 
 
-def main(config_path: str, strategy: Literal["join_nearest", "filter"] | None) -> None:
+def main(
+    config_path: str,
+    in_fname: str,
+    out_fname: str,
+    strategy: Literal["join_nearest", "filter"] | None,
+) -> None:
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
@@ -34,17 +38,15 @@ def main(config_path: str, strategy: Literal["join_nearest", "filter"] | None) -
     nhs.logging.config_logger(logger_config)
 
     # TODO: REMOVE hardcoding
-    logger.info(
-        f"Reading from {data_config['gnaf_path']}/TAS_ADDRESS_DEFAULT_GEOCODE_psv.parquet..."
-    )
-    houses_df = read_parquet(
-        f"{data_config["gnaf_path"]}/TAS_ADDRESS_DEFAULT_GEOCODE_psv.parquet"
-    )
+    in_path = os.path.join(data_config["gnaf_path"], in_fname)
+    logger.info(f"Reading from {in_path}...")
+    houses_df = read_parquet(in_path)
     if not isinstance(houses_df, pl.LazyFrame):
         logger.critical(
-            f"Failed to load CSV file at {data_config["gnaf_path"]}, terminating..."
+            f"Failed to load file at {data_config["gnaf_path"]}, terminating..."
         )
         exit(1)
+
     logger.info("Converting to GeoDataFrame...")
     house_coords = geography.to_geo_dataframe(houses_df, data_config["crs"])
 
@@ -57,9 +59,7 @@ def main(config_path: str, strategy: Literal["join_nearest", "filter"] | None) -
     joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
 
     # joins output from area-point mapping to orignial data
-    output_csv_path = os.path.join(
-        data_config["output_path"], "house_data_with_areas.csv"
-    )
+    output_csv_path = os.path.join(data_config["output_path"], out_fname)
     joined_coords.sink_csv(output_csv_path)
     logger.info(f"CSV file saved to: {output_csv_path}")
 
@@ -67,6 +67,19 @@ def main(config_path: str, strategy: Literal["join_nearest", "filter"] | None) -
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Process house data and assign SA1 areas."
+    )
+    parser.add_argument(
+        "-i",
+        "--input_fname",
+        type=str,
+        help="Name of the input GNAF address geocode parquet file, e.g. 'TAS_ADDRESS_DEFAULT_GEOCODE_psv.parquet'",
+    )
+    parser.add_argument(
+        "-o",
+        "--output_fname",
+        type=str,
+        help="Name of the output CSV file",
+        default="house_data_with_areas.csv",
     )
     parser.add_argument(
         "-c",
@@ -80,8 +93,8 @@ if __name__ == "__main__":
         "--strategy",
         type=str,
         help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken.",
+        default=None,
     )
-    # TODO: extend to work with multiple files
     args = parser.parse_args()
 
-    main(args.config_path, args.strategy)
+    main(args.config_path, args.input_fname, args.output_fname, args.strategy)

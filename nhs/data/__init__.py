@@ -1,3 +1,8 @@
+from .allocation import (
+    join_census_with_coords,
+    randomly_assign_census_features,
+    sample_census_feature,
+)
 from .filter import filter_sa1_regions
 from .geography import join_coords_with_area, read_shapefile, to_geo_dataframe
 from .handling import (
@@ -22,4 +27,7 @@ __all__ = [
     "get_spreadsheet_reader",
     "read_shapefile",
     "to_geo_dataframe",
+    "join_census_with_coords",
+    "sample_census_feature",
+    "randomly_assign_census_features",
 ]
