@@ -1,5 +1,5 @@
 from .filter import filter_sa1_regions
-from .mapping import map_state_to_sa1_codes
+from .mapping import load_gnaf_files_by_states, filter_and_join_gnaf_frames
 from .handling import (
     read_csv,
     read_psv,
@@ -15,5 +15,6 @@ __all__ = [
     "read_xlsx",
     "standardize_names",
     "filter_sa1_regions",
-    "map_state_to_sa1_codes",
+    "load_gnaf_files_by_states",
+    "filter_and_join_gnaf_frames",
 ]
