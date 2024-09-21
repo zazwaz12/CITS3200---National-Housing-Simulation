@@ -1,3 +1,8 @@
+from .filter import (
+    filter_sa1_regions,
+    filter_building_types,
+)
+
 from .allocation import (
     join_census_with_coords,
     randomly_assign_census_features,
@@ -22,6 +27,7 @@ __all__ = [
     "read_xlsx",
     "standardize_names",
     "filter_sa1_regions",
+    "filter_building_types",
     "join_coords_with_area",
     "read_parquet",
     "get_spreadsheet_reader",
