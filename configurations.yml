@@ -1,0 +1,47 @@
+# Logging configuration settings
+# "See https://loguru.readthedocs.io/en/stable/api/logger.html"
+logging:
+  # Path and naming convention for logs (including timestamp)
+  log_file: "stdout"
+  # Format of the log messages
+  format: "<green>{time:YYYY-MM-DD at HH:mm:ss}</green> <level>{level: <8} {message}</level>"
+  # TRUE for detailed backtrace logging for debugging
+  backtrace: true
+  # extra diagnostic information
+  diagnose: true
+  # Log level; ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
+  level: "INFO"
+
+# Paths to data files and resources
+data:
+  # Path to the census data files
+  census_path: "./DataFiles/AppStaging/census/2021 Census GCP All Geographies for AUS/SA1/AUS"
+  # Path folder containing the GNAF (Geocoded National Address File) data
+  gnaf_path: "./DataFiles/AppStaging/Standard/"
+  # Path to the shapefile used for geospatial analysis
+  shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
+  # Path of the output CSV
+  output_path: "./DataFiles/FilesOut/"
+  # Coordinate Reference System (CRS) for spatial data
+  # use CRS 7844 - specified in the ABS 2021 datapack
+  # 'EPSG:7844' is a CRS in the European Petroleum Survey Group system
+  # for defining geospatial coordinates
+  # SEE ALSO WGS84 (EPSG:4326) - represent latitude and longitude on spherical Earth
+  crs: "EPSG:7844"
+  # The column in your data that contains SA2(!) area names
+  sa2_area_column: "SA2_NAME21"
+  # The column in your data that contains SA1(!) area codes
+  sa1_area_code_column: "SA1_CODE21"
+
+simulation:
+  # List of census features to be used in the simulation
+  census_features:
+    - "Age_0_4_yr_M"
+    - "Age_0_4_yr_F"
+    - "Age_0_4_yr_P"
+    - "Age_5_14_yr_M"
+    - "Age_5_14_yr_F"
+    - "Age_5_14_yr_P"
+    - "Age_15_19_yr_M"
+  # FALSE to skip visualization
+  enable_visualization: false
