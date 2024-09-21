@@ -149,7 +149,6 @@ class TestLoadGnafFilesByStates:
 
 
 
-
 class TestFilterAndJoinGnafFrames:
 
     @pytest.fixture
