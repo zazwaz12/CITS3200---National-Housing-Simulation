@@ -1,14 +1,15 @@
 import polars as pl
 import glob
 
-def load_gnaf_files_by_states(gnaf_dir: str, states: list[str] = None) -> tuple[pl.LazyFrame, pl.LazyFrame]:
+def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = None) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
     Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL files for the specified states
     from the given GNAF directory, and return them as LazyFrames. 
     (Defaults to all states if none are specified)
 
     Parameters:
-    - gnaf_dir: str, the directory path where the GNAF psv files are stored.
+    - gnaf_path: str, path folder containing the GNAF (Geocoded National Address File) data
+             (gnaf_path: "./DataFiles/AppStaging/Standard/")
     - states: list[str], an optional list of state/territory names (e.g., ["WA", "ACT"]). 
               If no list is provided, the function will default to including all states.
 
@@ -30,7 +31,7 @@ def load_gnaf_files_by_states(gnaf_dir: str, states: list[str] = None) -> tuple[
 
     for state_name in states:
         # Find the corresponding ADDRESS_DEFAULT_GEOCODE file
-        geocode_file_pattern = f"{gnaf_dir}/{state_name}_ADDRESS_DEFAULT_GEOCODE_psv.psv"
+        geocode_file_pattern = f"{gnaf_path}/{state_name}_ADDRESS_DEFAULT_GEOCODE_psv.psv"
         geocode_files = glob.glob(geocode_file_pattern)
         
         # Load the found file 
@@ -41,7 +42,7 @@ def load_gnaf_files_by_states(gnaf_dir: str, states: list[str] = None) -> tuple[
             default_geocode_lfs.append(lf)
 
         # Find the corresponding ADDRESS_DETAIL file
-        detail_file_pattern = f"{gnaf_dir}/{state_name}_ADDRESS_DETAIL_psv.psv"
+        detail_file_pattern = f"{gnaf_path}/{state_name}_ADDRESS_DETAIL_psv.psv"
         detail_files = glob.glob(detail_file_pattern)
         
         # Load the found file 
@@ -55,6 +56,7 @@ def load_gnaf_files_by_states(gnaf_dir: str, states: list[str] = None) -> tuple[
     address_detail_lf = pl.concat(address_detail_lfs) if address_detail_lfs else pl.LazyFrame()
 
     return default_geocode_lf, address_detail_lf
+
 
 
 
@@ -72,8 +74,9 @@ def filter_and_join_gnaf_frames(
     - default_geocode_lf: pl.LazyFrame, the LazyFrame containing ADDRESS_DEFAULT_GEOCODE data.
     - address_detail_lf: pl.LazyFrame, the LazyFrame containing ADDRESS_DETAIL data.
     - building_types: list[str], an optional list of building types to filter on (e.g., ["flat", "unit"]).
-                      If not provided, no filtering on building types will be applied.
-    - postcodes: list[int], an optional list of postcodes to filter on. If not provided, no filtering on postcodes will be applied.
+                      (If not provided, no filtering on building types will be applied)
+    - postcodes: list[int], an optional list of postcodes to filter on. 
+                    (If not provided, no filtering on postcodes will be applied)
 
     Returns:
     - pl.LazyFrame: The joined LazyFrame containing data from both ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL,
@@ -99,5 +102,6 @@ def filter_and_join_gnaf_frames(
     joined_lf = default_geocode_lf.join(address_detail_lf, on="ADDRESS_DETAIL_PID", how="inner")
     
     return joined_lf
+
 
 
