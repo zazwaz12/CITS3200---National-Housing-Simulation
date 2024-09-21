@@ -1,17 +1,15 @@
 import polars as pl
 import glob
 
-def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = None) -> tuple[pl.LazyFrame, pl.LazyFrame]:
+def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
     Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL files for the specified states
     from the given GNAF directory, and return them as LazyFrames. 
-    (Defaults to all states if none are specified)
 
     Parameters:
-    - gnaf_path: str, path folder containing the GNAF (Geocoded National Address File) data
-             (gnaf_path: "./DataFiles/AppStaging/Standard/")
+    - gnaf_path: str, the directory path where the GNAF psv files are stored.
     - states: list[str], an optional list of state/territory names (e.g., ["WA", "ACT"]). 
-              If no list is provided, the function will default to including all states.
+              If an empty list is provided, the function will default to including all states.
 
     Returns:
     - tuple: (default_geocode_lf, address_detail_lf)
@@ -22,8 +20,8 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = None) -> tuple
     # State codes
     all_state_codes = ["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
     
-    # Use all state codes if none are provided
-    if states is None:
+    # If states is an empty list, use all state codes
+    if not states:
         states = all_state_codes
 
     default_geocode_lfs = []
@@ -60,11 +58,12 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = None) -> tuple
 
 
 
+
 def filter_and_join_gnaf_frames(
     default_geocode_lf: pl.LazyFrame,
     address_detail_lf: pl.LazyFrame,
-    building_types: list[str] = None,
-    postcodes: list[int] = None
+    building_types: list[str] = [], 
+    postcodes: list[int] = []   
 ) -> pl.LazyFrame:
     """
     Filter and join GNAF ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL LazyFrames based on optional building types
@@ -74,16 +73,16 @@ def filter_and_join_gnaf_frames(
     - default_geocode_lf: pl.LazyFrame, the LazyFrame containing ADDRESS_DEFAULT_GEOCODE data.
     - address_detail_lf: pl.LazyFrame, the LazyFrame containing ADDRESS_DETAIL data.
     - building_types: list[str], an optional list of building types to filter on (e.g., ["flat", "unit"]).
-                      (If not provided, no filtering on building types will be applied)
-    - postcodes: list[int], an optional list of postcodes to filter on. 
-                    (If not provided, no filtering on postcodes will be applied)
+                      (If empty, no filtering on building types will be applied.)
+    - postcodes: list[int], an optional list of postcodes to filter on.
+                    (If empty, no filtering on postcodes will be applied.)
 
     Returns:
     - pl.LazyFrame: The joined LazyFrame containing data from both ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL,
                     with the applied filters if specified.
     """
     
-   # Replace null values in FLAT_TYPE_CODE with "unknown" and convert all values to lowercase
+    # Replace null values in FLAT_TYPE_CODE with "unknown" and convert all values to lowercase
     address_detail_lf = address_detail_lf.with_columns(
         pl.col("FLAT_TYPE_CODE")
         .fill_null("unknown")  # Replace all null values with "unknown"
@@ -91,11 +90,11 @@ def filter_and_join_gnaf_frames(
     )
 
     # Apply optional filtering based on building_types
-    if building_types:
+    if building_types:  # Check if the list is not empty
         address_detail_lf = address_detail_lf.filter(pl.col("FLAT_TYPE_CODE").is_in(building_types))
     
     # Apply optional filtering based on postcodes
-    if postcodes:
+    if postcodes:  # Check if the list is not empty
         address_detail_lf = address_detail_lf.filter(pl.col("POSTCODE").is_in(postcodes))
 
     # Join using "ADDRESS_DETAIL_PID" as the key
