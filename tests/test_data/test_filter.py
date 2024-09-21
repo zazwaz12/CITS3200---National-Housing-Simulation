@@ -1,7 +1,7 @@
 import pytest
 import polars as pl
 from unittest.mock import patch
-from nhs.data.mapping import load_gnaf_files_by_states, filter_and_join_gnaf_frames
+from nhs.data.filter import load_gnaf_files_by_states, filter_and_join_gnaf_frames
 
 class TestLoadGnafFilesByStates:
 
@@ -24,8 +24,8 @@ class TestLoadGnafFilesByStates:
 
 
 
-    @patch("nhs.data.mapping.glob.glob")
-    @patch("nhs.data.mapping.pl.scan_csv")
+    @patch("nhs.data.filter.glob.glob")
+    @patch("nhs.data.filter.pl.scan_csv")
     def test_load_files_for_valid_states(self, mock_scan_csv, mock_glob, sample_geocode_data, sample_detail_data):
         mock_glob.side_effect = [
             ["NSW_ADDRESS_DEFAULT_GEOCODE_psv.psv"],
@@ -51,8 +51,8 @@ class TestLoadGnafFilesByStates:
         assert result_detail_lf.collect().to_dicts() == expected_detail.to_dicts()
 
 
-    @patch("nhs.data.mapping.glob.glob")
-    @patch("nhs.data.mapping.pl.scan_csv")
+    @patch("nhs.data.filter.glob.glob")
+    @patch("nhs.data.filter.pl.scan_csv")
     def test_load_files_with_no_matching_states(self, mock_scan_csv, mock_glob):
         mock_glob.side_effect = [[], []]
 
@@ -66,8 +66,8 @@ class TestLoadGnafFilesByStates:
 
 
 
-    @patch("nhs.data.mapping.glob.glob")
-    @patch("nhs.data.mapping.pl.scan_csv")
+    @patch("nhs.data.filter.glob.glob")
+    @patch("nhs.data.filter.pl.scan_csv")
     def test_load_files_for_multiple_states(self, mock_scan_csv, mock_glob):
         """
         Test loading GNAF files for multiple states (NSW, ACT) using mocked file I/O.
@@ -111,16 +111,16 @@ class TestLoadGnafFilesByStates:
         }).lazy()
 
         # Manually patch scan_csv to return the correct LazyFrame for each call
-        with patch("nhs.data.mapping.pl.scan_csv", return_value=sample_geocode_data_nsw) as mock_scan_csv_nsw:
+        with patch("nhs.data.filter.pl.scan_csv", return_value=sample_geocode_data_nsw) as mock_scan_csv_nsw:
             result_geocode_nsw = mock_scan_csv_nsw()
 
-        with patch("nhs.data.mapping.pl.scan_csv", return_value=sample_geocode_data_act) as mock_scan_csv_act:
+        with patch("nhs.data.filter.pl.scan_csv", return_value=sample_geocode_data_act) as mock_scan_csv_act:
             result_geocode_act = mock_scan_csv_act()
 
-        with patch("nhs.data.mapping.pl.scan_csv", return_value=sample_detail_data_nsw) as mock_scan_detail_nsw:
+        with patch("nhs.data.filter.pl.scan_csv", return_value=sample_detail_data_nsw) as mock_scan_detail_nsw:
             result_detail_nsw = mock_scan_detail_nsw()
 
-        with patch("nhs.data.mapping.pl.scan_csv", return_value=sample_detail_data_act) as mock_scan_detail_act:
+        with patch("nhs.data.filter.pl.scan_csv", return_value=sample_detail_data_act) as mock_scan_detail_act:
             result_detail_act = mock_scan_detail_act()
 
         # Collect the results
