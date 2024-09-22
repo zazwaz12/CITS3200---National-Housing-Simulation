@@ -125,7 +125,7 @@ def filter_and_join_gnaf_frames(
 
 
 def filter_sa1_regions(
-    lf: pl.LazyFrame, region_codes: list[int] = [], sa1_column: str = "SA1_CODE_2021"
+    lf: pl.LazyFrame, region_codes: list[int] = [], sa1_column: str = "SA1_CODE21"
 ) -> pl.LazyFrame:
     """
     Filters the LazyFrame to include only rows with specified SA1 area codes. 
@@ -138,7 +138,7 @@ def filter_sa1_regions(
     region_codes : List[int], optional
         A list of SA1 area codes to filter for. If empty, no filtering will be applied.
     sa1_column : str, optional
-        The name of the column containing the SA1 area codes. Defaults to "SA1_CODE_2021".
+        The name of the column containing the SA1 area codes. Defaults to "SA1_CODE21".
 
     Returns
     -------
