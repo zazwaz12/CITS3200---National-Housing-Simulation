@@ -1,5 +1,6 @@
 import pytest
 import polars as pl
+
 from unittest.mock import patch
 from ..context import nhs
 
@@ -328,6 +329,260 @@ class TestFilterAndJoinGnafFrames:
         """
         Test the function when no rows match the postcode filter.
         """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, postcodes=[9999]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": [],
+                "LATITUDE": [],
+                "LONGITUDE": [],
+                "FLAT_TYPE_CODE": [],
+                "POSTCODE": [],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+
+class TestFilterAndJoinGnafFrames:
+
+    @pytest.fixture
+    def default_geocode_data(self):
+        return pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "LATITUDE": [34.5, 35.0, 36.0],
+                "LONGITUDE": [150.3, 149.1, 148.5],
+            }
+        ).lazy()
+        return pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "LATITUDE": [34.5, 35.0, 36.0],
+                "LONGITUDE": [150.3, 149.1, 148.5],
+            }
+        ).lazy()
+
+    @pytest.fixture
+    def address_detail_data(self):
+        return pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "FLAT_TYPE_CODE": [
+                    "Flat",
+                    None,
+                    "Unit",
+                ],  # One null value to test null handling
+                "POSTCODE": [2000, 2600, 3000],
+            }
+        ).lazy()
+        return pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "FLAT_TYPE_CODE": [
+                    "Flat",
+                    None,
+                    "Unit",
+                ],  # One null value to test null handling
+                "POSTCODE": [2000, 2600, 3000],
+            }
+        ).lazy()
+
+    def test_filter_no_filters(self, default_geocode_data, address_detail_data):
+        """
+        Test the function with no filters applied, should join all rows.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "LATITUDE": [34.5, 35.0, 36.0],
+                "LONGITUDE": [150.3, 149.1, 148.5],
+                "FLAT_TYPE_CODE": [
+                    "flat",
+                    "unknown",
+                    "unit",
+                ],  # "Flat" converted to lowercase, None replaced with "unknown"
+                "POSTCODE": [2000, 2600, 3000],
+            }
+        )
+
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1003"],
+                "LATITUDE": [34.5, 35.0, 36.0],
+                "LONGITUDE": [150.3, 149.1, 148.5],
+                "FLAT_TYPE_CODE": [
+                    "flat",
+                    "unknown",
+                    "unit",
+                ],  # "Flat" converted to lowercase, None replaced with "unknown"
+                "POSTCODE": [2000, 2600, 3000],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+    def test_filter_by_building_type(self, default_geocode_data, address_detail_data):
+        """
+        Test the function with a filter on building types.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, building_types=["flat"]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001"],
+                "LATITUDE": [34.5],
+                "LONGITUDE": [150.3],
+                "FLAT_TYPE_CODE": ["flat"],
+                "POSTCODE": [2000],
+            }
+        )
+
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, building_types=["flat"]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1001"],
+                "LATITUDE": [34.5],
+                "LONGITUDE": [150.3],
+                "FLAT_TYPE_CODE": ["flat"],
+                "POSTCODE": [2000],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+    def test_filter_by_postcode(self, default_geocode_data, address_detail_data):
+        """
+        Test the function with a filter on postcodes.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, postcodes=[2600]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1002"],
+                "LATITUDE": [35.0],
+                "LONGITUDE": [149.1],
+                "FLAT_TYPE_CODE": ["unknown"],  # None replaced with "unknown"
+                "POSTCODE": [2600],
+            }
+        )
+
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, postcodes=[2600]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1002"],
+                "LATITUDE": [35.0],
+                "LONGITUDE": [149.1],
+                "FLAT_TYPE_CODE": ["unknown"],  # None replaced with "unknown"
+                "POSTCODE": [2600],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+
+    def test_filter_by_building_type_and_postcode(
+        self, default_geocode_data, address_detail_data
+    ):
+        """
+        Test the function with both building type and postcode filters applied.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data,
+            address_detail_data,
+            building_types=["unit"],
+            postcodes=[3000],
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1003"],
+                "LATITUDE": [36.0],
+                "LONGITUDE": [148.5],
+                "FLAT_TYPE_CODE": ["unit"],
+                "POSTCODE": [3000],
+            }
+        )
+
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data,
+            address_detail_data,
+            building_types=["unit"],
+            postcodes=[3000],
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": ["1003"],
+                "LATITUDE": [36.0],
+                "LONGITUDE": [148.5],
+                "FLAT_TYPE_CODE": ["unit"],
+                "POSTCODE": [3000],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+    def test_no_matching_building_type(self, default_geocode_data, address_detail_data):
+        """
+        Test the function when no rows match the building type filter.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, building_types=["apartment"]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": [],
+                "LATITUDE": [],
+                "LONGITUDE": [],
+                "FLAT_TYPE_CODE": [],
+                "POSTCODE": [],
+            }
+        )
+
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, building_types=["apartment"]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": [],
+                "LATITUDE": [],
+                "LONGITUDE": [],
+                "FLAT_TYPE_CODE": [],
+                "POSTCODE": [],
+            }
+        )
+
+        assert result_lf.collect().to_dicts() == expected_df.to_dicts()
+
+    def test_no_matching_postcode(self, default_geocode_data, address_detail_data):
+        """
+        Test the function when no rows match the postcode filter.
+        """
+        result_lf = filter_and_join_gnaf_frames(
+            default_geocode_data, address_detail_data, postcodes=[9999]
+        )
+        expected_df = pl.DataFrame(
+            {
+                "ADDRESS_DETAIL_PID": [],
+                "LATITUDE": [],
+                "LONGITUDE": [],
+                "FLAT_TYPE_CODE": [],
+                "POSTCODE": [],
+            }
+        )
+
         result_lf = filter_and_join_gnaf_frames(
             default_geocode_data, address_detail_data, postcodes=[9999]
         )
