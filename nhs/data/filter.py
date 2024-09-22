@@ -1,9 +1,10 @@
 import glob
+
 import polars as pl
 
 
 def load_gnaf_files_by_states(
-        gnaf_path: str, states: list[str] = []
+    gnaf_path: str, states: list[str] = []
 ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
     Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL files for the specified states
@@ -69,8 +70,6 @@ def load_gnaf_files_by_states(
     return default_geocode_lf, address_detail_lf
 
 
-
-
 def filter_and_join_gnaf_frames(
     default_geocode_lf: pl.LazyFrame,
     address_detail_lf: pl.LazyFrame,
@@ -121,14 +120,11 @@ def filter_and_join_gnaf_frames(
     return joined_lf
 
 
-
-
-
 def filter_sa1_regions(
     lf: pl.LazyFrame, region_codes: list[int] = [], sa1_column: str = "SA1_CODE_2021"
 ) -> pl.LazyFrame:
     """
-    Filters the LazyFrame to include only rows with specified SA1 area codes. 
+    Filters the LazyFrame to include only rows with specified SA1 area codes.
     If no region_codes are provided, return the original LazyFrame without filtering.
 
     Parameters

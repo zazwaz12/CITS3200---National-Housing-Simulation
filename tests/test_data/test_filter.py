@@ -1,9 +1,9 @@
-import pytest
-import polars as pl
-
 from unittest.mock import patch
-from ..context import nhs
 
+import polars as pl
+import pytest
+
+from ..context import nhs
 
 load_gnaf_files_by_states = nhs.data.filter.load_gnaf_files_by_states
 filter_and_join_gnaf_frames = nhs.data.filter.filter_and_join_gnaf_frames
@@ -493,7 +493,6 @@ class TestFilterAndJoinGnafFrames:
 
         assert result_lf.collect().to_dicts() == expected_df.to_dicts()
 
-
     def test_filter_by_building_type_and_postcode(
         self, default_geocode_data, address_detail_data
     ):
@@ -597,9 +596,6 @@ class TestFilterAndJoinGnafFrames:
         )
 
         assert result_lf.collect().to_dicts() == expected_df.to_dicts()
-
-
-
 
 
 class TestFilterSa1RegionCodes:
