@@ -631,10 +631,7 @@ class TestFilterSa1RegionCodes:
 
     def test_filter_with_no_matching_codes(self, sample_lazyframe):
         # Test with region codes that don't match any rows (should return an empty DataFrame)
-        result = filter_sa1_regions(
-            sample_lazyframe, [999999], "SA1_CODE21"
-        ).collect()
+        result = filter_sa1_regions(sample_lazyframe, [999999], "SA1_CODE21").collect()
 
         expected = pl.DataFrame({"SA1_CODE21": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
-
