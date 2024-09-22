@@ -1,5 +1,6 @@
 import polars as pl
 import glob
+from typing import List
 
 def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
@@ -58,7 +59,6 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[p
 
 
 
-
 def filter_and_join_gnaf_frames(
     default_geocode_lf: pl.LazyFrame,
     address_detail_lf: pl.LazyFrame,
@@ -104,3 +104,31 @@ def filter_and_join_gnaf_frames(
 
 
 
+
+
+
+def filter_sa1_regions(
+    lf: pl.LazyFrame, region_codes: List[int] = [], sa1_column: str = "SA1_CODE_2021"
+) -> pl.LazyFrame:
+    """
+    Filters the LazyFrame to include only rows with specified SA1 area codes. 
+    If no region_codes are provided, return the original LazyFrame without filtering.
+
+    Parameters
+    ----------
+    lf : pl.LazyFrame
+        The LazyFrame containing SA1 region codes and data to be filtered.
+    region_codes : List[int], optional
+        A list of SA1 area codes to filter for. If empty, no filtering will be applied.
+    sa1_column : str, optional
+        The name of the column containing the SA1 area codes. Defaults to "SA1_CODE_2021".
+
+    Returns
+    -------
+    pl.LazyFrame
+        A LazyFrame containing only rows with the specified SA1 area codes.
+        If no region_codes are specified, returns the original LazyFrame.
+    """
+    if not region_codes:  # If the region_codes list is empty
+        return lf  # Return the original LazyFrame
+    return lf.filter(pl.col(sa1_column).is_in(region_codes))
