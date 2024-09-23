@@ -72,7 +72,69 @@ def join_census_with_coords(
     return census_type_casted.join(
         coords, left_on=left_code_col, right_on=right_code_col, how="inner"
     )
+def calculate_proportions(grouping, values):
+    values = [float(v) for v in values]
+    
+    df = pl.DataFrame({
+        "group_col": [str(g) for g in grouping],
+        "value_col": values
+    })
 
+    final_results = []
+    unique_groups = sorted(set(grouping))
+    total = 0.0
+
+    for group in unique_groups:
+        filtered_values = df.filter(pl.col("group_col") == group)
+        group_value = filtered_values['value_col'][0] if filtered_values.height > 0 else 0.0
+        total += group_value
+        final_results.append((group, group_value))
+
+    final_results_with_proportions = []
+    
+    for group, total_value in final_results:
+        proportion = round(total_value / total, 3) if total > 0 else 0.0
+        # Append a single row as a tuple: (group, total_value, proportion)
+        final_results_with_proportions.append((group, total_value, proportion))
+
+    # Create a DataFrame to return
+    return pl.DataFrame(final_results_with_proportions, schema=["group_col", "value", "proportion"])
+
+
+
+def sample_proportions(df: pl.DataFrame, group_columns: list[str], N: int) -> pl.DataFrame:
+    """
+    Sample rows based on proportions for the group.
+    
+    Args:
+    df: Polars DataFrame
+    group_columns: List of column names to group by
+    N: Number of samples to draw based on proportion
+    
+    Returns:
+    Sampled DataFrame
+    """
+    # Calculate proportions for the group
+    proportions = calculate_proportion(df, group_columns)
+    
+    # Initialize an empty DataFrame for sampling
+    sampled_df = pl.DataFrame()
+
+    # Loop through each column in the group to sample proportionally
+    for col in group_columns:
+        # Get proportion for current column
+        proportion = proportions[col].item()
+        
+        # Calculate how many samples to take for this column
+        num_samples = int(proportion * N)
+        
+        # Sample rows from this column
+        sampled_col = df.filter(pl.col(col).is_not_null()).sample(n=num_samples, with_replacement=True)
+        
+        # Append to the sampled DataFrame
+        sampled_df = sampled_df.vstack(sampled_col)
+
+    return sampled_df
 
 @log_entry_exit()
 def sample_census_feature(

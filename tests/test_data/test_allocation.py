@@ -5,6 +5,7 @@ from ..context import nhs
 join_census_with_coords = nhs.data.join_census_with_coords
 sample_census_feature = nhs.data.sample_census_feature
 randomly_assign_census_features = nhs.data.randomly_assign_census_features
+calculate_proportions = nhs.data.calculate_proportions
 
 
 class TestJoinCensusWithCoords:
@@ -265,3 +266,50 @@ class TestRandomlyAssignCensusFeatures:
         assert isinstance(result, pl.LazyFrame)
         collected_result = result.collect()
         assert collected_result.shape == (0, 6)
+
+class TestCalculateProportions:
+    def test_multiple_groups(self):
+        grouping = ["A", "A", "B", "C"]
+        values = [4, 4, 2, 1]
+        result = calculate_proportions(grouping, values)
+
+        expected = pl.DataFrame({
+            "group_col": ["A", "B", "C"],
+            "value": [4.0, '2', '1'],
+            "proportion": [0.571, '0.286', '0.143']
+        })
+        print(result)
+        assert (result['group_col'].to_list() == expected['group_col'].to_list())
+        assert (result['value'].to_list() == expected['value'].to_list())
+        assert (result['proportion'].to_list() == expected['proportion'].to_list())
+
+    def test_same_value_groups(self):
+        grouping = ["A", "A", "B", "B"]
+        values = [3, 3, 3, 3]
+        result = calculate_proportions(grouping, values)
+
+        expected = pl.DataFrame({
+            "group_col": ["A", "B"],
+            "value": [3.0, 3.0],
+            "proportion": [0.5, 0.5]
+        })
+
+        assert (result['group_col'].to_list() == expected['group_col'].to_list())
+        assert (result['value'].to_list() == expected['value'].to_list())
+        assert (result['proportion'].to_list() == expected['proportion'].to_list())
+
+    def test_empty_input(self):
+        grouping = []
+        values = []
+        result = calculate_proportions(grouping, values)
+
+        expected = pl.DataFrame({
+            "group_col": [],
+            "value": [],
+            "proportion": []
+        })
+
+        assert (result['group_col'].to_list() == expected['group_col'].to_list())
+        assert (result['value'].to_list() == expected['value'].to_list())
+        assert (result['proportion'].to_list() == expected['proportion'].to_list())
+
