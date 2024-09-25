@@ -31,4 +31,5 @@ __all__ = [
     "join_census_with_coords",
     "sample_census_feature",
     "randomly_assign_census_features",
+    "calculate_proportions"
 ]
