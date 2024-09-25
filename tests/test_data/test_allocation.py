@@ -1,5 +1,6 @@
 import polars as pl
 import pytest
+
 from ..context import nhs
 
 join_census_with_coords = nhs.data.join_census_with_coords
@@ -267,21 +268,32 @@ class TestRandomlyAssignCensusFeatures:
         collected_result = result.collect()
         assert collected_result.shape == (0, 6)
 
+
 class TestCalculateProportions:
     def test_multiple_groups(self):
         # Input grouping dictionary
         grouping = {"A": 4, "A": 4, "B": 2, "C": 1}
-        
+
         # Run the function to get the LazyFrame and collect the result
         lf = calculate_proportions(grouping)
         result = lf.collect()
 
         # Expected DataFrame
-        expected = pl.DataFrame({
-            "group_col": ["A", "B", "C"],
-            "value_col": [4, 2, 1],  # Ensure value_col is consistent with integer values
-            "proportion": [0.571, 0.286, 0.143]  # Adjusted to match the rounding behavior in the function
-        })
+        expected = pl.DataFrame(
+            {
+                "group_col": ["A", "B", "C"],
+                "value_col": [
+                    4,
+                    2,
+                    1,
+                ],  # Ensure value_col is consistent with integer values
+                "proportion": [
+                    0.571,
+                    0.286,
+                    0.143,
+                ],  # Adjusted to match the rounding behavior in the function
+            }
+        )
 
         # Print the result (optional)
         print(result)
@@ -292,24 +304,31 @@ class TestCalculateProportions:
         proportion_result = result.get_column("proportion").to_list()
 
         # Assert the columns match as expected
-        assert group_col_result == expected['group_col'].to_list()
-        assert value_col_result == expected['value_col'].to_list()
-        assert proportion_result == expected['proportion'].to_list()
+        assert group_col_result == expected["group_col"].to_list()
+        assert value_col_result == expected["value_col"].to_list()
+        assert proportion_result == expected["proportion"].to_list()
 
     def test_same_value_groups(self):
         # Input grouping dictionary with sum of values for keys
-        grouping = {"A": 3, "A":3, "B":3, "B": 3}  # Aggregated values (3+3 for A, 3+3 for B)
+        grouping = {
+            "A": 3,
+            "A": 3,
+            "B": 3,
+            "B": 3,
+        }  # Aggregated values (3+3 for A, 3+3 for B)
 
         # Run the function to get the LazyFrame and collect the result
         lf = calculate_proportions(grouping)
         result = lf.collect()  # Collect to DataFrame for comparison
 
         # Expected DataFrame
-        expected = pl.DataFrame({
-            "group_col": ["A", "B"],
-            "value_col": [3, 3],  # Total values for A and B
-            "proportion": [0.5, 0.5]  # Proportion of total
-        })
+        expected = pl.DataFrame(
+            {
+                "group_col": ["A", "B"],
+                "value_col": [3, 3],  # Total values for A and B
+                "proportion": [0.5, 0.5],  # Proportion of total
+            }
+        )
 
         # Access the result columns using Polars methods
         group_col_result = result.get_column("group_col").to_list()
@@ -317,9 +336,9 @@ class TestCalculateProportions:
         proportion_result = result.get_column("proportion").to_list()
 
         # Assert the columns match as expected
-        assert group_col_result == expected['group_col'].to_list()
-        assert value_col_result == expected['value_col'].to_list()
-        assert proportion_result == expected['proportion'].to_list()
+        assert group_col_result == expected["group_col"].to_list()
+        assert value_col_result == expected["value_col"].to_list()
+        assert proportion_result == expected["proportion"].to_list()
 
     def test_empty_input(self):
         with pytest.raises(ValueError) as excinfo:

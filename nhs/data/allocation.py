@@ -73,31 +73,35 @@ def join_census_with_coords(
         coords, left_on=left_code_col, right_on=right_code_col, how="inner"
     )
 
+
 @log_entry_exit()
 def calculate_proportions(group_values_dict: dict) -> pl.LazyFrame:
-    
+
     if not group_values_dict:
         raise ValueError("The grouping dictionary is empty.")
 
     # Extract the keys (grouping) and values (values) from the dictionary
     unique_dict = {}
-    
+
     for group, value in group_values_dict.items():
         if group not in unique_dict:
             unique_dict[group] = value
-    
+
     # Construct a LazyFrame from the unique dictionary
-    lf = pl.LazyFrame({
-        "group_col": list(unique_dict.keys()),
-        "value_col": list(unique_dict.values())
-    })
-    
+    lf = pl.LazyFrame(
+        {"group_col": list(unique_dict.keys()), "value_col": list(unique_dict.values())}
+    )
+
     # Define the total sum computation
-    total_sum_expr = lf.select(pl.col("value_col").sum()).collect().get_column("value_col")[0]
-    
+    total_sum_expr = (
+        lf.select(pl.col("value_col").sum()).collect().get_column("value_col")[0]
+    )
+
     # Add a new column for the proportions using a LazyFrame
-    lf = lf.with_columns((pl.col("value_col") / total_sum_expr).round(3).alias("proportion"))
-    
+    lf = lf.with_columns(
+        (pl.col("value_col") / total_sum_expr).round(3).alias("proportion")
+    )
+
     # Collect to evaluate the LazyFrame (for demonstration purposes)
     print(lf.collect())
     return lf
