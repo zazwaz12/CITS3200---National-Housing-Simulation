@@ -72,34 +72,33 @@ def join_census_with_coords(
     return census_type_casted.join(
         coords, left_on=left_code_col, right_on=right_code_col, how="inner"
     )
-def calculate_proportions(grouping, values):
-    values = [float(v) for v in values]
+def calculate_proportions(group_values_dict: dict) -> pl.LazyFrame:
     
-    df = pl.DataFrame({
-        "group_col": [str(g) for g in grouping],
-        "value_col": values
+    if not group_values_dict:
+        raise ValueError("The grouping dictionary is empty.")
+
+    # Extract the keys (grouping) and values (values) from the dictionary
+    unique_dict = {}
+    
+    for group, value in group_values_dict.items():
+        if group not in unique_dict:
+            unique_dict[group] = value
+    
+    # Construct a LazyFrame from the unique dictionary
+    lf = pl.LazyFrame({
+        "group_col": list(unique_dict.keys()),
+        "value_col": list(unique_dict.values())
     })
-
-    final_results = []
-    unique_groups = sorted(set(grouping))
-    total = 0.0
-
-    for group in unique_groups:
-        filtered_values = df.filter(pl.col("group_col") == group)
-        group_value = filtered_values['value_col'][0] if filtered_values.height > 0 else 0.0
-        total += group_value
-        final_results.append((group, group_value))
-
-    final_results_with_proportions = []
     
-    for group, total_value in final_results:
-        proportion = round(total_value / total, 3) if total > 0 else 0.0
-        # Append a single row as a tuple: (group, total_value, proportion)
-        final_results_with_proportions.append((group, total_value, proportion))
-
-    # Create a DataFrame to return
-    return pl.DataFrame(final_results_with_proportions, schema=["group_col", "value", "proportion"])
-
+    # Define the total sum computation
+    total_sum_expr = lf.select(pl.col("value_col").sum()).collect().get_column("value_col")[0]
+    
+    # Add a new column for the proportions using a LazyFrame
+    lf = lf.with_columns((pl.col("value_col") / total_sum_expr).round(3).alias("proportion"))
+    
+    # Collect to evaluate the LazyFrame (for demonstration purposes)
+    print(lf.collect())
+    return lf
 
 
 def sample_proportions(df: pl.DataFrame, group_columns: list[str], N: int) -> pl.DataFrame:
