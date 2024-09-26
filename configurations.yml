@@ -34,14 +34,21 @@ data:
   sa1_area_code_column: "SA1_CODE21"
 
 simulation:
-  # List of census features to be used in the simulation
-  census_features:
-    - "Age_0_4_yr_M"
-    - "Age_0_4_yr_F"
-    - "Age_0_4_yr_P"
-    - "Age_5_14_yr_M"
-    - "Age_5_14_yr_F"
-    - "Age_5_14_yr_P"
-    - "Age_15_19_yr_M"
-  # FALSE to skip visualization
-  enable_visualization: false
+  # Tables configuration
+  tables:
+    - name: "G19"
+      multi_response: true
+      census_features:
+        - "cancer"
+        - "arthritis"
+        - "dementia"
+    - name: "G01"
+      multi_response: false
+      census_features:
+        - "Age_0_4_yr_M"
+        - "Age_0_4_yr_F"
+        - "Age_0_4_yr_P"
+        - "Age_5_14_yr_M"
+        - "Age_5_14_yr_F"
+        - "Age_5_14_yr_P"
+        - "Age_15_19_yr_M"

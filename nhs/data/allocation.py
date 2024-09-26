@@ -189,32 +189,35 @@ def _stack_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame)
 @log_entry_exit()
 def randomly_assign_census_features(
     census: pl.LazyFrame,
+    table_config: dict,
     code_col: str,
     long_col: str,
     lat_col: str,
-    feature_cols: list[str],
     index_col: str = "person_id",
     ignore_total: bool = True,
     total_prefix: str = "Tot_",
 ):
     """
-    Randomly assign census features to the GNAF coordinates.
+    Randomly assign census features to the GNAF coordinates, handling multi-response features based on configuration.
+
+    This function works with LazyFrames and uses Polars' lazy evaluation capabilities.
 
     Parameters
     ----------
     census : pl.LazyFrame
         A `LazyFrame` containing the columns `code_col`,
-        `long_col`, `lat_col`, and all columns in `feature_cols`.
+        `long_col`, `lat_col`, and all columns in `table_config["census_features"]`.
+    table_config : dict
+        A dictionary containing the configuration for the current table, including:
+        - name: str, the name of the table
+        - multi_response: bool, whether the table is multi-response
+        - census_features: list[str], list of feature columns
     code_col : str
         Column in `census` that contains some identifier/code.
     long_col : str
         Column in `census` that contains the longitude.
     lat_col : str
         Column in `census` that contains the latitude.
-    feature_cols : list[str]
-        List of column names in `census` to assign to the GNAF coordinates.
-        Each row in these columns have a number indicating the number of
-        individuals with that feature for a particular code in `code_col`.
     index_col : str
         Column name to assign the row index to.
     ignore_total : bool
@@ -227,60 +230,31 @@ def randomly_assign_census_features(
     Returns
     -------
     pl.LazyFrame
-        A `LazyFrame` with the columns `[code_col, long_col, lat_col, *feature_cols]`
-        where each `[code_col, long_col, lat_col]` rows are randomly assigned to
-        a combination of the `feature_cols` columns. Each row in the columns `feature_cols`
-        is a **one-hot encoded** value (`True` or `False` indicating the presence of a
-        feature for the corresponding `[code_col, long_col, lat_col]`.
-
-    Examples
-    --------
-    >>> census = pl.LazyFrame({
-    ...     "code_col": ["A", "A", "B", "B"],
-    ...     "long_col": [1.0, 1.1, 2.0, 2.1],
-    ...     "lat_col": [1.0, 1.1, 2.0, 2.1],
-    ...     "feature_1": [7, 7, 12, 12],
-    ...     "feature_2": [3, 3, 4, 4],
-    ...     "feature_3": [5, 5, 6, 6],
-    ... })
-    >>> randomly_assign_census_features(
-    ...     census,
-    ...     code_col="code_col",
-    ...     long_col="long_col",
-    ...     lat_col="lat_col",
-    ...     feature_cols=["feature_1", "feature_2", "feature_3"],
-    ... ).collect()
-    shape: (37, 7)
-    ┌───────────┬──────────┬──────────┬─────────┬───────────┬───────────┬───────────┐
-    │ person_id ┆ code_col ┆ long_col ┆ lat_col ┆ feature_1 ┆ feature_2 ┆ feature_3 │
-    │ ---       ┆ ---      ┆ ---      ┆ ---     ┆ ---       ┆ ---       ┆ ---       │
-    │ i64       ┆ str      ┆ f64      ┆ f64     ┆ bool      ┆ bool      ┆ bool      │
-    ╞═══════════╪══════════╪══════════╪═════════╪═══════════╪═══════════╪═══════════╡
-    │ 0         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
-    │ 1         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
-    │ 2         ┆ A        ┆ 1.0      ┆ 1.0     ┆ true      ┆ false     ┆ false     │
-    │ 3         ┆ A        ┆ 1.1      ┆ 1.1     ┆ true      ┆ false     ┆ false     │
-    │ 4         ┆ A        ┆ 1.1      ┆ 1.1     ┆ true      ┆ false     ┆ false     │
-    │ …         ┆ …        ┆ …        ┆ …       ┆ …         ┆ …         ┆ …         │
-    │ 32        ┆ B        ┆ 2.0      ┆ 2.0     ┆ false     ┆ false     ┆ true      │
-    │ 33        ┆ B        ┆ 2.0      ┆ 2.0     ┆ false     ┆ false     ┆ true      │
-    │ 34        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
-    │ 35        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
-    │ 36        ┆ B        ┆ 2.1      ┆ 2.1     ┆ false     ┆ false     ┆ true      │
-    └───────────┴──────────┴──────────┴─────────┴───────────┴───────────┴───────────┘
+        A `LazyFrame` with the columns `[index_col, code_col, long_col, lat_col, *feature_cols]`
+        where each `[code_col, long_col, lat_col]` row is randomly assigned to
+        feature columns. For multi-response tables, multiple features can be True.
+        For non-multi-response tables, only one feature will be True.
     """
     if ignore_total:
         census = census.select(
-            [col for col in census.collect_schema() if not col.startswith(total_prefix)]
+            [col for col in census.columns if not col.startswith(total_prefix)]
         )
 
+    feature_cols = table_config["census_features"]
+
+    # Use sample_census_feature for each feature column
     sampled_features = [
-        sample_census_feature(census, code_col, long_col, lat_col, feat_col)
-        for feat_col in feature_cols
+        sample_census_feature(census, code_col, long_col, lat_col, feature_col)
+        for feature_col in feature_cols
     ]
-    joined = reduce(_stack_sampled_census_features, sampled_features)
-    return joined.with_columns(
-        pl.int_range(pl.len()).alias(index_col)  # assign row index
-    ).select(
-        pl.col(index_col, code_col, long_col, lat_col, *feature_cols)
-    )  # reassign column order
+
+    # Combine the sampled features
+    if table_config["multi_response"]:
+        result = reduce(_join_sampled_census_features, sampled_features)
+    else:
+        result = reduce(_stack_sampled_census_features, sampled_features)
+
+    # Add index column
+    result = result.with_row_count(index_col)
+
+    return result.select(pl.col(index_col, code_col, long_col, lat_col, *feature_cols))
