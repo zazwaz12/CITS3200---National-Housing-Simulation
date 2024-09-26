@@ -39,9 +39,9 @@ simulation:
     - name: "G19"
       multi_response: true
       census_features:
-        - "cancer"
-        - "arthritis"
-        - "dementia"
+        - "F_Cancer_15_24"
+        - "F_Dementia_15_24"
+        - "F_Arthritis_15_24"
     - name: "G01"
       multi_response: false
       census_features:
