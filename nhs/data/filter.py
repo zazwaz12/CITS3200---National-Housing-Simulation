@@ -1,10 +1,14 @@
-import polars as pl
 import os
 from typing import Callable, Literal
+
+import polars as pl
+
 from .handling import read_spreadsheets
 
 
-def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[pl.LazyFrame, pl.LazyFrame]:
+def load_gnaf_files_by_states(
+    gnaf_path: str, states: list[str] = []
+) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
     Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL parquet files for the specified states
     from the given GNAF directory, and return them as LazyFrames.
@@ -65,7 +69,8 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[p
         key: lf.with_columns(pl.lit(state_name).alias("STATE"))
         for state_name in states
         for key, lf in all_files.items()
-        if f"{state_name}_ADDRESS_DEFAULT_GEOCODE" in key and isinstance(lf, pl.LazyFrame)
+        if f"{state_name}_ADDRESS_DEFAULT_GEOCODE" in key
+        and isinstance(lf, pl.LazyFrame)
     }
 
     detail_files = {
@@ -75,14 +80,15 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[p
         if f"{state_name}_ADDRESS_DETAIL" in key and isinstance(lf, pl.LazyFrame)
     }
 
-
-
     # Concatenate all LazyFrames
-    default_geocode_lf = pl.concat(list(geocode_files.values())) if geocode_files else pl.LazyFrame()
-    address_detail_lf = pl.concat(list(detail_files.values())) if detail_files else pl.LazyFrame()
+    default_geocode_lf = (
+        pl.concat(list(geocode_files.values())) if geocode_files else pl.LazyFrame()
+    )
+    address_detail_lf = (
+        pl.concat(list(detail_files.values())) if detail_files else pl.LazyFrame()
+    )
 
     return default_geocode_lf, address_detail_lf
-
 
 
 def filter_and_join_gnaf_frames(
@@ -102,24 +108,24 @@ def filter_and_join_gnaf_frames(
     address_detail_lf : pl.LazyFrame
         LazyFrame containing ADDRESS_DETAIL data.
     building_types : list of str, optional
-        Building types to filter by in the "FLAT_TYPE_CODE" column of `address_detail_lf` 
+        Building types to filter by in the "FLAT_TYPE_CODE" column of `address_detail_lf`
         (e.g., ["flat", "unit"]). If empty, no filtering is applied.
     postcodes : list of int, optional
-        Postcodes to filter by in the "POSTCODE" column of `address_detail_lf`. 
+        Postcodes to filter by in the "POSTCODE" column of `address_detail_lf`.
         If empty, no filtering is applied.
 
     Returns
     -------
     pl.LazyFrame
         Joined LazyFrame with applied filters, if specified.
-    
+
     Example
     -------
     >>> default_geocode_lf, address_detail_lf = load_gnaf_files_by_states("/path/to/gnaf", ["ACT", "NSW"])
     >>> filtered_lf = filter_and_join_gnaf_frames(
-    ...     default_geocode_lf, 
-    ...     address_detail_lf, 
-    ...     building_types=["flat", "unit"], 
+    ...     default_geocode_lf,
+    ...     address_detail_lf,
+    ...     building_types=["flat", "unit"],
     ...     postcodes=[2000, 2600]
     ... )
     >>> filtered_lf.collect()
@@ -151,7 +157,6 @@ def filter_and_join_gnaf_frames(
     return joined_lf
 
 
-
 def filter_sa1_regions(
     lf: pl.LazyFrame, region_codes: list[int] = [], sa1_column: str = "SA1_CODE21"
 ) -> pl.LazyFrame:
@@ -179,10 +184,6 @@ def filter_sa1_regions(
     return lf.filter(pl.col(sa1_column).is_in(region_codes))
 
 
-
-
-
-
 # 假设 GNAF 文件的目录路径
 gnaf_path = "C:/Users/leyic/Desktop/New folder"
 
@@ -190,12 +191,12 @@ gnaf_path = "C:/Users/leyic/Desktop/New folder"
 states = ["ACT", "WA"]
 
 # 调用函数来加载这些州的数据
-default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_path,states)
+default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_path, states)
 
 
 print(default_geocode_lf.collect())
 print(address_detail_lf.collect())
 
 
-#joined_lf = filter_and_join_gnaf_frames(default_geocode_lf, address_detail_lf)
-#print(joined_lf.collect())
+# joined_lf = filter_and_join_gnaf_frames(default_geocode_lf, address_detail_lf)
+# print(joined_lf.collect())
