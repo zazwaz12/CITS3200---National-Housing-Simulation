@@ -8,7 +8,7 @@ from ..context import nhs
 load_gnaf_files_by_states = nhs.data.filter.load_gnaf_files_by_states
 filter_and_join_gnaf_frames = nhs.data.filter.filter_and_join_gnaf_frames
 filter_sa1_regions = nhs.data.filter.filter_sa1_regions
-
+read_spreadsheets = nhs.data.handling.read_spreadsheets
 
 class TestLoadGnafFilesByStates:
 
@@ -32,20 +32,15 @@ class TestLoadGnafFilesByStates:
             }
         ).lazy()
 
-    @patch("nhs.data.filter.glob.glob")
-    @patch("nhs.data.filter.pl.scan_csv")
-    def test_load_files_for_valid_states(
-        self, mock_scan_csv, mock_glob, sample_geocode_data, sample_detail_data
-    ):
-        mock_glob.side_effect = [
-            ["NSW_ADDRESS_DEFAULT_GEOCODE_psv.psv"],
-            ["NSW_ADDRESS_DETAIL_psv.psv"],
-        ]
-        mock_scan_csv.side_effect = [sample_geocode_data, sample_detail_data]
+    @patch("nhs.data.filter.read_spreadsheets")
+    def test_load_files_for_valid_states(self, mock_read_spreadsheets, sample_geocode_data, sample_detail_data):
+        # Mock the read_spreadsheets function to return the fake LazyFrames
+        mock_read_spreadsheets.return_value = {
+            "NSW_ADDRESS_DEFAULT_GEOCODE.parquet": sample_geocode_data,
+            "NSW_ADDRESS_DETAIL.parquet": sample_detail_data,
+        }
 
-        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states(
-            "/fake/path", ["NSW"]
-        )
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["NSW"])
 
         expected_geocode = pl.DataFrame(
             {
@@ -66,14 +61,12 @@ class TestLoadGnafFilesByStates:
         assert result_geocode_lf.collect().to_dicts() == expected_geocode.to_dicts()
         assert result_detail_lf.collect().to_dicts() == expected_detail.to_dicts()
 
-    @patch("nhs.data.filter.glob.glob")
-    @patch("nhs.data.filter.pl.scan_csv")
-    def test_load_files_with_no_matching_states(self, mock_scan_csv, mock_glob):
-        mock_glob.side_effect = [[], []]
+    @patch("nhs.data.filter.read_spreadsheets")
+    def test_load_files_with_no_matching_states(self, mock_read_spreadsheets):
+        # Mock read_spreadsheets to return no files
+        mock_read_spreadsheets.return_value = {}
 
-        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states(
-            "/fake/path", ["VIC"]
-        )
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["VIC"])
 
         expected_geocode = pl.DataFrame(
             {"ADDRESS_DETAIL_PID": [], "LATITUDE": [], "LONGITUDE": [], "STATE": []}
@@ -85,92 +78,50 @@ class TestLoadGnafFilesByStates:
         assert result_geocode_lf.collect().to_dicts() == expected_geocode.to_dicts()
         assert result_detail_lf.collect().to_dicts() == expected_detail.to_dicts()
 
-    @patch("nhs.data.filter.glob.glob")
-    @patch("nhs.data.filter.pl.scan_csv")
-    def test_load_files_for_multiple_states(self, mock_scan_csv, mock_glob):
+    @patch("nhs.data.filter.read_spreadsheets")
+    def test_load_files_for_multiple_states(self, mock_read_spreadsheets):
         """
         Test loading GNAF files for multiple states (NSW, ACT) using mocked file I/O.
         """
-        # Mock the glob.glob function to return fake file paths for both NSW and ACT
-        mock_glob.return_value = [
-            "NSW_ADDRESS_DEFAULT_GEOCODE_psv.psv",
-            "ACT_ADDRESS_DEFAULT_GEOCODE_psv.psv",
-            "NSW_ADDRESS_DETAIL_psv.psv",
-            "ACT_ADDRESS_DETAIL_psv.psv",
-        ]
+        # Mock read_spreadsheets to return files for both NSW and ACT
+        mock_read_spreadsheets.return_value = {
+            "NSW_ADDRESS_DEFAULT_GEOCODE.parquet": pl.DataFrame(
+                {
+                    "ADDRESS_DETAIL_PID": ["1001", "1002"],
+                    "LATITUDE": [34.5, 35.0],
+                    "LONGITUDE": [150.3, 149.1],
+                    "STATE": ["NSW", "NSW"],
+                }
+            ).lazy(),
+            "ACT_ADDRESS_DEFAULT_GEOCODE.parquet": pl.DataFrame(
+                {
+                    "ADDRESS_DETAIL_PID": ["1234", "4321"],
+                    "LATITUDE": [33.9, 34.4],
+                    "LONGITUDE": [149.8, 150.1],
+                    "STATE": ["ACT", "ACT"],
+                }
+            ).lazy(),
+            "NSW_ADDRESS_DETAIL.parquet": pl.DataFrame(
+                {
+                    "ADDRESS_DETAIL_PID": ["1001", "1002"],
+                    "FLAT_TYPE_CODE": ["flat", "unit"],
+                    "POSTCODE": [2000, 2600],
+                }
+            ).lazy(),
+            "ACT_ADDRESS_DETAIL.parquet": pl.DataFrame(
+                {
+                    "ADDRESS_DETAIL_PID": ["1234", "4321"],
+                    "FLAT_TYPE_CODE": ["apartment", "house"],
+                    "POSTCODE": [2610, 2620],
+                }
+            ).lazy(),
+        }
 
-        # Create separate LazyFrames for NSW geocode data
-        sample_geocode_data_nsw = pl.DataFrame(
-            {
-                "ADDRESS_DETAIL_PID": ["1001", "1002"],
-                "LATITUDE": [34.5, 35.0],
-                "LONGITUDE": [150.3, 149.1],
-                "STATE": ["NSW", "NSW"],
-            }
-        ).lazy()
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["NSW", "ACT"])
 
-        # Create separate LazyFrames for ACT geocode data with different ADDRESS_DETAIL_PID
-        sample_geocode_data_act = pl.DataFrame(
-            {
-                "ADDRESS_DETAIL_PID": ["1234", "4321"],
-                "LATITUDE": [33.9, 34.4],
-                "LONGITUDE": [149.8, 150.1],
-                "STATE": ["ACT", "ACT"],
-            }
-        ).lazy()
-
-        # Create separate LazyFrames for NSW detail data
-        sample_detail_data_nsw = pl.DataFrame(
-            {
-                "ADDRESS_DETAIL_PID": ["1001", "1002"],
-                "FLAT_TYPE_CODE": ["flat", "unit"],
-                "POSTCODE": [2000, 2600],
-            }
-        ).lazy()
-
-        # Create separate LazyFrames for ACT detail data with different ADDRESS_DETAIL_PID
-        sample_detail_data_act = pl.DataFrame(
-            {
-                "ADDRESS_DETAIL_PID": ["1234", "4321"],
-                "FLAT_TYPE_CODE": ["apartment", "house"],
-                "POSTCODE": [2610, 2620],
-            }
-        ).lazy()
-
-        # Manually patch scan_csv to return the correct LazyFrame for each call
-        with patch(
-            "nhs.data.filter.pl.scan_csv", return_value=sample_geocode_data_nsw
-        ) as mock_scan_csv_nsw:
-            result_geocode_nsw = mock_scan_csv_nsw()
-
-        with patch(
-            "nhs.data.filter.pl.scan_csv", return_value=sample_geocode_data_act
-        ) as mock_scan_csv_act:
-            result_geocode_act = mock_scan_csv_act()
-
-        with patch(
-            "nhs.data.filter.pl.scan_csv", return_value=sample_detail_data_nsw
-        ) as mock_scan_detail_nsw:
-            result_detail_nsw = mock_scan_detail_nsw()
-
-        with patch(
-            "nhs.data.filter.pl.scan_csv", return_value=sample_detail_data_act
-        ) as mock_scan_detail_act:
-            result_detail_act = mock_scan_detail_act()
-
-        # Collect the results
-        result_geocode_lf = pl.concat([result_geocode_nsw, result_geocode_act]).lazy()
-        result_detail_lf = pl.concat([result_detail_nsw, result_detail_act]).lazy()
-
-        # Expected data
         expected_geocode = pl.DataFrame(
             {
-                "ADDRESS_DETAIL_PID": [
-                    "1001",
-                    "1002",
-                    "1234",
-                    "4321",
-                ],  # Different PIDs for NSW and ACT
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1234", "4321"],
                 "LATITUDE": [34.5, 35.0, 33.9, 34.4],
                 "LONGITUDE": [150.3, 149.1, 149.8, 150.1],
                 "STATE": ["NSW", "NSW", "ACT", "ACT"],
@@ -179,18 +130,12 @@ class TestLoadGnafFilesByStates:
 
         expected_detail = pl.DataFrame(
             {
-                "ADDRESS_DETAIL_PID": [
-                    "1001",
-                    "1002",
-                    "1234",
-                    "4321",
-                ],  # Different PIDs for NSW and ACT
+                "ADDRESS_DETAIL_PID": ["1001", "1002", "1234", "4321"],
                 "FLAT_TYPE_CODE": ["flat", "unit", "apartment", "house"],
                 "POSTCODE": [2000, 2600, 2610, 2620],
             }
         )
 
-        # Assertions
         assert result_geocode_lf.collect().to_dicts() == expected_geocode.to_dicts()
         assert result_detail_lf.collect().to_dicts() == expected_detail.to_dicts()
 
