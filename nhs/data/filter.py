@@ -182,7 +182,3 @@ def filter_sa1_regions(
     if not region_codes:  # If the region_codes list is empty
         return lf  # Return the original LazyFrame
     return lf.filter(pl.col(sa1_column).is_in(region_codes))
-
-
-
-
