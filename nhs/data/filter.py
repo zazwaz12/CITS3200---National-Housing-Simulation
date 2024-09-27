@@ -181,21 +181,3 @@ def filter_sa1_regions(
 
 
 
-
-
-# 假设 GNAF 文件的目录路径
-gnaf_path = "C:/Users/leyic/Desktop/New folder"
-
-# 要加载的州列表，例如加载 WA 和 ACT
-states = ["ACT", "WA"]
-
-# 调用函数来加载这些州的数据
-default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_path,states)
-
-
-print(default_geocode_lf.collect())
-print(address_detail_lf.collect())
-
-
-#joined_lf = filter_and_join_gnaf_frames(default_geocode_lf, address_detail_lf)
-#print(joined_lf.collect())
