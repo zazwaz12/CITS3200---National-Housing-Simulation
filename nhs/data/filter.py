@@ -61,13 +61,21 @@ def load_gnaf_files_by_states(gnaf_path: str, states: list[str] = []) -> tuple[p
     all_files = read_spreadsheets(gnaf_path, "parquet")
 
     # Filter out ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL files
-    geocode_files = {key: lf.with_columns(pl.lit(state_name).alias("STATE"))
-                     for state_name in states
-                     for key, lf in all_files.items() if "ADDRESS_DEFAULT_GEOCODE" in key and state_name in key}
+    geocode_files = {
+        key: lf.with_columns(pl.lit(state_name).alias("STATE"))
+        for state_name in states
+        for key, lf in all_files.items()
+        if f"{state_name}_ADDRESS_DEFAULT_GEOCODE" in key and isinstance(lf, pl.LazyFrame)
+    }
 
-    detail_files = {key: lf.select(["ADDRESS_DETAIL_PID", "FLAT_TYPE_CODE", "POSTCODE"])
-                    for state_name in states
-                    for key, lf in all_files.items() if "ADDRESS_DETAIL" in key and state_name in key}
+    detail_files = {
+        key: lf.select(["ADDRESS_DETAIL_PID", "FLAT_TYPE_CODE", "POSTCODE"])
+        for state_name in states
+        for key, lf in all_files.items()
+        if f"{state_name}_ADDRESS_DETAIL" in key and isinstance(lf, pl.LazyFrame)
+    }
+
+
 
     # Concatenate all LazyFrames
     default_geocode_lf = pl.concat(list(geocode_files.values())) if geocode_files else pl.LazyFrame()
@@ -171,3 +179,23 @@ def filter_sa1_regions(
     return lf.filter(pl.col(sa1_column).is_in(region_codes))
 
 
+
+
+
+
+# 假设 GNAF 文件的目录路径
+gnaf_path = "C:/Users/leyic/Desktop/New folder"
+
+# 要加载的州列表，例如加载 WA 和 ACT
+states = ["ACT", "WA"]
+
+# 调用函数来加载这些州的数据
+default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_path,states)
+
+
+print(default_geocode_lf.collect())
+print(address_detail_lf.collect())
+
+
+#joined_lf = filter_and_join_gnaf_frames(default_geocode_lf, address_detail_lf)
+#print(joined_lf.collect())
