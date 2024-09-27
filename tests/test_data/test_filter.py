@@ -10,6 +10,7 @@ filter_and_join_gnaf_frames = nhs.data.filter.filter_and_join_gnaf_frames
 filter_sa1_regions = nhs.data.filter.filter_sa1_regions
 read_spreadsheets = nhs.data.handling.read_spreadsheets
 
+
 class TestLoadGnafFilesByStates:
 
     @pytest.fixture
@@ -33,14 +34,18 @@ class TestLoadGnafFilesByStates:
         ).lazy()
 
     @patch("nhs.data.filter.read_spreadsheets")
-    def test_load_files_for_valid_states(self, mock_read_spreadsheets, sample_geocode_data, sample_detail_data):
+    def test_load_files_for_valid_states(
+        self, mock_read_spreadsheets, sample_geocode_data, sample_detail_data
+    ):
         # Mock the read_spreadsheets function to return the fake LazyFrames
         mock_read_spreadsheets.return_value = {
             "NSW_ADDRESS_DEFAULT_GEOCODE.parquet": sample_geocode_data,
             "NSW_ADDRESS_DETAIL.parquet": sample_detail_data,
         }
 
-        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["NSW"])
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states(
+            "/fake/path", ["NSW"]
+        )
 
         expected_geocode = pl.DataFrame(
             {
@@ -66,7 +71,9 @@ class TestLoadGnafFilesByStates:
         # Mock read_spreadsheets to return no files
         mock_read_spreadsheets.return_value = {}
 
-        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["VIC"])
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states(
+            "/fake/path", ["VIC"]
+        )
 
         expected_geocode = pl.DataFrame(
             {"ADDRESS_DETAIL_PID": [], "LATITUDE": [], "LONGITUDE": [], "STATE": []}
@@ -117,7 +124,9 @@ class TestLoadGnafFilesByStates:
             ).lazy(),
         }
 
-        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states("/fake/path", ["NSW", "ACT"])
+        result_geocode_lf, result_detail_lf = load_gnaf_files_by_states(
+            "/fake/path", ["NSW", "ACT"]
+        )
 
         expected_geocode = pl.DataFrame(
             {
