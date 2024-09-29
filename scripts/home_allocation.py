@@ -158,9 +158,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--census_pattern",
-        help="Regex pattern to match the names of census files in the directory to process. Defaults to r'2021Census_G\\d+[A-Z]_AUST_SA1'",
+        help="Regex pattern to match the names of census files in the directory to process. Defaults to r'2021Census_G\\d+[A-Z]?_AUST_SA1'",
         type=str,
-        default=r"2021Census_G\d+[A-Z]_AUST_SA1",
+        default=r"2021Census_G\d+[A-Z]?_AUST_SA1",
     )
     parser.add_argument(
         "-o",

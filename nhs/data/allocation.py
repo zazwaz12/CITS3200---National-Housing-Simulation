@@ -1,9 +1,6 @@
 from functools import partial, reduce
 
 import polars as pl
-from loguru import logger
-
-from nhs.utils.parallel import pmap
 
 from ..logging import log_entry_exit
 
@@ -194,7 +191,6 @@ def randomly_assign_census_features(
     index_col: str = "person_id",
     ignore_total: bool = True,
     total_prefix: str = "Tot_",
-    parallel: bool = True,
 ):
     """
     Randomly assign census features to the GNAF coordinates.
@@ -222,8 +218,6 @@ def randomly_assign_census_features(
     total_prefix : str
         Prefix used to identify columns that are totals, only used if `ignore_total`
         is `True`. Defaults to "Tot_".
-    Parallel : bool
-        Whether to use parallel computation. Defaults to `True`.
 
     Returns
     -------
@@ -275,22 +269,10 @@ def randomly_assign_census_features(
             [col for col in census.collect_schema() if not col.startswith(total_prefix)]
         )
 
-    sample_features = partial(
-        sample_census_feature,
-        census=census,
-        code_col=code_col,
-        long_col=long_col,
-        lat_col=lat_col,
-    )
-
-    [
+    sampled_features = [
         sample_census_feature(census, code_col, long_col, lat_col, feat_col)
         for feat_col in feature_cols
     ]
-    mapper = pmap if parallel else map
-    sampled_features = list(
-        mapper(lambda feat: sample_features(feature_col=feat), feature_cols)
-    )
 
     joined = reduce(_stack_sampled_census_features, sampled_features)
     return joined.with_columns(
