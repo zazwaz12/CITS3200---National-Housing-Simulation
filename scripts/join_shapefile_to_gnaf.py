@@ -50,7 +50,7 @@ def main(
     joined_coords = join_coords_with_area(coords, shapefile, strategy)
 
     logger.info(f"Saving joined data to {output_name}...")
-    joined_coords.sink_csv(output_name)
+    joined_coords.sink_parquet(output_name)
     logger.info("Done!")
 
 
