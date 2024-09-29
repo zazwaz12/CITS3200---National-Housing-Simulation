@@ -13,6 +13,7 @@ from fiona.drvsupport import supported_drivers
 from loguru import logger
 import sys
 
+
 sys.path.append(".")
 sys.path.append("..")
 from nhs.data import (
@@ -22,70 +23,77 @@ from nhs.data import (
     read_shapefile,
     join_census_with_coords,
     randomly_assign_census_features,
+    join_census_frames,
+    read_spreadsheets,
 )
 from nhs import config
 from nhs.logging import config_logger
 from nhs.utils import log_time
 
 
+def join_gnaf_with_shapefile(
+    gnaf_dir: str,
+    gnaf_default_code_pattern: str,
+    shapefile_dir: str,
+    data_config: dict,
+    strategy: Literal["join_nearest", "filter"] | None = None,
+) -> pl.LazyFrame:
+    with log_time():
+        logger.info(f"Reading GNAF default geocode data from {gnaf_dir}...")
+        geocode_lfs = read_spreadsheets(gnaf_dir, "parquet", gnaf_default_code_pattern)
+        geocode_lfs = pl.concat(geocode_lfs.values(), how="diagonal_relaxed")  # type: ignore
+
+        logger.info(f"Reading shapefile from {data_config['shapefile_path']}")
+        area_polygons = read_shapefile(shapefile_dir, data_config["crs"])
+
+    with log_time():
+        logger.info("Converting GNAF addresses to GeoDataFrame...")
+        with log_time():
+            house_coords = (to_geo_dataframe(geocode_lfs, data_config["crs"]),)
+
+    with log_time():
+        logger.info("Joining coordinates with area polygons...")
+        with log_time():
+            joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
+    return joined_coords
+
+
 def main(
-    config_path: str,
-    gnaf_fname: str,
-    census_fname: str,
-    out_fname: str,
-    strategy: Literal["join_nearest", "filter"] | None,
+    gnaf_dir: str,
+    gnaf_cache: str,
+    gnaf_default_code_pattern: str,
+    gnaf_address_details_pattern: str,
+    shapefile_dir: str,
+    census_dir: str,
+    census_pattern: str,
+    output_path: str,
+    data_config: dict,
+    simulation_config: dict,
+    strategy: Literal["join_nearest", "filter"] | None = None,
 ) -> None:
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
     init_time = time()  # logs total time taken
 
-    try:
-        data_config = config.data_config(config_path)
-        logger_config = config.logger_config(config_path)
-        simulation_config = config.simulation_config(config_path)
-    except Exception as e:
-        logger.critical(
-            f"Failed to load configuration at {config_path} with exception {e}, terminating..."
+    if not os.path.exists(gnaf_cache):
+        logger.warning(
+            f"Unable to find GNAF cache file at {gnaf_cache}, GNAF will be joined with shapefiles. Note that it's recommended to perform this join beforehand as this process is time-consuming."
         )
-        exit(1)
-
-    logger.enable("nhs")
-    config_logger(logger_config)
-
-    gnaf_path = os.path.join(data_config["gnaf_path"], gnaf_fname)
-    logger.info(f"Reading GNAF data from {gnaf_path}...")
-    with log_time():
-        houses_df = read_parquet(gnaf_path)
-    if not isinstance(houses_df, pl.LazyFrame):
-        logger.error(f"Failed to load GNAF file at {gnaf_path}, terminating...")
-        exit(1)
-
-    census_path = os.path.join(data_config["census_path"], census_fname)
-    logger.info(f"Reading census data from {census_path}...")
-    with log_time():
-        census = read_parquet(census_path)
-    if not isinstance(census, pl.LazyFrame):
-        logger.error(f"Failed to load census file at {census_path}, terminating...")
-        exit(1)
-
-    logger.info(f"Reading shapefile from {data_config['shapefile_path']}")
-    with log_time():
-        area_polygons = read_shapefile(
-            data_config["shapefile_path"], data_config["crs"]
+        joined_coords = join_gnaf_with_shapefile(
+            gnaf_dir, gnaf_default_code_pattern, shapefile_dir, data_config, strategy
         )
+    else:
+        logger.info(f"Reading GNAF cache from {gnaf_cache}...")
+        joined_coords = read_parquet(gnaf_cache)
 
-    logger.info("Converting GNAF addresses to GeoDataFrame...")
     with log_time():
-        house_coords = (to_geo_dataframe(houses_df, data_config["crs"]),)
+        logger.info(f"Reading census data from {census_dir}...")
+        census_lfs = read_spreadsheets(census_dir, "parquet", census_pattern)
+        census = join_census_frames(census_lfs)
 
-    logger.info("Joining coordinates with area polygons...")
-    with log_time():
-        joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
-
-    out_path = os.path.join(data_config["output_path"], out_fname)
     logger.info(
-        f"Randomly assigning census features to GNAF addresses and saving to {out_path}..."
+        f"Randomly assigning census features to GNAF addresses and saving to {output_path}..."
     )
     with log_time():
         census_gnaf = join_census_with_coords(census, joined_coords)
@@ -99,9 +107,9 @@ def main(
             simulation_config["census_features"],
         )
         logger.debug(allocated.explain(streaming=True))
-        allocated.collect().write_csv(out_path)
+        allocated.collect().write_csv(output_path)
     logger.info(
-        f"Allocation complete, saved to {out_path} in {time() - init_time:.2f} s total."
+        f"Allocation complete, saved to {output_path} in {time() - init_time:.2f} s total."
     )
 
 
@@ -111,24 +119,55 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-g",
-        "--gnaf_fname",
+        "--gnaf_dir",
         type=str,
-        help="Name of the input GNAF address geocode parquet file, e.g. 'TAS_ADDRESS_DEFAULT_GEOCODE_psv.parquet'",
-        required=True,
+        help="Directory containing the input GNAF address geocode parquet files",
+        default=None,
+    )
+    parser.add_argument(
+        "--gnaf_default_code_pattern",
+        help="Regex pattern to match the names of GNAF files containing the default geocode in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
+        type=str,
+        default=r"[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv",
+    )
+    parser.add_argument(
+        "--gnaf_address_details_pattern",
+        help="Regex pattern to match the names of GNAF files containing the address details in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DETAIL_psv'",
+        type=str,
+        default=r"[A-Z]+_ADDRESS_DETAIL_psv",
+    )
+    parser.add_argument(
+        "--gnaf_cache",
+        help="Path to a file with GNAF default geocodes joined with the shapefile. If supplied, the shapefile and GNAF files are ignored.",
+        type=str,
+        default=None,
+    )
+    parser.add_argument(
+        "-s",
+        "--shapefile_dir",
+        help="Path to a shapefile directory. Ignored if GNAF cache file is supplied.",
+        type=str,
+        default=None,
     )
     parser.add_argument(
         "-i",
-        "--census_fname",
+        "--census_dir",
         type=str,
-        help="Name of the input census parquet file, e.g. 2021Census_G01_AUS_AUS.parquet",
-        required=True,
+        help="Directory containing the input census parquet files, e.g. 2021Census_G01_AUS_AUS.parquet",
+        default=None,
+    )
+    parser.add_argument(
+        "--census_pattern",
+        help="Regex pattern to match the names of census files in the directory to process. Defaults to r'2021Census_G\\d+[A-Z]_AUST_SA1'",
+        type=str,
+        default=r"2021Census_G\d+[A-Z]_AUST_SA1",
     )
     parser.add_argument(
         "-o",
-        "--output_fname",
+        "--output_path",
         type=str,
-        help="Name of the output CSV file",
-        default="random_allocation.csv",
+        help="Path of the output CSV file",
+        default=None,
     )
     parser.add_argument(
         "-c",
@@ -138,18 +177,40 @@ if __name__ == "__main__":
         default="configurations.yml",
     )
     parser.add_argument(
-        "-s",
         "--strategy",
         type=str,
-        help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken.",
+        help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken. Ignored if GNAF cache file is supplied.",
         default=None,
     )
+
     args = parser.parse_args()
 
+    logger.enable("nhs")
+
+    try:
+        data_config = config.data_config(args.config_path)
+        logger_config = config.logger_config(args.config_path)
+        simulation_config = config.simulation_config(args.config_path)
+    except Exception as e:
+        logger.critical(
+            f"Failed to load configuration at {args.config_path} with exception {e}, terminating..."
+        )
+        exit(1)
+    config_logger(logger_config)
+
     main(
-        args.config_path,
-        args.gnaf_fname,
-        args.census_fname,
-        args.output_fname,
-        args.strategy,
+        gnaf_dir=args.gnaf_dir or data_config["gnaf_path"],
+        gnaf_cache=args.gnaf_cache or data_config["gnaf_cache_file"],
+        gnaf_default_code_pattern=args.gnaf_default_code_pattern,
+        gnaf_address_details_pattern=args.gnaf_address_details_pattern,
+        shapefile_dir=args.shapefile_dir or data_config["shapefile_path"],
+        census_dir=args.census_dir or data_config["census_path"],
+        census_pattern=args.census_pattern,
+        output_path=(
+            args.output_path
+            or os.path.join(data_config["output_path"], "allocated.csv")
+        ),
+        strategy=args.strategy,
+        data_config=data_config,
+        simulation_config=simulation_config,
     )

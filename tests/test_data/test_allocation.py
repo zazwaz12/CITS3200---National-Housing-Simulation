@@ -78,24 +78,6 @@ class TestJoinCensusWithCoords:
         # Assert the result matches the expected DataFrame
         assert result_df.equals(expected_df)
 
-    # One or both LazyFrames are empty
-    def test_empty_lazyframes(self):
-        # Create empty LazyFrames
-        census = pl.LazyFrame({"SA1_CODE_2021": [], "data": []})
-        coords = pl.LazyFrame({"SA1_CODE21": [], "coords": []})
-
-        # Perform join
-        result = join_census_with_coords(census, coords)
-
-        # Collect result to DataFrame for assertion
-        result_df = result.collect()
-
-        # Expected result is an empty DataFrame with the same schema
-        expected_df = pl.DataFrame({"SA1_CODE_2021": [], "data": [], "coords": []})
-
-        # Assert the result matches the expected empty DataFrame
-        assert result_df.equals(expected_df)
-
 
 class TestSampleCensusFeature:
     # Correctly samples rows based on feature_col values

@@ -93,7 +93,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p",
         "--pattern",
-        help="Regex pattern to match files in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
+        help="Regex pattern to match file names in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
         type=str,
         default=r"[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv",
     )

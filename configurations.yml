@@ -20,8 +20,8 @@ data:
   gnaf_path: "./DataFiles/AppStaging/Standard/"
   # File of GNAF data already joined with the shapefile
   # Recommended to use as converting GNAF to GeoDataFrames is time-consuming
-  gnaf_cache_file: "./DataFiles/AppStaging/Standard/gnaf.parquet"
-  # Path to the shapefile used for geospatial analysis
+  gnaf_cache_file: "./DataFiles/AppStaging/gnaf.parquet"
+  # Path to the shapefile containing region codes and polygon of the area
   shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
   # Path of the output CSV
   output_path: "./DataFiles/FilesOut/"
