@@ -1,5 +1,4 @@
-import os
-from typing import Callable, Literal
+from typing import Literal
 
 import polars as pl
 
@@ -7,16 +6,23 @@ from .handling import read_spreadsheets
 
 
 def load_gnaf_files_by_states(
-    gnaf_path: str, states: list[str] = []
+    gnaf_path: str,
+    states: list[
+        Literal["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
+    ] = [],
 ) -> tuple[pl.LazyFrame, pl.LazyFrame]:
     """
-    Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL parquet files for the specified states
-    from the given GNAF directory, and return them as LazyFrames.
+    Load and filter ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL files for the given `states` from `gnaf_path`.
 
     Parameters
     ----------
     gnaf_path : str
-        The directory path where the GNAF parquet files are stored.
+        The directory path where the GNAF parquet files are stored. The files in the directory
+        must two types of parquet files with the naming convention:
+            - `"{state_name}_ADDRESS_DEFAULT_GEOCODE_psv.parquet"` for data containing the default
+              geocode data for the state. e.g. "ACT_ADDRESS_DEFAULT_GEOCODE_psv.parquet"
+            - `"{state_name}_ADDRESS_DETAIL_psv.parquet"`: for data containing the detailed address
+              data for the state. e.g. "ACT_ADDRESS_DETAIL_psv.parquet"
     states : list of str, optional
         A list of state/territory abbreviations (e.g., ["WA", "ACT"]). If not provided or an empty list,
         data for all states will be included. Default is an empty list.
@@ -24,26 +30,14 @@ def load_gnaf_files_by_states(
     Returns
     -------
     tuple of (pl.LazyFrame, pl.LazyFrame)
-        default_geocode_lf : pl.LazyFrame
-            The merged ADDRESS_DEFAULT_GEOCODE data for the specified states, with an added "STATE" column.
-        address_detail_lf : pl.LazyFrame
-            The merged ADDRESS_DETAIL data for the specified states.
+        A tuple containing two LazyFrames:
+            - The merged ADDRESS_DEFAULT_GEOCODE data for the specified states, with an added "STATE" column.
+            - The merged ADDRESS_DETAIL data for the specified states.
 
     Notes
     -----
-    The function expects the files in the directory to follow this naming convention:
-    - {state_name}_ADDRESS_DEFAULT_GEOCODE_psv.parquet: Contains the default geocode data for the state.
-    - {state_name}_ADDRESS_DETAIL_psv.parquet: Contains the detailed address data for the state.
-
-    Example file names:
-    - "ACT_ADDRESS_DEFAULT_GEOCODE_psv.parquet"
-    - "ACT_ADDRESS_DETAIL_psv.parquet"
-
     Expected columns:
     - `ADDRESS_DEFAULT_GEOCODE` files should include the following columns:
-        - "ADDRESS_DEFAULT_GEOCODE_PID"
-        - "DATE_CREATED"
-        - "DATE_RETIRED"
         - "ADDRESS_DETAIL_PID"
         - "GEOCODE_TYPE_CODE"
         - "LATITUDE"
@@ -55,7 +49,9 @@ def load_gnaf_files_by_states(
         - "POSTCODE"
     """
     # List of all state codes
-    all_state_codes = ["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
+    all_state_codes: list[
+        Literal["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
+    ] = ["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
 
     # If the states list is empty, use all states
     if not states:
@@ -98,15 +94,18 @@ def filter_and_join_gnaf_frames(
     postcodes: list[int] = [],
 ) -> pl.LazyFrame:
     """
-    Filters and joins GNAF ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL LazyFrames based on optional building types
-    and postcodes, and returns the resulting LazyFrame.
+    Filters and joins ADDRESS_DEFAULT_GEOCODE and ADDRESS_DETAIL LazyFrames on `building_types` and `postcodes`.
 
     Parameters
     ----------
     default_geocode_lf : pl.LazyFrame
-        LazyFrame containing ADDRESS_DEFAULT_GEOCODE data.
+        LazyFrame containing ADDRESS_DEFAULT_GEOCODE data. Must have the columns:
+            - "ADDRESS_DETAIL_PID": for joining with `address_detail_lf`.
     address_detail_lf : pl.LazyFrame
-        LazyFrame containing ADDRESS_DETAIL data.
+        LazyFrame containing ADDRESS_DETAIL data. Must have the column:
+            - "ADDRESS_DETAIL_PID": for joining with `default_geocode_lf`.
+            - "FLAT_TYPE_CODE": building type information.
+            - "POSTCODE": postcode of the address.
     building_types : list of str, optional
         Building types to filter by in the "FLAT_TYPE_CODE" column of `address_detail_lf`
         (e.g., ["flat", "unit"]). If empty, no filtering is applied.
@@ -158,11 +157,10 @@ def filter_and_join_gnaf_frames(
 
 
 def filter_sa1_regions(
-    lf: pl.LazyFrame, region_codes: list[int] = [], sa1_column: str = "SA1_CODE21"
+    lf: pl.LazyFrame, region_codes: list[int], sa1_column: str = "SA1_CODE21"
 ) -> pl.LazyFrame:
     """
-    Filters the LazyFrame to include only rows with specified SA1 area codes.
-    If no region_codes are provided, return the original LazyFrame without filtering.
+    Filter `lf` to include only rows with specified SA1 area codes.
 
     Parameters
     ----------
