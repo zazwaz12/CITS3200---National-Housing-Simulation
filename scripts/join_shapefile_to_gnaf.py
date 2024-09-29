@@ -20,7 +20,6 @@ from nhs.data import read_spreadsheets
 from nhs.logging import config_logger
 from nhs.config import logger_config, data_config
 from loguru import logger
-import re
 from nhs.data import read_shapefile
 from fiona import supported_drivers
 
@@ -39,7 +38,7 @@ def main(
 
     logger.info(f"Reading GNAF data from {gnaf_dir}...")
     lfs = read_spreadsheets(gnaf_dir, extension, pattern)
-    gnaf = pl.concat(lfs, how="diagonal_relaxed")  # type: ignore
+    gnaf = pl.concat(lfs.values(), how="diagonal_relaxed")  # type: ignore
 
     logger.info(f"Reading shapefile from {shapefile_dir}...")
     shapefile = read_shapefile(shapefile_dir, data_config["crs"])
