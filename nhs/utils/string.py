@@ -54,7 +54,7 @@ def placeholder_matches(
     str_list: list[str],
     pattern: str,
     placeholders: list[str],
-    re_pattern: str = r".*?",
+    re_pattern: str = r".+",
 ) -> list[tuple[str, ...]]:
     """
     Return placeholder values for each string in a list that match pattern.
