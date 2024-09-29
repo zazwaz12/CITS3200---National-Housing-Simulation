@@ -25,7 +25,7 @@ from nhs.data import (
 )
 from nhs import config
 from nhs.logging import config_logger
-from nhs.utils import compute_in_parallel, log_time
+from nhs.utils import log_time
 
 
 def main(
@@ -69,14 +69,15 @@ def main(
         logger.error(f"Failed to load census file at {census_path}, terminating...")
         exit(1)
 
-    logger.info(
-        f"Reading shapefile from {data_config['shapefile_path']} and converting housing dataset to GeoDataFrame..."
-    )
+    logger.info(f"Reading shapefile from {data_config['shapefile_path']}")
     with log_time():
-        area_polygons, house_coords = compute_in_parallel(
-            lambda: read_shapefile(data_config["shapefile_path"], data_config["crs"]),
-            lambda: to_geo_dataframe(houses_df, data_config["crs"]),
+        area_polygons = read_shapefile(
+            data_config["shapefile_path"], data_config["crs"]
         )
+
+    logger.info("Converting GNAF addresses to GeoDataFrame...")
+    with log_time():
+        house_coords = (to_geo_dataframe(houses_df, data_config["crs"]),)
 
     logger.info("Joining coordinates with area polygons...")
     with log_time():

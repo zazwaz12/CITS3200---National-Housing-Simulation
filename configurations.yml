@@ -18,6 +18,9 @@ data:
   census_path: "./DataFiles/AppStaging/census/2021 Census GCP All Geographies for AUS/SA1/AUS"
   # Path folder containing the GNAF (Geocoded National Address File) data
   gnaf_path: "./DataFiles/AppStaging/Standard/"
+  # File of GNAF data already joined with the shapefile
+  # Recommended to use as converting GNAF to GeoDataFrames is time-consuming
+  gnaf_cache_file: "./DataFiles/AppStaging/Standard/gnaf.parquet"
   # Path to the shapefile used for geospatial analysis
   shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
   # Path of the output CSV
