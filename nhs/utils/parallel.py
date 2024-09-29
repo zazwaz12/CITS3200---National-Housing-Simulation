@@ -1,5 +1,6 @@
-from pathos.multiprocessing import ProcessingPool as Pool
 from typing import Any, Callable
+
+from pathos.multiprocessing import ProcessingPool as Pool
 
 
 def compute_in_parallel(*jobs: Callable[[], Any]) -> tuple[Any, ...]:

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
-from loguru import logger
 from time import time
+
+from loguru import logger
 
 
 @contextmanager
