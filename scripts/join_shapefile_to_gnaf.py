@@ -38,10 +38,8 @@ def main(
     supported_drivers["ESRI Shapefile"] = "rw"
 
     logger.info(f"Reading GNAF data from {gnaf_dir}...")
-    regex = re.compile(pattern)
-    lfs = read_spreadsheets(gnaf_dir, extension)
-    gnaf_lfs = [v for k, v in lfs.items() if regex.search(k) and v is not None]
-    gnaf = pl.concat(gnaf_lfs, how="diagonal_relaxed")  # type: ignore
+    lfs = read_spreadsheets(gnaf_dir, extension, pattern)
+    gnaf = pl.concat(lfs, how="diagonal_relaxed")  # type: ignore
 
     logger.info(f"Reading shapefile from {shapefile_dir}...")
     shapefile = read_shapefile(shapefile_dir, data_config["crs"])
@@ -87,10 +85,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-c",
-        "--config",
+        "--config_path",
         help="Path to a configuration file",
         type=str,
-        default="configurations.yaml",
+        default="configurations.yml",
     )
     parser.add_argument(
         "-p",
