@@ -4,16 +4,16 @@ from typing import Literal
 
 import geopandas as gpd
 import polars as pl
-from context import nhs
 from fiona.drvsupport import supported_drivers
 from loguru import logger
 
-from nhs.data.geography import join_coords_with_area
+import sys
+sys.path.append(".")
+sys.path.append("..")
 
-config = nhs.config
-geography = nhs.data.geography
-read_parquet = nhs.data.read_parquet
-join_coords_with_area = nhs.data.join_coords_with_area
+from nhs.data import read_parquet, join_coords_with_area, to_geo_dataframe, read_shapefile
+from nhs import logging, config
+
 
 
 def main(
@@ -34,7 +34,7 @@ def main(
         )
         exit(1)
     logger.enable("nhs")
-    nhs.logging.config_logger(logger_config)
+    logging.config_logger(logger_config)
 
     # TODO: REMOVE hardcoding
     in_path = os.path.join(data_config["gnaf_path"], in_fname)
@@ -47,10 +47,10 @@ def main(
         exit(1)
 
     logger.info("Converting to GeoDataFrame...")
-    house_coords = geography.to_geo_dataframe(houses_df, data_config["crs"])
+    house_coords = to_geo_dataframe(houses_df, data_config["crs"])
 
     logger.info(f"Reading from {data_config['shapefile_path']}...")
-    area_polygons: gpd.GeoDataFrame = geography.read_shapefile(
+    area_polygons: gpd.GeoDataFrame = read_shapefile(
         data_config["shapefile_path"], data_config["crs"]
     )
 

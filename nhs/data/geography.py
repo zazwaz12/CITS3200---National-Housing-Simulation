@@ -144,7 +144,7 @@ def join_coords_with_area(
     area_polygons_only_column = coords_with_area.columns.difference(coords.columns)  # type: ignore
     # unmapped coords will have rows with all null values for area polygon columns
     unmapped_coords = coords_with_area[area_polygons_only_column].isnull().all(axis=1)  # type: ignore
-    if not unmapped_coords.all():  # type: ignore
+    if len(unmapped_coords) == 0:  # type: ignore
         logger.warning(
             f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}"  # type: ignore
         )
