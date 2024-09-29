@@ -36,19 +36,20 @@ data:
 simulation:
   # Tables configuration
   tables:
-    - name: "G19"
-      multi_response: true
+    - name: "2021Census_G19A_AUST_SA1.parquet"
+      multi_response: TRUE
       census_features:
         - "F_Cancer_15_24"
         - "F_Dementia_15_24"
         - "F_Arthritis_15_24"
-    - name: "G01"
-      multi_response: false
-      census_features:
-        - "Age_0_4_yr_M"
-        - "Age_0_4_yr_F"
-        - "Age_0_4_yr_P"
-        - "Age_5_14_yr_M"
-        - "Age_5_14_yr_F"
-        - "Age_5_14_yr_P"
-        - "Age_15_19_yr_M"
+        - "F_Diabetes_15_24"
+    # - name: "2021Census_G01_AUST_SA1.parquet"
+    #   multi_response: false
+    #   census_features:
+    #     - "Age_0_4_yr_M"
+    #     - "Age_0_4_yr_F"
+    #     - "Age_0_4_yr_P"
+    #     - "Age_5_14_yr_M"
+    #     - "Age_5_14_yr_F"
+    #     - "Age_5_14_yr_P"
+    #     - "Age_15_19_yr_M"

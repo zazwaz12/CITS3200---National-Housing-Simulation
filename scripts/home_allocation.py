@@ -1,6 +1,7 @@
 import argparse
 import os
 from typing import Literal
+from functools import reduce
 
 import geopandas as gpd
 import polars as pl
@@ -9,22 +10,18 @@ from fiona.drvsupport import supported_drivers
 from loguru import logger
 
 from nhs.config import simulation_config
-
-geography = nhs.data.geography
-read_parquet = nhs.data.read_parquet
-join_coords_with_area = nhs.data.join_coords_with_area
-to_geo_dataframe = nhs.data.to_geo_dataframe
-read_shapefile = nhs.data.read_shapefile
-join_coords_with_area = nhs.data.join_coords_with_area
-join_census_with_coords = nhs.data.join_census_with_coords
-randomly_assign_census_features = nhs.data.randomly_assign_census_features
-sample_census_feature = nhs.data.sample_census_feature
-
+from nhs.data import (
+    read_parquet,
+    join_coords_with_area,
+    to_geo_dataframe,
+    read_shapefile,
+    join_census_with_coords,
+    randomly_assign_census_features,
+)
 
 def main(
     config_path: str,
     gnaf_fname: str,
-    census_fname: str,
     out_fname: str,
     strategy: Literal["join_nearest", "filter"] | None,
 ) -> None:
@@ -51,13 +48,6 @@ def main(
         logger.error(f"Failed to load GNAF file at {gnaf_path}, terminating...")
         exit(1)
 
-    census_path = os.path.join(data_config["census_path"], census_fname)
-    logger.info(f"Reading census data from {census_path}...")
-    census = read_parquet(census_path)
-    if not isinstance(census, pl.LazyFrame):
-        logger.error(f"Failed to load census file at {census_path}, terminating...")
-        exit(1)
-
     logger.info(f"Reading shapefile from {data_config['shapefile_path']}...")
     area_polygons: gpd.GeoDataFrame = read_shapefile(
         data_config["shapefile_path"], data_config["crs"]
@@ -70,23 +60,45 @@ def main(
     joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
 
     out_path = os.path.join(data_config["output_path"], out_fname)
-    logger.info(
-        f"Randomly assigning census features to GNAF addresses and saving to {out_path}..."
-    )
-    census_gnaf = join_census_with_coords(census, joined_coords)
+    logger.info(f"Processing simulation tables and saving to {out_path}...")
 
-    # TODO: is there a better way to handle column names instead of hard-coding?
-    allocated = randomly_assign_census_features(
-        census_gnaf,
-        "SA1_CODE_2021",
-        "LONGITUDE",
-        "LATITUDE",
-        simulation_config["census_features"],
-    )
-    logger.debug(allocated.explain(streaming=True))
-    allocated.collect().write_csv(out_path)
-    logger.info(f"Allocation complete, saved to {out_path}")
+    all_allocated = []
+    for table in simulation_config["tables"]:
+        census_fname = table["name"]
+        census_path = os.path.join(data_config["census_path"], census_fname)
+        logger.info(f"Reading census data from {census_path}...")
+        census = read_parquet(census_path)
+        if not isinstance(census, pl.LazyFrame):
+            logger.error(f"Failed to load census file at {census_path}, skipping...")
+            continue
 
+        census_gnaf = join_census_with_coords(census, joined_coords)
+
+        allocated = randomly_assign_census_features(
+            census_gnaf,
+            table,
+            "SA1_CODE_2021",
+            "LONGITUDE",
+            "LATITUDE",
+        )
+        logger.debug(allocated.explain(streaming=True))
+        all_allocated.append(allocated)
+
+    # Combine all allocated tables
+    if all_allocated:
+        final_allocation = reduce(
+            lambda left, right: left.join(
+                right,
+                on=["person_id", "SA1_CODE_2021", "LONGITUDE", "LATITUDE"],
+                how="outer"
+            ),
+            all_allocated
+        )
+
+        final_allocation.collect().write_csv(out_path)
+        logger.info(f"Allocation complete, saved to {out_path}")
+    else:
+        logger.warning("No tables were successfully processed. No output file created.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -100,18 +112,11 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "-i",
-        "--census_fname",
-        type=str,
-        help="Name of the input census parquet file, e.g. 2021Census_G01_AUS_AUS.parquet",
-        required=True,
-    )
-    parser.add_argument(
         "-o",
         "--output_fname",
         type=str,
         help="Name of the output CSV file",
-        default="random_allocation.csv",
+        default="allocation.csv",
     )
     parser.add_argument(
         "-c",
@@ -132,7 +137,6 @@ if __name__ == "__main__":
     main(
         args.config_path,
         args.gnaf_fname,
-        args.census_fname,
         args.output_fname,
         args.strategy,
     )

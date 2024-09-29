@@ -128,24 +128,15 @@ def sample_census_feature(
     │ B        ┆ true        ┆ 4.0      ┆ 40.0    │
     └──────────┴─────────────┴──────────┴─────────┘
     """
-    if census.select(pl.len()).collect().item() == 0:
-        logger.warning("Empty census data provided.")
-        return census.select(pl.col(code_col, long_col, lat_col, feature_col))
-
     return (
-        census.select(
-            pl.col(code_col, long_col, lat_col, feature_col)
-            # repeat (long, lat) to ensure num coordinates is bigger than sample size
-            .repeat_by(pl.col(feature_col)).flatten()
+        census.select(pl.col(code_col, long_col, lat_col, feature_col))
+        .with_columns(
+            pl.lit(True).alias(feature_col)
         )
         .filter(
             pl.int_range(pl.len()).shuffle().over(code_col) < pl.col(feature_col)
-        )  # sample N rows
-        .with_columns(
-            pl.lit(True).alias(feature_col)
-        )  # fill the feature column with True
+        )
     )
-
 
 @log_entry_exit()
 def _get_feat_non_feat_cols(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame):
@@ -179,7 +170,8 @@ def _stack_sampled_census_features(feats_1: pl.LazyFrame, feats_2: pl.LazyFrame)
     """
     Vertically stack two LazyFrames with sampled census features, uniting shared columns.
     """
-    feat_cols, _ = _get_feat_non_feat_cols(feats_1, feats_2)
+    feat_cols = list(set(feats_1.collect_schema().names()).symmetric_difference(feats_2.collect_schema().names()))
+    non_feat_cols = list(set(feats_1.collect_schema().names()).intersection(feats_2.collect_schema().names()))
 
     return pl.concat([feats_1, feats_2], how="diagonal_relaxed").with_columns(
         pl.col(*feat_cols).fill_null(False)
@@ -235,23 +227,45 @@ def randomly_assign_census_features(
         feature columns. For multi-response tables, multiple features can be True.
         For non-multi-response tables, only one feature will be True.
     """
+    census_columns = census.collect_schema().names()
     if ignore_total:
         census = census.select(
-            [col for col in census.columns if not col.startswith(total_prefix)]
+            [col for col in census_columns if not col.startswith(total_prefix)]
         )
 
     feature_cols = table_config["census_features"]
 
-    # Use sample_census_feature for each feature column
-    sampled_features = [
-        sample_census_feature(census, code_col, long_col, lat_col, feature_col)
-        for feature_col in feature_cols
-    ]
+    def sample_census_feature_multi(census, code_col, long_col, lat_col, feature_col):
+        return (
+            census.select(pl.col(code_col, long_col, lat_col, feature_col))
+            .with_columns(
+                pl.when(pl.col(feature_col) > 0)
+                .then(pl.lit(True))
+                .otherwise(pl.lit(False))
+                .alias(feature_col)
+            )
+        )
 
-    # Combine the sampled features
     if table_config["multi_response"]:
-        result = reduce(_join_sampled_census_features, sampled_features)
+        # For multi-response, sample each feature independently
+        sampled_features = [
+            sample_census_feature_multi(census, code_col, long_col, lat_col, feature_col)
+            for feature_col in feature_cols
+        ]
+        
+        # Join all sampled features
+        result = reduce(
+            lambda left, right: left.join(
+                right, on=[code_col, long_col, lat_col], how="outer"
+            ),
+            sampled_features
+        )
     else:
+        # For non-multi-response, use the existing logic
+        sampled_features = [
+            sample_census_feature(census, code_col, long_col, lat_col, feature_col)
+            for feature_col in feature_cols
+        ]
         result = reduce(_stack_sampled_census_features, sampled_features)
 
     # Add index column
