@@ -8,7 +8,6 @@ other scripts.
 """
 
 import sys
-from math import log
 from typing import Literal
 
 import polars as pl

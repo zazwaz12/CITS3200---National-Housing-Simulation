@@ -1,3 +1,8 @@
+"""
+Randomly generate individuals with census features and assign them to GNAF addresses.
+
+"""
+
 import argparse
 import os
 from typing import Literal

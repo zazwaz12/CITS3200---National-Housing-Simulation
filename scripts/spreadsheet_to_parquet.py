@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 
 import polars as pl
-from context import nhs
 from loguru import logger
 from tqdm import tqdm
 
@@ -19,6 +18,7 @@ sys.path.append("..")
 from nhs.utils import list_files
 from nhs.data import get_spreadsheet_reader
 from nhs.config import logger_config
+from nhs import logging
 
 
 @logger.catch()
@@ -46,7 +46,7 @@ def save_parquet(path: str, input_dir: str, output_dir: str):
 def convert_to_parquet(input: str, output: str, config_path: str):
     logger.enable("nhs")
     try:
-        nhs.logging.config_logger(logger_config(config_path))
+        logging.config_logger(logger_config(config_path))
     except Exception as e:
         logger.critical(
             f"Failed to load configuration at {config_path} with exception {e}, terminating..."

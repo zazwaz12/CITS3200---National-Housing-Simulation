@@ -1,5 +1,5 @@
-from .path import list_files
 from .parallel import compute_in_parallel
+from .path import list_files
 from .string import capture_placeholders, placeholder_matches
 from .time import log_time
 
