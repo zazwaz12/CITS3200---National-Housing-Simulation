@@ -7,21 +7,23 @@ operation. This script runs this operation once to avoid repeating it in
 other scripts.
 """
 
-from math import log
 import sys
+from math import log
 from typing import Literal
+
 import polars as pl
 
 sys.path.append(".")
 sys.path.append("..")
 import argparse
-from nhs.data.geography import join_coords_with_area, to_geo_dataframe
-from nhs.data import read_spreadsheets
-from nhs.logging import config_logger
-from nhs.config import logger_config, data_config
-from loguru import logger
-from nhs.data import read_shapefile
+
 from fiona import supported_drivers
+from loguru import logger
+
+from nhs.config import data_config, logger_config
+from nhs.data import read_shapefile, read_spreadsheets
+from nhs.data.geography import join_coords_with_area, to_geo_dataframe
+from nhs.logging import config_logger
 
 
 def main(

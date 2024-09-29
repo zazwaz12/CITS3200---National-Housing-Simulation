@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Callable, Literal
 
 import polars as pl
@@ -7,7 +8,6 @@ from loguru import logger
 from nhs.logging import log_entry_exit
 from nhs.utils.path import list_files
 from nhs.utils.string import placeholder_matches
-import re
 
 
 @logger.catch()
