@@ -144,6 +144,44 @@ class TestReadSpreadsheets:
             assert isinstance(key, str)
             assert isinstance(value, pl.LazyFrame)
 
+    def test_filter_regex_filters_out_unneeded_filenames(self, mocker):
+        mock_files = [
+            "file1.csv",
+            "file2.csv",
+            "file3.csv",
+            "report1.csv",
+            "datafile.txt",
+            "notes.docx",
+            "fileA.csv",
+            "fileB.csv",
+        ]
+        mocker.patch(LIST_FILES_PATCH, return_value=mock_files)
+        mocker.patch(READ_CSV_PATCH, side_effect=[pl.LazyFrame()] * len(mock_files))
+
+        # Define the test input
+        file_dir_pattern = "path/to/csv_files/"
+        extension = "csv"
+        filter_regex = (
+            r"file\d+\.csv"  # Filter to match files like 'file1.csv', 'file2.csv'
+        )
+
+        # Call the function under test
+        result = read_spreadsheets(file_dir_pattern, extension, filter_regex)
+
+        # Assertions
+        assert isinstance(result, dict)
+        assert all(
+            key.endswith(".csv") for key in result.keys()
+        )  # Check keys are CSV files
+        assert all(
+            value is not None for value in result.values()
+        )  # Check values are not None
+        assert "file1.csv" in result
+        assert "file2.csv" in result
+        assert "file3.csv" in result
+        assert "fileA.csv" not in result
+        assert "report1.csv" not in result
+
 
 class TestColumnReadable:
     # Standardize column names correctly when all parameters are valid

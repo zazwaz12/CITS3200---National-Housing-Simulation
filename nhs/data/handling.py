@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Callable, Literal
 
 import polars as pl
@@ -68,7 +69,9 @@ def get_spreadsheet_reader(
 
 @log_entry_exit(level="INFO")
 def read_spreadsheets(
-    file_dir_pattern: str, extension: Literal["csv", "psv", "xlsx", "parquet"]
+    file_dir_pattern: str,
+    extension: Literal["csv", "psv", "xlsx", "parquet"],
+    filter_regex: str | None = None,
 ) -> dict[str, dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
@@ -85,6 +88,9 @@ def read_spreadsheets(
         Using os.path.dirname(path) to find out where files are located.
     extension: str
         File extension to read. Must be one of `psv`, `csv`.
+    filter_regex: str
+        Regular expression to filter files in the directory. Only files matching the regex will be read.
+
     Returns
     -------
     dict[str, pl.LazyFrame]
@@ -114,6 +120,9 @@ def read_spreadsheets(
         keys = map(
             lambda x: x[0], placeholder_matches(files, file_dir_pattern, ["key"])
         )
+    if filter_regex:
+        pattern = re.compile(filter_regex)
+        files = filter(lambda x: pattern.search(x), files)
 
     return {key: val for key, val in zip(keys, map(reader, files))}
 
