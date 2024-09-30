@@ -3,7 +3,11 @@ from .allocation import (
     randomly_assign_census_features,
     sample_census_feature,
 )
-from .filter import filter_sa1_regions
+from .filter import (
+    filter_and_join_gnaf_frames,
+    filter_sa1_regions,
+    load_gnaf_files_by_states,
+)
 from .geography import join_coords_with_area, read_shapefile, to_geo_dataframe
 from .handling import (
     get_spreadsheet_reader,
@@ -22,6 +26,8 @@ __all__ = [
     "read_csv",
     "read_xlsx",
     "standardize_names",
+    "load_gnaf_files_by_states",
+    "filter_and_join_gnaf_frames",
     "filter_sa1_regions",
     "join_coords_with_area",
     "read_parquet",
