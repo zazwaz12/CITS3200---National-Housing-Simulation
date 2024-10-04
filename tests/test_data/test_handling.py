@@ -24,7 +24,8 @@ class TestReadSpreadsheets:
         )
         mocker.patch(READ_PSV_PATCH, side_effect=[pl.LazyFrame(), pl.LazyFrame()])
 
-        result = read_spreadsheets("path/to/psv_files/", "psv")
+        result = read_spreadsheets("path/to/psv_files/", "psv", parallel=False)
+
 
         assert len(result) == 2
         assert "file1.psv" in result
@@ -37,7 +38,7 @@ class TestReadSpreadsheets:
         mock_list_files = mocker.patch(LIST_FILES_PATCH)
         mock_list_files.return_value = []
 
-        result = read_spreadsheets("path/to/psv_files/", "psv")
+        result = read_spreadsheets("path/to/psv_files/", "psv", parallel=False)
 
         assert result == {}
 
@@ -49,7 +50,7 @@ class TestReadSpreadsheets:
         )
         mocker.patch(READ_CSV_PATCH, side_effect=[pl.LazyFrame(), pl.LazyFrame()])
 
-        result = read_spreadsheets("path/to/csv_files/fil{key}.csv", "csv")
+        result = read_spreadsheets("path/to/csv_files/fil{key}.csv", "csv", parallel=False)
 
         assert len(result) == 2
         assert "e1" in result
@@ -166,7 +167,7 @@ class TestReadSpreadsheets:
         )
 
         # Call the function under test
-        result = read_spreadsheets(file_dir_pattern, extension, filter_regex)
+        result = read_spreadsheets(file_dir_pattern, extension, filter_regex, parallel=False)
 
         # Assertions
         assert isinstance(result, dict)
