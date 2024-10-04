@@ -4,21 +4,20 @@ Produce a directory of parquet files from a directory of spreadsheets
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 import polars as pl
 from loguru import logger
 from tqdm import tqdm
 
-import sys
-
 sys.path.append(".")
 sys.path.append("..")
 
-from nhs.utils import list_files
-from nhs.data import get_spreadsheet_reader
-from nhs.config import logger_config
 from nhs import logging
+from nhs.config import logger_config
+from nhs.data import get_spreadsheet_reader
+from nhs.utils import list_files
 
 
 @logger.catch()

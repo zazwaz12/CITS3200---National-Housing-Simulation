@@ -1,15 +1,16 @@
 import os
 import re
-from typing import Callable, Literal
 from functools import reduce
+from typing import Callable, Literal
 
 import polars as pl
 from loguru import logger
 
 from nhs.logging import log_entry_exit
+
+from ..utils.parallel import pmap
 from ..utils.path import list_files
 from ..utils.string import placeholder_matches
-from ..utils.parallel import pmap
 
 
 @logger.catch()

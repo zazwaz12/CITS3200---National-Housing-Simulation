@@ -5,28 +5,27 @@ Randomly generate individuals with census features and assign them to GNAF addre
 
 import argparse
 import os
+import sys
+from time import time
 from typing import Literal
 
-from time import time
 import polars as pl
 from fiona.drvsupport import supported_drivers
 from loguru import logger
-import sys
-
 
 sys.path.append(".")
 sys.path.append("..")
-from nhs.data import (
-    read_parquet,
-    join_coords_with_area,
-    to_geo_dataframe,
-    read_shapefile,
-    join_census_with_coords,
-    randomly_assign_census_features,
-    join_census_frames,
-    read_spreadsheets,
-)
 from nhs import config
+from nhs.data import (
+    join_census_frames,
+    join_census_with_coords,
+    join_coords_with_area,
+    randomly_assign_census_features,
+    read_parquet,
+    read_shapefile,
+    read_spreadsheets,
+    to_geo_dataframe,
+)
 from nhs.logging import config_logger
 from nhs.utils import log_time
 

@@ -11,13 +11,13 @@ from .filter import (
 from .geography import join_coords_with_area, read_shapefile, to_geo_dataframe
 from .handling import (
     get_spreadsheet_reader,
+    join_census_frames,
     read_csv,
     read_parquet,
     read_psv,
     read_spreadsheets,
     read_xlsx,
     standardize_names,
-    join_census_frames,
 )
 
 __all__ = [

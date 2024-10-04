@@ -109,7 +109,6 @@ class TestSampleCensusFeature:
         assert count.filter(pl.col("code_col") == "A").select("feature_col").item() == 4
         assert count.filter(pl.col("code_col") == "B").select("feature_col").item() == 2
 
- 
     # Correctly samples rows based on feature_col values
     def test_sampling_fewer_coords_than_sample_size(self):
         pl.set_random_seed(42)
@@ -203,6 +202,3 @@ class TestRandomlyAssignCensusFeatures:
             count.filter(pl.col("code_col") == "B").select("feature_3").collect().item()
             == 6
         )
-
-
- 
