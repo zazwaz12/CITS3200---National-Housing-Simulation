@@ -1,13 +1,16 @@
 import os
 import re
+from functools import reduce
 from typing import Callable, Literal
 
 import polars as pl
 from loguru import logger
 
 from nhs.logging import log_entry_exit
-from nhs.utils.path import list_files
-from nhs.utils.string import placeholder_matches
+
+from ..utils.parallel import pmap
+from ..utils.path import list_files
+from ..utils.string import placeholder_matches
 
 
 @logger.catch()
@@ -72,10 +75,10 @@ def read_spreadsheets(
     file_dir_pattern: str,
     extension: Literal["csv", "psv", "xlsx", "parquet"],
     filter_regex: str | None = None,
-) -> dict[str, dict[str, pl.LazyFrame] | pl.LazyFrame | None]:
+    parallel: bool = True,
+) -> dict[str, dict[str, pl.LazyFrame] | pl.LazyFrame]:
     """
     Return dictionary of key and polars `LazyFrame` given directory of PSV, CSV files.
-    If a file cannot be read, the value will be None.
 
     Parameters
     ----------
@@ -90,11 +93,13 @@ def read_spreadsheets(
         File extension to read. Must be one of `psv`, `csv`.
     filter_regex: str
         Regular expression to filter files in the directory. Only files matching the regex will be read.
+    parallel: bool
+        Whether to read files in parallel. Default is True.
 
     Returns
     -------
     dict[str, pl.LazyFrame]
-        Dictionary of polars LazyFrames, with keys as matched from key_pattern
+        Dictionary of polars LazyFrames, with keys as matched from key_pattern.
 
     Examples
     --------
@@ -124,7 +129,23 @@ def read_spreadsheets(
         pattern = re.compile(filter_regex)
         files = filter(lambda x: pattern.search(x), files)
 
-    return {key: val for key, val in zip(keys, map(reader, files))}
+    mapper = map if not parallel else pmap
+    result = {key: val for key, val in zip(keys, mapper(reader, files))}
+    failed = [name for name, lf in result.items() if lf is None]
+    if failed:
+        logger.warning(f"Failed to load the following files: {failed}")
+    return {key: val for key, val in result.items() if val is not None}
+
+
+@log_entry_exit(level="DEBUG")
+def join_census_frames(
+    census_lfs: dict[str, pl.LazyFrame], join_col: str = "SA1_CODE_2021"
+) -> pl.LazyFrame:
+    """
+    Join multiple census frames into a single frame on `join_col`
+    """
+    join_lfs = lambda x, y: x.join(y, on=join_col, how="outer")
+    return reduce(join_lfs, census_lfs.values())
 
 
 @log_entry_exit(level="INFO")

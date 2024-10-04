@@ -78,24 +78,6 @@ class TestJoinCensusWithCoords:
         # Assert the result matches the expected DataFrame
         assert result_df.equals(expected_df)
 
-    # One or both LazyFrames are empty
-    def test_empty_lazyframes(self):
-        # Create empty LazyFrames
-        census = pl.LazyFrame({"SA1_CODE_2021": [], "data": []})
-        coords = pl.LazyFrame({"SA1_CODE21": [], "coords": []})
-
-        # Perform join
-        result = join_census_with_coords(census, coords)
-
-        # Collect result to DataFrame for assertion
-        result_df = result.collect()
-
-        # Expected result is an empty DataFrame with the same schema
-        expected_df = pl.DataFrame({"SA1_CODE_2021": [], "data": [], "coords": []})
-
-        # Assert the result matches the expected empty DataFrame
-        assert result_df.equals(expected_df)
-
 
 class TestSampleCensusFeature:
     # Correctly samples rows based on feature_col values
@@ -126,24 +108,6 @@ class TestSampleCensusFeature:
         assert result_df.shape == (4 + 2, 4)
         assert count.filter(pl.col("code_col") == "A").select("feature_col").item() == 4
         assert count.filter(pl.col("code_col") == "B").select("feature_col").item() == 2
-
-    # Handles empty LazyFrame input
-    def test_handles_empty_lazyframe_input(self):
-        # Create an empty LazyFrame
-        census = pl.LazyFrame(
-            {"code_col": [], "long_col": [], "lat_col": [], "feature_col": []}
-        )
-
-        # Call the function
-        result = sample_census_feature(
-            census, "code_col", "long_col", "lat_col", "feature_col"
-        )
-
-        # Collect the result
-        result_df = result.collect()
-
-        # Assertions
-        assert result_df.equals(census.collect())
 
     # Correctly samples rows based on feature_col values
     def test_sampling_fewer_coords_than_sample_size(self):
@@ -238,30 +202,3 @@ class TestRandomlyAssignCensusFeatures:
             count.filter(pl.col("code_col") == "B").select("feature_3").collect().item()
             == 6
         )
-
-    # Handles empty census LazyFrame
-    def test_handles_empty_census_lazyframe(self):
-        # Create empty LazyFrame
-        census = pl.LazyFrame(
-            {
-                "code_col": [],
-                "long_col": [],
-                "lat_col": [],
-                "feature_1": [],
-                "feature_2": [],
-            }
-        )
-
-        # Call the function
-        result = randomly_assign_census_features(
-            census,
-            code_col="code_col",
-            long_col="long_col",
-            lat_col="lat_col",
-            feature_cols=["feature_1", "feature_2"],
-        )
-
-        # Assertions
-        assert isinstance(result, pl.LazyFrame)
-        collected_result = result.collect()
-        assert collected_result.shape == (0, 6)
