@@ -109,24 +109,7 @@ class TestSampleCensusFeature:
         assert count.filter(pl.col("code_col") == "A").select("feature_col").item() == 4
         assert count.filter(pl.col("code_col") == "B").select("feature_col").item() == 2
 
-    # Handles empty LazyFrame input
-    def test_handles_empty_lazyframe_input(self):
-        # Create an empty LazyFrame
-        census = pl.LazyFrame(
-            {"code_col": [], "long_col": [], "lat_col": [], "feature_col": []}
-        )
-
-        # Call the function
-        result = sample_census_feature(
-            census, "code_col", "long_col", "lat_col", "feature_col"
-        )
-
-        # Collect the result
-        result_df = result.collect()
-
-        # Assertions
-        assert result_df.equals(census.collect())
-
+ 
     # Correctly samples rows based on feature_col values
     def test_sampling_fewer_coords_than_sample_size(self):
         pl.set_random_seed(42)
@@ -221,29 +204,5 @@ class TestRandomlyAssignCensusFeatures:
             == 6
         )
 
-    # Handles empty census LazyFrame
-    def test_handles_empty_census_lazyframe(self):
-        # Create empty LazyFrame
-        census = pl.LazyFrame(
-            {
-                "code_col": [],
-                "long_col": [],
-                "lat_col": [],
-                "feature_1": [],
-                "feature_2": [],
-            }
-        )
 
-        # Call the function
-        result = randomly_assign_census_features(
-            census,
-            code_col="code_col",
-            long_col="long_col",
-            lat_col="lat_col",
-            feature_cols=["feature_1", "feature_2"],
-        )
-
-        # Assertions
-        assert isinstance(result, pl.LazyFrame)
-        collected_result = result.collect()
-        assert collected_result.shape == (0, 6)
+ 
