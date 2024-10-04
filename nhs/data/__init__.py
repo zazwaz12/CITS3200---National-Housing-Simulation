@@ -17,6 +17,7 @@ from .handling import (
     read_spreadsheets,
     read_xlsx,
     standardize_names,
+    join_census_frames,
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "join_census_with_coords",
     "sample_census_feature",
     "randomly_assign_census_features",
+    "join_census_frames",
 ]

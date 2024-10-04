@@ -8,7 +8,6 @@ other scripts.
 """
 
 import sys
-from math import log
 from typing import Literal
 
 import polars as pl
@@ -79,7 +78,7 @@ if __name__ == "__main__":
         "--output_name",
         help="Path to an output directory",
         type=str,
-        default="gnaf.parquet",
+        default=None,
     )
     parser.add_argument(
         "-e", "--extension", help="File extension of the output file", default="parquet"
@@ -94,7 +93,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p",
         "--pattern",
-        help="Regex pattern to match files in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
+        help="Regex pattern to match file names in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
         type=str,
         default=r"[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv",
     )
@@ -121,7 +120,7 @@ if __name__ == "__main__":
         gnaf_dir=args.gnaf_dir or data_config["gnaf_path"],
         shapefile_dir=args.shapefile_dir or data_config["shapefile_path"],
         pattern=args.pattern,
-        output_name=args.output_name,
+        output_name=args.output_name or data_config["gnaf_cache_file"],
         extension=args.extension,
         data_config=data_config,
         strategy=args.strategy,

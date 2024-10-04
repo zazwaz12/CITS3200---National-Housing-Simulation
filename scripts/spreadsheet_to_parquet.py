@@ -7,16 +7,18 @@ import os
 from pathlib import Path
 
 import polars as pl
-from context import nhs
 from loguru import logger
 from tqdm import tqdm
 
-from nhs.config import logger_config
+import sys
 
-# Utility functions for file listing and reading spreadsheets
-list_files = nhs.utils.path.list_files
-get_reader = nhs.data.handling.get_spreadsheet_reader
-logger_config = nhs.config.logger_config
+sys.path.append(".")
+sys.path.append("..")
+
+from nhs.utils import list_files
+from nhs.data import get_spreadsheet_reader
+from nhs.config import logger_config
+from nhs import logging
 
 
 @logger.catch()
@@ -34,7 +36,7 @@ def save_parquet(path: str, input_dir: str, output_dir: str):
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Read and convert spreadsheet to Parquet
-    df = get_reader(Path(path).suffix)(path)
+    df = get_spreadsheet_reader(Path(path).suffix)(path)
     if not isinstance(df, pl.LazyFrame):
         logger.error(f"Failed to read {path}")
         return
@@ -44,7 +46,7 @@ def save_parquet(path: str, input_dir: str, output_dir: str):
 def convert_to_parquet(input: str, output: str, config_path: str):
     logger.enable("nhs")
     try:
-        nhs.logging.config_logger(logger_config(config_path))
+        logging.config_logger(logger_config(config_path))
     except Exception as e:
         logger.critical(
             f"Failed to load configuration at {config_path} with exception {e}, terminating..."

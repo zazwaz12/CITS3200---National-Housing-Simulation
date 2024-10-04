@@ -1,7 +1,6 @@
-from functools import reduce
+from functools import partial, reduce
 
 import polars as pl
-from loguru import logger
 
 from ..logging import log_entry_exit
 
@@ -128,10 +127,6 @@ def sample_census_feature(
     │ B        ┆ true        ┆ 4.0      ┆ 40.0    │
     └──────────┴─────────────┴──────────┴─────────┘
     """
-    if census.select(pl.len()).collect().item() == 0:
-        logger.warning("Empty census data provided.")
-        return census.select(pl.col(code_col, long_col, lat_col, feature_col))
-
     return (
         census.select(
             pl.col(code_col, long_col, lat_col, feature_col)
@@ -278,6 +273,7 @@ def randomly_assign_census_features(
         sample_census_feature(census, code_col, long_col, lat_col, feat_col)
         for feat_col in feature_cols
     ]
+
     joined = reduce(_stack_sampled_census_features, sampled_features)
     return joined.with_columns(
         pl.int_range(pl.len()).alias(index_col)  # assign row index
