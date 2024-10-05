@@ -25,43 +25,103 @@ from nhs.data import (
     read_shapefile,
     read_spreadsheets,
     to_geo_dataframe,
+    load_gnaf_files_by_states,
+    filter_and_join_gnaf_frames,
+    filter_sa1_regions,
+    filter_gnaf_cache,
 )
 from nhs.logging import config_logger
 from nhs.utils import log_time
 
 
+
+
+
+def write_csv_in_chunks(lf: pl.LazyFrame, output_path: str, chunk_size: int = 50000):
+    """
+    Write a LazyFrame to a CSV file in chunks.
+
+    This function writes the data from the provided LazyFrame to a CSV file in chunks, 
+    to handle large datasets efficiently by avoiding memory issues during writing.
+
+    Parameters
+    ----------
+    lf : pl.LazyFrame
+        The LazyFrame containing the data to be written.
+    output_path : str
+        The path to the output CSV file.
+    chunk_size : int, optional
+        The number of rows to write in each chunk. Default is 50000.
+
+    Notes
+    -----
+    The first chunk will overwrite the existing file, while subsequent chunks 
+    will append to the file.
+    """
+    first_chunk = True  
+    for chunk in lf.collect(streaming=True).iter_slices(chunk_size):
+        if first_chunk:
+            chunk.write_csv(output_path) 
+            first_chunk = False
+        else:
+            with open(output_path, "a") as f:
+                f.write(chunk.write_csv())  
+
+    logger.info(f"Data successfully written to {output_path} in chunks of {chunk_size} rows.")
+
+
+
+
+
 def join_gnaf_with_shapefile(
     gnaf_dir: str,
-    gnaf_default_code_pattern: str,
     shapefile_dir: str,
     data_config: dict,
     strategy: Literal["join_nearest", "filter"] | None = None,
+    states: list[str] = [],  
+    building_types: list[str] = [],  
+    postcodes: list[int] = [],  
+    region_codes: list[str] = [], 
+    sa2_codes: list[str] = [] 
 ) -> pl.LazyFrame:
     with log_time():
-        logger.info(f"Reading GNAF default geocode data from {gnaf_dir}...")
-        geocode_lfs = read_spreadsheets(gnaf_dir, "parquet", gnaf_default_code_pattern)
-        geocode_lfs = pl.concat(geocode_lfs.values(), how="diagonal_relaxed")  # type: ignore
+        logger.info(f"Reading GNAF data from {gnaf_dir}...")
+        default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_dir, states)
 
+    logger.info("Filtering GNAF data before spatial join...")
+    if building_types or postcodes:
+        geocode_lfs = filter_and_join_gnaf_frames(
+            default_geocode_lf, address_detail_lf, building_types, postcodes
+        )
+    else:
+        geocode_lfs = default_geocode_lf
+
+    with log_time():
         logger.info(f"Reading shapefile from {data_config['shapefile_path']}")
         area_polygons = read_shapefile(shapefile_dir, data_config["crs"])
 
     with log_time():
         logger.info("Converting GNAF addresses to GeoDataFrame...")
-        with log_time():
-            house_coords = (to_geo_dataframe(geocode_lfs, data_config["crs"]),)
+        house_coords = to_geo_dataframe(geocode_lfs, data_config["crs"])
 
     with log_time():
         logger.info("Joining coordinates with area polygons...")
-        with log_time():
-            joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
+        joined_coords = join_coords_with_area(house_coords, area_polygons, strategy)
+
+    with log_time():
+        logger.info("Applying SA1 and SA2 filters to joined data...")
+        joined_coords = filter_sa1_regions(
+            joined_coords,
+            region_codes=region_codes,  
+            sa2_codes=sa2_codes         
+        )
+
     return joined_coords
 
 
 def main(
     gnaf_dir: str,
     gnaf_cache: str,
-    gnaf_default_code_pattern: str,
-    gnaf_address_details_pattern: str,
     shapefile_dir: str,
     census_dir: str,
     census_pattern: str,
@@ -69,6 +129,11 @@ def main(
     data_config: dict,
     simulation_config: dict,
     strategy: Literal["join_nearest", "filter"] | None = None,
+    states: list[str] = [],
+    building_types: list[str] = [],
+    postcodes: list[int] = [],
+    region_codes: list[str] = [], 
+    sa2_codes: list[str] = []  
 ) -> None:
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
@@ -80,12 +145,23 @@ def main(
             f"Unable to find GNAF cache file at {gnaf_cache}, GNAF will be joined with shapefiles. Note that it's recommended to perform this join beforehand as this process is time-consuming."
         )
         joined_coords = join_gnaf_with_shapefile(
-            gnaf_dir, gnaf_default_code_pattern, shapefile_dir, data_config, strategy
+            gnaf_dir, shapefile_dir, data_config, strategy, states, building_types, postcodes, region_codes, sa2_codes
         )
     else:
         logger.info(f"Reading GNAF cache from {gnaf_cache}...")
         joined_coords = read_parquet(gnaf_cache)
 
+        # Apply filtering to the cached GNAF data
+        logger.info("Applying filters to cached GNAF data...")
+        joined_coords = filter_gnaf_cache(
+            joined_coords,
+            states=states,  
+            region_codes=region_codes,  
+            sa2_codes=sa2_codes, 
+            flat_type_codes=building_types,  
+            postcodes=postcodes 
+        )
+        
     with log_time():
         logger.info(f"Reading census data from {census_dir}...")
         census_lfs = read_spreadsheets(census_dir, "parquet", census_pattern)
@@ -105,8 +181,9 @@ def main(
             "LATITUDE",
             simulation_config["census_features"],
         )
-        logger.debug(allocated.explain(streaming=True))
-        allocated.collect().write_csv(output_path)
+
+        write_csv_in_chunks(allocated, output_path, chunk_size=10000)
+
     logger.info(
         f"Allocation complete, saved to {output_path} in {time() - init_time:.2f} s total."
     )
@@ -122,18 +199,6 @@ if __name__ == "__main__":
         type=str,
         help="Directory containing the input GNAF address geocode parquet files",
         default=None,
-    )
-    parser.add_argument(
-        "--gnaf_default_code_pattern",
-        help="Regex pattern to match the names of GNAF files containing the default geocode in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
-        type=str,
-        default=r"[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv",
-    )
-    parser.add_argument(
-        "--gnaf_address_details_pattern",
-        help="Regex pattern to match the names of GNAF files containing the address details in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DETAIL_psv'",
-        type=str,
-        default=r"[A-Z]+_ADDRESS_DETAIL_psv",
     )
     parser.add_argument(
         "--gnaf_cache",
@@ -181,6 +246,42 @@ if __name__ == "__main__":
         help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken. Ignored if GNAF cache file is supplied.",
         default=None,
     )
+    parser.add_argument(
+        "--states",
+        type=str,
+        nargs="*",
+        help="List of states to filter in the GNAF dataset",
+        default=[],
+    )
+    parser.add_argument(
+        "--building_types",
+        type=str,
+        nargs="*",
+        help="Building types to filter in the GNAF dataset",
+        default=[],
+    )
+    parser.add_argument(
+        "--postcodes",
+        type=int,
+        nargs="*",
+        help="Postcodes to filter in the GNAF dataset",
+        default=[],
+    )
+    parser.add_argument(
+        "--region_codes",
+        type=str,  
+        nargs="*",
+        help="SA1 region codes to filter in the GNAF dataset",
+        default=[],
+    )
+    parser.add_argument(
+        "--sa2_codes",
+        type=str, 
+        nargs="*",
+        help="SA2 region codes to filter in the GNAF dataset",
+        default=[],
+    )
+
 
     args = parser.parse_args()
 
@@ -200,16 +301,22 @@ if __name__ == "__main__":
     main(
         gnaf_dir=args.gnaf_dir or data_config["gnaf_path"],
         gnaf_cache=args.gnaf_cache or data_config["gnaf_cache_file"],
-        gnaf_default_code_pattern=args.gnaf_default_code_pattern,
-        gnaf_address_details_pattern=args.gnaf_address_details_pattern,
         shapefile_dir=args.shapefile_dir or data_config["shapefile_path"],
         census_dir=args.census_dir or data_config["census_path"],
         census_pattern=args.census_pattern,
         output_path=(
-            args.output_path
-            or os.path.join(data_config["output_path"], "allocated.csv")
+            args.output_path or os.path.join(data_config["output_path"], "allocated.csv")
         ),
         strategy=args.strategy,
         data_config=data_config,
         simulation_config=simulation_config,
+        states=args.states,
+        building_types=args.building_types,
+        postcodes=args.postcodes,
+        region_codes=args.region_codes,  
+        sa2_codes=args.sa2_codes 
     )
+
+
+
+

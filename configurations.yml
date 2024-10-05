@@ -20,9 +20,9 @@ data:
   gnaf_path: "./DataFiles/AppStaging/Standard/"
   # File of GNAF data already joined with the shapefile
   # Recommended to use as converting GNAF to GeoDataFrames is time-consuming
-  gnaf_cache_file: "./DataFiles/AppStaging/gnaf.parquet"
+  gnaf_cache_file: "./DataFiles/FilesOut/gnaf_cache.parquet"
   # Path to the shapefile containing region codes and polygon of the area
-  shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
+  shapefile_path: "./DataFiles/FilesIn/SA1_2021_AUST_SHP_GDA2020/SA1_2021_AUST_GDA2020.shp"
   # Path of the output CSV
   output_path: "./DataFiles/FilesOut/"
   # Coordinate Reference System (CRS) for spatial data
