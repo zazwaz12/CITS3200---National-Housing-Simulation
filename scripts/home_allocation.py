@@ -127,14 +127,11 @@ def main(
     census_pattern: str,
     output_path: str,
     data_config: dict,
+    filter_config: dict, 
     simulation_config: dict,
     strategy: Literal["join_nearest", "filter"] | None = None,
-    states: list[str] = [],
-    building_types: list[str] = [],
-    postcodes: list[int] = [],
-    region_codes: list[str] = [], 
-    sa2_codes: list[str] = []  
 ) -> None:
+    
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
@@ -145,7 +142,12 @@ def main(
             f"Unable to find GNAF cache file at {gnaf_cache}, GNAF will be joined with shapefiles. Note that it's recommended to perform this join beforehand as this process is time-consuming."
         )
         joined_coords = join_gnaf_with_shapefile(
-            gnaf_dir, shapefile_dir, data_config, strategy, states, building_types, postcodes, region_codes, sa2_codes
+            gnaf_dir, shapefile_dir, data_config, strategy,
+            states=filter_config["states"], 
+            building_types=filter_config["building_types"], 
+            postcodes=filter_config["postcodes"], 
+            region_codes=filter_config["region_codes"],  
+            sa2_codes=filter_config["sa2_codes"]  
         )
     else:
         logger.info(f"Reading GNAF cache from {gnaf_cache}...")
@@ -155,11 +157,11 @@ def main(
         logger.info("Applying filters to cached GNAF data...")
         joined_coords = filter_gnaf_cache(
             joined_coords,
-            states=states,  
-            region_codes=region_codes,  
-            sa2_codes=sa2_codes, 
-            flat_type_codes=building_types,  
-            postcodes=postcodes 
+            states=filter_config["states"], 
+            region_codes=filter_config["region_codes"],  
+            sa2_codes=filter_config["sa2_codes"], 
+            flat_type_codes=filter_config["building_types"], 
+            postcodes=filter_config["postcodes"]  
         )
         
     with log_time():
@@ -246,42 +248,6 @@ if __name__ == "__main__":
         help="Strategy to handle failed joins, either 'join_nearest' or 'filter'. If not specified, no action is taken. Ignored if GNAF cache file is supplied.",
         default=None,
     )
-    parser.add_argument(
-        "--states",
-        type=str,
-        nargs="*",
-        help="List of states to filter in the GNAF dataset",
-        default=[],
-    )
-    parser.add_argument(
-        "--building_types",
-        type=str,
-        nargs="*",
-        help="Building types to filter in the GNAF dataset",
-        default=[],
-    )
-    parser.add_argument(
-        "--postcodes",
-        type=int,
-        nargs="*",
-        help="Postcodes to filter in the GNAF dataset",
-        default=[],
-    )
-    parser.add_argument(
-        "--region_codes",
-        type=str,  
-        nargs="*",
-        help="SA1 region codes to filter in the GNAF dataset",
-        default=[],
-    )
-    parser.add_argument(
-        "--sa2_codes",
-        type=str, 
-        nargs="*",
-        help="SA2 region codes to filter in the GNAF dataset",
-        default=[],
-    )
-
 
     args = parser.parse_args()
 
@@ -290,6 +256,7 @@ if __name__ == "__main__":
     try:
         data_config = config.data_config(args.config_path)
         logger_config = config.logger_config(args.config_path)
+        filter_config = config.filter_config(args.config_path) 
         simulation_config = config.simulation_config(args.config_path)
     except Exception as e:
         logger.critical(
@@ -310,11 +277,7 @@ if __name__ == "__main__":
         strategy=args.strategy,
         data_config=data_config,
         simulation_config=simulation_config,
-        states=args.states,
-        building_types=args.building_types,
-        postcodes=args.postcodes,
-        region_codes=args.region_codes,  
-        sa2_codes=args.sa2_codes 
+        filter_config=filter_config 
     )
 
 
