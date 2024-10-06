@@ -18,6 +18,7 @@ from .handling import (
     read_spreadsheets,
     read_xlsx,
     standardize_names,
+    read_census_metafile_datapack,
 )
 
 __all__ = [
@@ -29,8 +30,6 @@ __all__ = [
     "load_gnaf_files_by_states",
     "filter_and_join_gnaf_frames",
     "filter_sa1_regions",
-    "category_system",
-    "category_for_age_and_gender",
     "join_coords_with_area",
     "read_parquet",
     "get_spreadsheet_reader",
@@ -40,4 +39,5 @@ __all__ = [
     "sample_census_feature",
     "randomly_assign_census_features",
     "join_census_frames",
+    "read_census_metafile_datapack",
 ]

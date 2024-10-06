@@ -1,8 +1,9 @@
 import os
 import re
 from functools import reduce
-from typing import Callable, Literal
+from typing import Any, Callable, Literal
 
+from numpy import isin
 import polars as pl
 from loguru import logger
 
@@ -34,17 +35,25 @@ def read_csv(file_path: str) -> pl.LazyFrame | None:
 @logger.catch()
 @log_entry_exit()
 def read_xlsx(
-    file_path: str, sheet_id: None | int = 1
+    file_path: str, sheet_id: None | int = 1, read_options: dict[str, Any] | None = None
 ) -> dict[str, pl.LazyFrame] | pl.LazyFrame | None:
     """
     Load a .xlsx file into a polars `LazyFrame`, returning None if exception occurs.
     Function returns lazyFrame if sheet_id = 1 and 0 returns dictionary, so default sheet_id is 1.
     **NOTE**: Polars use `xlsx2csv` to read .xlsx files, so whole CSV file is read
     """
-    frames = pl.read_excel(file_path, sheet_id=sheet_id)
+    frames = pl.read_excel(file_path, sheet_id=sheet_id, read_options=read_options)
     if isinstance(frames, dict):
         return {name: df.lazy() for name, df in frames.items()}  # type: ignore
     return frames.lazy()
+
+
+@log_entry_exit(level="DEBUG")
+def read_census_metafile_datapack(file_path: str) -> pl.LazyFrame | None:
+    """
+    Load the Metadata_2021_GCP_DataPack_R1_R2.xlsx file into a polars `LazyFrame`
+    """
+    return read_xlsx(file_path, sheet_id=2, read_options={"header_row": 4})  # type: ignore
 
 
 @logger.catch()
@@ -163,12 +172,12 @@ def to_parquet(
 
 
 def standardize_names(
-    df_dict: dict[str, pl.LazyFrame],
+    df_dict: dict[str, pl.LazyFrame] | pl.LazyFrame,
     census_metadata: pl.LazyFrame,
     census_code_col: str = "DataPackfile",
     abbreviation_column_name: str = "Short",
     long_column_name: str = "Long",
-) -> dict[str, pl.LazyFrame]:
+) -> dict[str, pl.LazyFrame] | pl.LazyFrame:
     """
     Standardise the column names of a polar Lazy frame dictionary to make them more readable
 
@@ -185,7 +194,7 @@ def standardize_names(
         Lazy frame containing a column called `census_code_col` that contains
         the keys in `df_dict` to standardise, and columns called `abbreviation_column_name`
         and `long_column_name` containing the abbreviated and long column names
-        for frames in the `df_dict`.
+        for frames in the `df_dict`. Output of `read_census_metafile_datapack`.
     census_code_col : str
         Column name in `census_metadata` that contains the keys in `df_dict` to standardise.
         e.g. if `df_dict` have the key `"G03"` and `"G03"` exist `census_metadata[census_code_col]`
@@ -215,6 +224,17 @@ def standardize_names(
     >>> frames_out["file_identify2"].columns # No change, name not in `metadata["file_names"]`
     ["SHORT1", "SHORT2"]
     """
+    if isinstance(df_dict, pl.LazyFrame):
+        row_list = lambda df, col: [name for name in df.select(col).collect()[col]]
+        mapping = {
+            s_name: l_name
+            for s_name, l_name in zip(
+                row_list(census_metadata, abbreviation_column_name),
+                row_list(census_metadata, long_column_name),
+            )
+        }
+        return df_dict.rename(mapping)
+
     result_dict: dict[str, dict[str, str]] = {}
     for row in census_metadata.collect().iter_rows(named=True):
         key = row[census_code_col]

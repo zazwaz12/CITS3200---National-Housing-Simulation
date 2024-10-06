@@ -44,9 +44,10 @@ simulation:
     # "M", "F", "P" for Male, Female, or Person
     sex: "M"
 
-    aboriginal_and_torres_strait_islander:
-      # g01 selected person characteristic by sex
-      # g07 indigenous status by age by sex
+    # Indigenious status, "indigenous", "non_indigenous", "not_stated", or False to disable
+    #     g01 selected person characteristic by sex - FILTER
+    #     g07 indigenous status by age by sex - FILTER
+    aboriginal_and_torres_strait_islander: "aboriginal"
 
     cultural_diversity:
       # g01 selected person
@@ -59,17 +60,18 @@ simulation:
       # g14 religious affiliation by sex
       # g43 selected labour forc,e educationn, migration char by sex
 
+    # g21 type of long-term health condition by selecte dperson char
+    # g22 service by age by sex - FILTER
     defense_force_service:
-      # type of long-term health condition by selecte dperson char
-      # service by age by sex
+      has_long_term_health_condition: False
 
     demographics:
       # g01 selected person by sex
       # g02 selected medians and averages
       # g03 place of usual residence by place of enumeration by census night by age
-      # age by sex
+      # g04 age by sex
 
-    travel_to_work:
+    travel_to_work_method:
       # g62 method of travel to work by sex
 
     dwelling_and_household:
@@ -122,11 +124,44 @@ simulation:
       # g02 selected medians and averages
       # g29 family composition
       # g30 family composition and country of birth of parents by age of dependent children
-      #
+      # 31 family blending
+      # g32 total family income (weekly) by family composition
+      # g47 labour force status by sex of parents by age of dependent children for couple families
+      # g48 Labour force status by sex of parent by age of dependent children for one parent families
+      # g57 Total family income (weekly) by labour force status of partners for couple families with no children
+      # g58 Total family income (weekly) by labour force status of parents/partners for couple families with children
+      # g59 Total family income (weekly) by labour force status of parent for one parent families
+
+    household_income_and_housing_cost:
+      # g02 selected medians and averages
+      # g33 total household income (weekly) by household composition
+      # g38 mortgage repayment (monthly) by dwlling structure
+      # g40 rent (weekly) by landlord type
+
+    need_for_assistance:
+      # g18 core activity needed for assistance by age by sex
+
+    relationships_and_children:
+      # g05 registered marital status by age by sex
+      # g06 social marietal status by age by sex
+      # g12 proficinecy in spoken eng of parents by age of dependent child
+      # g27 relationship in household by age by sex
+      # g28 number of children ever born
+
+    usual_address_and_internal_migration:
+      # g03 place of usual residence by place of enumeration by census night by age
+      # g44 place of usual residence 1 year ago by sex
+      # g45 place of usual residence 5 years ago by sex
+
+    unpaid_work_and_care:
+      # g23 voluntary work for organisation or group by age by sex
+      # g24 unpaid domestic work: number of hours by age by sex
+      # g25 unpaid assistanc eto person with disability, health condition or due to old age by age by sex
+      # g26 unpaid child care by age by sex
 # BY SEX
 # BY AGE
 # country of birth
-# country of birth of parents
+# age of dependent children
 # proficiency in spoken english
 # year of arrival in australia
 # dwelling structure
@@ -142,4 +177,6 @@ simulation:
 # couple families
 # one parent families
 # family composition
-# age of dependent children
+# of parents
+# of partners
+# place of usual residence

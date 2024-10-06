@@ -8,6 +8,27 @@ import polars as pl
 from nhs.logging import log_entry_exit
 
 
+def get_sex_pattern(sex: str | list[str] | None):
+    """
+    Return regex pattern to match one or more sex
+    """
+    MAPPING = {
+        "m": "males",
+        "f": "females",
+        "p": "persons",
+        "male": "males",
+        "female": "females",
+        "person": "persons",
+    }
+
+    if not sex:
+        return "|".join(set(MAPPING.values()))
+    elif isinstance(sex, str):
+        return MAPPING.get(sex.lower(), sex.lower())
+    elif isinstance(sex, list):
+        return "|".join([MAPPING[i.lower()] for i in sex])
+
+
 @log_entry_exit(level="INFO")
 def category_system(category_required: str, data_pack_file: pl.LazyFrame):
     """
