@@ -6,7 +6,10 @@ import polars as pl
 from loguru import logger
 from pyproj import CRS
 
+from ..logging import log_entry_exit
 
+
+@log_entry_exit()
 def to_geo_dataframe(
     lf: pl.LazyFrame,
     crs: str,
@@ -64,6 +67,7 @@ def read_shapefile(shapefile_dir: str, crs: str) -> gpd.GeoDataFrame:
     return gpd.read_file(shapefile_dir).to_crs(CRS.from_string(crs))  # type: ignore
 
 
+@log_entry_exit()
 def _failed_join_strategy(
     unmapped_coords: pd.Series,  # type: ignore
     coords_with_area: gpd.GeoDataFrame,
@@ -92,6 +96,7 @@ def _failed_join_strategy(
     return coords_with_area
 
 
+@log_entry_exit()
 def join_coords_with_area(
     coords: gpd.GeoDataFrame,
     area_polygons: gpd.GeoDataFrame,
@@ -139,7 +144,7 @@ def join_coords_with_area(
     area_polygons_only_column = coords_with_area.columns.difference(coords.columns)  # type: ignore
     # unmapped coords will have rows with all null values for area polygon columns
     unmapped_coords = coords_with_area[area_polygons_only_column].isnull().all(axis=1)  # type: ignore
-    if not unmapped_coords.all():  # type: ignore
+    if len(unmapped_coords) == 0:  # type: ignore
         logger.warning(
             f"{len(coords_with_area[unmapped_coords])} coordinates couldn't be attributed to areas. {"Assigning coordinates using strategy " + failed_join_strategy if failed_join_strategy else ""}"  # type: ignore
         )
