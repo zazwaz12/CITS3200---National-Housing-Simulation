@@ -1,8 +1,10 @@
+"""
+Set of functions for filtering data based on census categories.
+"""
 import re
 
 import polars as pl
 
-from nhs.data.handling import read_xlsx, specify_row_to_be_header
 from nhs.logging import log_entry_exit
 
 

@@ -37,14 +37,109 @@ data:
   sa1_area_code_column: "SA1_CODE21"
 
 simulation:
-  # List of census features to be used in the simulation
-  census_features:
-    - "Age_0_4_yr_M"
-    - "Age_0_4_yr_F"
-    - "Age_0_4_yr_P"
-    - "Age_5_14_yr_M"
-    - "Age_5_14_yr_F"
-    - "Age_5_14_yr_P"
-    - "Age_15_19_yr_M"
-  # FALSE to skip visualization
-  enable_visualization: false
+  # Specify census features
+  census:
+    # 2 numbers representing range, use null to remove bound (e.g. "___ and over")
+    age_range: [18, null]
+    # "M", "F", "P" for Male, Female, or Person
+    sex: "M"
+
+    aboriginal_and_torres_strait_islander:
+      # g01 selected person characteristic by sex
+      # g07 indigenous status by age by sex
+
+    cultural_diversity:
+      # g01 selected person
+      # g08 ancestry by country of birth of parents
+      # g09 country of birth of person by age by sex
+      # g10 country of birth of person by year of arrival in aus
+      # g11 proficiency in spoken eng by year of arrival in aus by age
+      # g12 proficinecy in spoken eng of parents by age of dependent child
+      # g13 lang used at home by proficinecy in spoken eng by age
+      # g14 religious affiliation by sex
+      # g43 selected labour forc,e educationn, migration char by sex
+
+    defense_force_service:
+      # type of long-term health condition by selecte dperson char
+      # service by age by sex
+
+    demographics:
+      # g01 selected person by sex
+      # g02 selected medians and averages
+      # g03 place of usual residence by place of enumeration by census night by age
+      # age by sex
+
+    travel_to_work:
+      # g62 method of travel to work by sex
+
+    dwelling_and_household:
+      # g02 - selected medians and averages
+      # g27 relationship in household by age by sex
+      # g33 total household income weekyl by household composition
+      # g34 n motor vehicles by dwellings
+      # g35 household composition by number of persons usually resident
+      # g36 dwelling structure
+      # g37 tenure and landlord type by dwellig nstructure
+      # g41 dwelling structure by number of bedrooms
+      # g42 dwelling structure by household composition and family composition
+
+    education_and_qualifications:
+      # g01 selected person by age by sex
+      # g15 type of education institutde attending (Fulltime, part-time student status by age) by sex
+      # g16 highest year of school completed by age by sex
+      # g43 selected labour force, education and migration by sex
+      # g49 highest non-school qualification level of education by age by sex
+      # g50 highest non-school qualification field of study by age by sex
+      # g51 highest non-school qualification field of study by occupation by sex
+      # g52 highest non-school qualification level of educadtion by occupation by sex
+      # g53 highest non-school qualification level of education by industry of employment by sex
+
+    health:
+      # g19 type of long-term health condition by age by sex
+      # g20 count of selected long-term health conditions by age by sex
+      # type of long-term health condition by selected person characteristic
+
+    employment_and_income:
+      # g02 selected medians and averages
+      # g17 total personal income (weekly) by age by sex
+      # g43 selected labour force, education and migration by sex
+      # g46 labour force status by age by sex
+      # g47 labour force status by sex of parent by age of dependent children for couple families
+      # g48 labour force status by sex of parent by age of dependent children for one parent families
+      # g51 highest non-school qualification field of study by occupation by sex
+      # g52 highest non-school qualification level of education by
+      # g53 highest non-school qualification level of education by industry of employment
+      # g54 industry of employment by age by sex
+      # g55 industry of employment by hour worked by sex
+      # g56 industry of employment by occupation
+      # g57 total family income (weekly) by labour force status of partner for couble families with no children
+      # g58 Total family income (weekly) by labour force status of parents/partners for couple families with children
+      # g59 Total family income (weekly) by labour force status of parent for one parent families
+      # g60 occupation by age by sex
+      # g61 occuptatio by hours worked by sex
+
+    family:
+      # g02 selected medians and averages
+      # g29 family composition
+      # g30 family composition and country of birth of parents by age of dependent children
+      #
+# BY SEX
+# BY AGE
+# country of birth
+# country of birth of parents
+# proficiency in spoken english
+# year of arrival in australia
+# dwelling structure
+# household composition
+# field of study
+# highest non-school qualification
+# occupation
+# level of educadtion
+# long-term health condition
+# labour force status
+# industry of employment
+# total family income (weekly)
+# couple families
+# one parent families
+# family composition
+# age of dependent children
