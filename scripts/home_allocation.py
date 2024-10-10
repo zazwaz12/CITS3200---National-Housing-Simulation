@@ -166,7 +166,9 @@ def main(
         
     with log_time():
         logger.info(f"Reading census data from {census_dir}...")
+        logger.disable("nhs")
         census_lfs = read_spreadsheets(census_dir, "parquet", census_pattern)
+        logger.enable("nhs")
         census = join_census_frames(census_lfs)
 
     logger.info(
