@@ -9,6 +9,7 @@ load_gnaf_files_by_states = nhs.data.filter.load_gnaf_files_by_states
 filter_and_join_gnaf_frames = nhs.data.filter.filter_and_join_gnaf_frames
 filter_sa1_regions = nhs.data.filter.filter_sa1_regions
 read_spreadsheets = nhs.data.handling.read_spreadsheets
+filter_gnaf_cache = nhs.data.filter.filter_gnaf_cache
 
 
 @pytest.fixture
@@ -200,40 +201,118 @@ class TestFilterAndJoinGnafFrames:
         assert result_lf.collect().height == 0
 
 
-class TestFilterSa1RegionCodes:
 
-    # Fixture to create a sample LazyFrame
+class TestFilterSa1Regions:
     @pytest.fixture
     def sample_lazyframe(self):
+        # Create a sample LazyFrame to use in tests with the correct column names
         data = {
-            "SA1_CODE21": [123456, 789012, 345678, 901234, 567890],
+            "SA1_CODE_2021": ["101", "102", "103", "104", "105"],
+            "SA2_CODE_2021": ["201", "202", "203", "204", "205"],
             "value": [10, 20, 30, 40, 50],
         }
         return pl.DataFrame(data).lazy()
 
-    def test_filter_with_valid_region_codes(self, sample_lazyframe):
-        # Filtering with valid region codes
+    def test_filter_with_valid_sa1_codes(self, sample_lazyframe):
+        # Filtering with valid SA1 codes
         result = filter_sa1_regions(
-            sample_lazyframe, [123456, 901234], "SA1_CODE21"
+            sample_lazyframe, region_codes=["101", "104"], sa1_column="SA1_CODE_2021"
         ).collect()
 
-        expected_data = {"SA1_CODE21": [123456, 901234], "value": [10, 40]}
-
+        expected_data = {"SA1_CODE_2021": ["101", "104"], "SA2_CODE_2021": ["201", "204"], "value": [10, 40]}
         expected = pl.DataFrame(expected_data)
+
         assert result.to_dicts() == expected.to_dicts()
 
-    def test_filter_with_empty_region_codes(self, sample_lazyframe):
-        # Test with empty region codes (should return the original LazyFrame)
-        result = filter_sa1_regions(sample_lazyframe, [], "SA1_CODE21").collect()
+    def test_filter_with_valid_sa2_codes(self, sample_lazyframe):
+        # Filtering with valid SA2 codes
+        result = filter_sa1_regions(
+            sample_lazyframe, sa2_codes=["202", "204"], sa2_column="SA2_CODE_2021"
+        ).collect()
 
-        # Expect the original DataFrame when no region codes are provided
+        expected_data = {"SA1_CODE_2021": ["102", "104"], "SA2_CODE_2021": ["202", "204"], "value": [20, 40]}
+        expected = pl.DataFrame(expected_data)
+
+        assert result.to_dicts() == expected.to_dicts()
+
+    def test_filter_with_empty_codes(self, sample_lazyframe):
+        # Test with empty region and SA2 codes (should return the original LazyFrame)
+        result = filter_sa1_regions(sample_lazyframe, [], [], "SA1_CODE_2021", "SA2_CODE_2021").collect()
+
+        # Expect the original DataFrame when no codes are provided
         expected = sample_lazyframe.collect()
 
         assert result.to_dicts() == expected.to_dicts()
 
-    def test_filter_with_no_matching_codes(self, sample_lazyframe):
-        # Test with region codes that don't match any rows (should return an empty DataFrame)
-        result = filter_sa1_regions(sample_lazyframe, [999999], "SA1_CODE21").collect()
+    def test_filter_with_no_matching_sa1_codes(self, sample_lazyframe):
+        # Test with SA1 codes that don't match any rows (should return an empty DataFrame)
+        result = filter_sa1_regions(sample_lazyframe, region_codes=["999"], sa1_column="SA1_CODE_2021").collect()
 
-        expected = pl.DataFrame({"SA1_CODE21": [], "value": []})
+        expected = pl.DataFrame({"SA1_CODE_2021": [], "SA2_CODE_2021": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
+
+    def test_filter_with_no_matching_sa2_codes(self, sample_lazyframe):
+        # Test with SA2 codes that don't match any rows (should return an empty DataFrame)
+        result = filter_sa1_regions(sample_lazyframe, sa2_codes=["999"], sa2_column="SA2_CODE_2021").collect()
+
+        expected = pl.DataFrame({"SA1_CODE_2021": [], "SA2_CODE_2021": [], "value": []})
+        assert result.to_dicts() == expected.to_dicts()
+
+
+
+
+class TestFilterGnafCache:
+    @pytest.fixture
+    def sample_lazyframe(self):
+        # Create a sample LazyFrame to use in tests
+        data = {
+            "STATE": ["NSW", "VIC", "QLD", "NSW", "SA"],
+            "SA1_CODE21": ["101", "102", "103", "104", "105"],
+            "SA2_CODE21": ["201", "202", "203", "204", "205"],
+            "FLAT_TYPE_CODE": ["A", "B", "C", "A", "B"],
+            "POSTCODE": [2000, 3000, 4000, 5000, 6000],
+        }
+        return pl.LazyFrame(data)
+
+    def test_filter_by_states(self, sample_lazyframe):
+        result = filter_gnaf_cache(sample_lazyframe, states=["NSW", "QLD"])
+        expected = sample_lazyframe.filter(pl.col("STATE").is_in(["NSW", "QLD"]))
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
+
+    def test_filter_by_region_codes(self, sample_lazyframe):
+        result = filter_gnaf_cache(sample_lazyframe, region_codes=["101", "104"])
+        expected = sample_lazyframe.filter(pl.col("SA1_CODE21").is_in(["101", "104"]))
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
+
+    def test_filter_by_sa2_codes(self, sample_lazyframe):
+        result = filter_gnaf_cache(sample_lazyframe, sa2_codes=["202", "204"])
+        expected = sample_lazyframe.filter(pl.col("SA2_CODE21").is_in(["202", "204"]))
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
+
+    def test_filter_by_flat_type_codes(self, sample_lazyframe):
+        result = filter_gnaf_cache(sample_lazyframe, flat_type_codes=["A"])
+        expected = sample_lazyframe.filter(pl.col("FLAT_TYPE_CODE").is_in(["A"]))
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
+
+    def test_filter_by_postcodes(self, sample_lazyframe):
+        result = filter_gnaf_cache(sample_lazyframe, postcodes=[2000, 4000])
+        expected = sample_lazyframe.filter(pl.col("POSTCODE").is_in([2000, 4000]))
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
+
+    def test_filter_with_multiple_conditions(self, sample_lazyframe):
+        result = filter_gnaf_cache(
+            sample_lazyframe,
+            states=["NSW"],
+            region_codes=["101", "104"],
+            sa2_codes=["201"],
+            flat_type_codes=["A"],
+            postcodes=[2000],
+        )
+        expected = sample_lazyframe.filter(
+            (pl.col("STATE").is_in(["NSW"])) &
+            (pl.col("SA1_CODE21").is_in(["101", "104"])) &
+            (pl.col("SA2_CODE21").is_in(["201"])) &
+            (pl.col("FLAT_TYPE_CODE").is_in(["A"])) &
+            (pl.col("POSTCODE").is_in([2000]))
+        )
+        assert result.collect().to_dicts() == expected.collect().to_dicts()
