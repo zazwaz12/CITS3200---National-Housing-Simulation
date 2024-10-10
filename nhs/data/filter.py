@@ -3,7 +3,7 @@ from typing import Literal
 import polars as pl
 
 from .handling import read_spreadsheets
-
+from loguru import logger
 
 def load_gnaf_files_by_states(
     gnaf_path: str,
@@ -48,6 +48,10 @@ def load_gnaf_files_by_states(
         - "FLAT_TYPE_CODE"
         - "POSTCODE"
     """
+
+    # Temporarily disable logging
+    logger.disable("nhs")
+
     # List of all state codes
     all_state_codes: list[
         Literal["NSW", "ACT", "VIC", "QLD", "SA", "WA", "TAS", "NT", "OT"]
@@ -83,6 +87,10 @@ def load_gnaf_files_by_states(
     address_detail_lf = (
         pl.concat(list(detail_files.values())) if detail_files else pl.LazyFrame()
     )
+
+    # Re-enable logging
+    logger.enable("nhs")
+
 
     return default_geocode_lf, address_detail_lf
 
@@ -157,26 +165,92 @@ def filter_and_join_gnaf_frames(
 
 
 def filter_sa1_regions(
-    lf: pl.LazyFrame, region_codes: list[int], sa1_column: str = "SA1_CODE21"
+    lf: pl.LazyFrame,
+    region_codes: list[str] = [],
+    sa2_codes: list[str] = [],     
+    sa1_column: str = "SA1_CODE21",
+    sa2_column: str = "SA2_CODE21",
 ) -> pl.LazyFrame:
     """
-    Filter `lf` to include only rows with specified SA1 area codes.
+    Filter `lf` to include only rows with specified SA1 and SA2 area codes.
 
     Parameters
     ----------
     lf : pl.LazyFrame
-        The LazyFrame containing SA1 region codes and data to be filtered.
-    region_codes : List[int], optional
+        The LazyFrame containing the data to be filtered.
+    region_codes : list[str], optional
         A list of SA1 area codes to filter for. If empty, no filtering will be applied.
+    sa2_codes : list[str], optional
+        A list of SA2 area codes to filter for. If empty, no filtering will be applied.
     sa1_column : str, optional
         The name of the column containing the SA1 area codes. Defaults to "SA1_CODE21".
+    sa2_column : str, optional
+        The name of the column containing the SA2 area codes. Defaults to "SA2_CODE21".
 
     Returns
     -------
     pl.LazyFrame
-        A LazyFrame containing only rows with the specified SA1 area codes.
-        If no region_codes are specified, returns the original LazyFrame.
+        A LazyFrame containing only rows that match the specified filter criteria.
+        If no filters are specified, returns the original LazyFrame.
     """
-    if not region_codes:  # If the region_codes list is empty
-        return lf  # Return the original LazyFrame
-    return lf.filter(pl.col(sa1_column).is_in(region_codes))
+    # Filter by SA1 codes if provided
+    if region_codes:
+        lf = lf.filter(pl.col(sa1_column).is_in(region_codes))
+
+    # Filter by SA2 codes if provided
+    if sa2_codes:
+        lf = lf.filter(pl.col(sa2_column).is_in(sa2_codes))
+
+    return lf
+
+
+
+
+def filter_gnaf_cache(
+    lf: pl.LazyFrame,
+    states: list[str] = [], 
+    region_codes: list[str] = [], 
+    sa2_codes: list[str] = [],   
+    flat_type_codes: list[str] = [],  
+    postcodes: list[int] = [], 
+) -> pl.LazyFrame:
+    """
+    A function to filter the GNAF cache based on states, SA1 area codes, SA2 area codes, building types, and postcodes.
+
+    Parameters
+    ----------
+    lf : pl.LazyFrame
+        The LazyFrame containing the GNAF cache data.
+    states : list[str], optional
+        A list of states to filter. If not provided, no state filtering will be applied.
+    region_codes : list[str], optional
+        A list of SA1 area codes to filter. If not provided, no SA1 filtering will be applied.
+    sa2_codes : list[str], optional
+        A list of SA2 area codes to filter. If not provided, no SA2 filtering will be applied.
+    flat_type_codes : list[str], optional
+        A list of building type codes to filter. If not provided, no building type filtering will be applied.
+    postcodes : list[int], optional
+        A list of postcodes to filter. If not provided, no postcode filtering will be applied.
+
+    Returns
+    -------
+    pl.LazyFrame
+        A LazyFrame containing the filtered GNAF data.
+    """
+
+    if states:
+        lf = lf.filter(pl.col("STATE").is_in(states))
+
+    if region_codes:
+        lf = lf.filter(pl.col("SA1_CODE21").is_in(region_codes))
+
+    if sa2_codes:
+        lf = lf.filter(pl.col("SA2_CODE21").is_in(sa2_codes))
+
+    if flat_type_codes:
+        lf = lf.filter(pl.col("FLAT_TYPE_CODE").is_in(flat_type_codes))
+
+    if postcodes:
+        lf = lf.filter(pl.col("POSTCODE").is_in(postcodes))
+
+    return lf

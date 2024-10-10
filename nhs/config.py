@@ -23,6 +23,13 @@ def data_config(config_path: str = "configurations.yml") -> dict[str, Any]:
     return parse_config(config_path)["data"]
 
 
+def filter_config(config_path: str = "configurations.yml") -> dict[str, Any]:
+    """
+    Parse a YAML configuration file at `config_path` and return the filter settings as a dictionary.
+    """
+    return parse_config(config_path)["filters"]
+
+
 def simulation_config(config_path: str = "configurations.yml") -> dict[str, Any]:
     """
     Parse a YAML configuration file at `config_path` and return the simulation settings as a dictionary.

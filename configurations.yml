@@ -12,19 +12,20 @@ logging:
   # Log level; ["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"]
   level: "INFO"
 
+
 # Paths to data files and resources
 data:
   # Path to the census data files
-  census_path: "./DataFiles/AppStaging/census/2021 Census GCP All Geographies for AUS/SA1/AUS"
+  census_path: "your own path/Desktop/DataFiles/AppStaging/census/2021 Census GCP All Geographies for AUS/SA1/AUS"
   # Path folder containing the GNAF (Geocoded National Address File) data
-  gnaf_path: "./DataFiles/AppStaging/Standard/"
+  gnaf_path: "your own path to the GNAF data directory/Desktop/DataFiles/AppStaging/Standard/"
   # File of GNAF data already joined with the shapefile
   # Recommended to use as converting GNAF to GeoDataFrames is time-consuming
-  gnaf_cache_file: "./DataFiles/AppStaging/gnaf.parquet"
+  gnaf_cache_file: "your own path to the gnaf_cache.parquet file/Desktop/DataFiles/FilesOut/gnaf_cache.parquet"
   # Path to the shapefile containing region codes and polygon of the area
-  shapefile_path: "./DataFiles/FilesIn/geodata/SA2 Names/"
+  shapefile_path: "your own path to the shapefile directory/Desktop/DataFiles/FilesIn/SA1_2021_AUST_SHP_GDA2020/SA1_2021_AUST_GDA2020.shp"
   # Path of the output CSV
-  output_path: "./DataFiles/FilesOut/"
+  output_path: "your own path to the output CSV directory/Desktop/DataFiles/FilesOut/"
   # Coordinate Reference System (CRS) for spatial data
   # use CRS 7844 - specified in the ABS 2021 datapack
   # 'EPSG:7844' is a CRS in the European Petroleum Survey Group system
@@ -35,6 +36,25 @@ data:
   sa2_area_column: "SA2_NAME21"
   # The column in your data that contains SA1(!) area codes
   sa1_area_code_column: "SA1_CODE21"
+
+
+
+
+# Filter settings (for filtering the GNAF and census data)
+filters:
+  # States to filter (e.g., QLD, NSW)
+  states: ["WA"]   
+  # List of SA1 region codes to filter 
+  region_codes: []    
+  # List of SA2 region codes to filter
+  sa2_codes: []    
+  # List of building type codes to filter
+  building_types: []     
+  # List of postcodes to filter
+  postcodes: []    
+
+
+
 
 simulation:
   # List of census features to be used in the simulation
