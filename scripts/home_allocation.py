@@ -17,31 +17,28 @@ sys.path.append(".")
 sys.path.append("..")
 from nhs import config
 from nhs.data import (
+    filter_and_join_gnaf_frames,
+    filter_gnaf_cache,
+    filter_sa1_regions,
     join_census_frames,
     join_census_with_coords,
     join_coords_with_area,
+    load_gnaf_files_by_states,
     randomly_assign_census_features,
     read_parquet,
     read_shapefile,
     read_spreadsheets,
     to_geo_dataframe,
-    load_gnaf_files_by_states,
-    filter_and_join_gnaf_frames,
-    filter_sa1_regions,
-    filter_gnaf_cache,
 )
 from nhs.logging import config_logger
 from nhs.utils import log_time
-
-
-
 
 
 def write_csv_in_chunks(lf: pl.LazyFrame, output_path: str, chunk_size: int = 50000):
     """
     Write a LazyFrame to a CSV file in chunks.
 
-    This function writes the data from the provided LazyFrame to a CSV file in chunks, 
+    This function writes the data from the provided LazyFrame to a CSV file in chunks,
     to handle large datasets efficiently by avoiding memory issues during writing.
 
     Parameters
@@ -55,22 +52,21 @@ def write_csv_in_chunks(lf: pl.LazyFrame, output_path: str, chunk_size: int = 50
 
     Notes
     -----
-    The first chunk will overwrite the existing file, while subsequent chunks 
+    The first chunk will overwrite the existing file, while subsequent chunks
     will append to the file.
     """
-    first_chunk = True  
+    first_chunk = True
     for chunk in lf.collect(streaming=True).iter_slices(chunk_size):
         if first_chunk:
-            chunk.write_csv(output_path) 
+            chunk.write_csv(output_path)
             first_chunk = False
         else:
             with open(output_path, "a") as f:
-                f.write(chunk.write_csv())  
+                f.write(chunk.write_csv())
 
-    logger.info(f"Data successfully written to {output_path} in chunks of {chunk_size} rows.")
-
-
-
+    logger.info(
+        f"Data successfully written to {output_path} in chunks of {chunk_size} rows."
+    )
 
 
 def join_gnaf_with_shapefile(
@@ -78,15 +74,17 @@ def join_gnaf_with_shapefile(
     shapefile_dir: str,
     data_config: dict,
     strategy: Literal["join_nearest", "filter"] | None = None,
-    states: list[str] = [],  
-    building_types: list[str] = [],  
-    postcodes: list[int] = [],  
-    region_codes: list[str] = [], 
-    sa2_codes: list[str] = [] 
+    states: list[str] = [],
+    building_types: list[str] = [],
+    postcodes: list[int] = [],
+    region_codes: list[str] = [],
+    sa2_codes: list[str] = [],
 ) -> pl.LazyFrame:
     with log_time():
         logger.info(f"Reading GNAF data from {gnaf_dir}...")
-        default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(gnaf_dir, states)
+        default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(
+            gnaf_dir, states
+        )
 
     logger.info("Filtering GNAF data before spatial join...")
     if building_types or postcodes:
@@ -111,9 +109,7 @@ def join_gnaf_with_shapefile(
     with log_time():
         logger.info("Applying SA1 and SA2 filters to joined data...")
         joined_coords = filter_sa1_regions(
-            joined_coords,
-            region_codes=region_codes,  
-            sa2_codes=sa2_codes         
+            joined_coords, region_codes=region_codes, sa2_codes=sa2_codes
         )
 
     return joined_coords
@@ -127,11 +123,11 @@ def main(
     census_pattern: str,
     output_path: str,
     data_config: dict,
-    filter_config: dict, 
+    filter_config: dict,
     simulation_config: dict,
     strategy: Literal["join_nearest", "filter"] | None = None,
 ) -> None:
-    
+
     # Required for fiona - reads shapefiles
     supported_drivers["ESRI Shapefile"] = "rw"
 
@@ -142,12 +138,15 @@ def main(
             f"Unable to find GNAF cache file at {gnaf_cache}, GNAF will be joined with shapefiles. Note that it's recommended to perform this join beforehand as this process is time-consuming."
         )
         joined_coords = join_gnaf_with_shapefile(
-            gnaf_dir, shapefile_dir, data_config, strategy,
-            states=filter_config["states"], 
-            building_types=filter_config["building_types"], 
-            postcodes=filter_config["postcodes"], 
-            region_codes=filter_config["region_codes"],  
-            sa2_codes=filter_config["sa2_codes"]  
+            gnaf_dir,
+            shapefile_dir,
+            data_config,
+            strategy,
+            states=filter_config["states"],
+            building_types=filter_config["building_types"],
+            postcodes=filter_config["postcodes"],
+            region_codes=filter_config["region_codes"],
+            sa2_codes=filter_config["sa2_codes"],
         )
     else:
         logger.info(f"Reading GNAF cache from {gnaf_cache}...")
@@ -157,13 +156,13 @@ def main(
         logger.info("Applying filters to cached GNAF data...")
         joined_coords = filter_gnaf_cache(
             joined_coords,
-            states=filter_config["states"], 
-            region_codes=filter_config["region_codes"],  
-            sa2_codes=filter_config["sa2_codes"], 
-            flat_type_codes=filter_config["building_types"], 
-            postcodes=filter_config["postcodes"]  
+            states=filter_config["states"],
+            region_codes=filter_config["region_codes"],
+            sa2_codes=filter_config["sa2_codes"],
+            flat_type_codes=filter_config["building_types"],
+            postcodes=filter_config["postcodes"],
         )
-        
+
     with log_time():
         logger.info(f"Reading census data from {census_dir}...")
         logger.disable("nhs")
@@ -258,7 +257,7 @@ if __name__ == "__main__":
     try:
         data_config = config.data_config(args.config_path)
         logger_config = config.logger_config(args.config_path)
-        filter_config = config.filter_config(args.config_path) 
+        filter_config = config.filter_config(args.config_path)
         simulation_config = config.simulation_config(args.config_path)
     except Exception as e:
         logger.critical(
@@ -274,14 +273,11 @@ if __name__ == "__main__":
         census_dir=args.census_dir or data_config["census_path"],
         census_pattern=args.census_pattern,
         output_path=(
-            args.output_path or os.path.join(data_config["output_path"], "allocated.csv")
+            args.output_path
+            or os.path.join(data_config["output_path"], "allocated.csv")
         ),
         strategy=args.strategy,
         data_config=data_config,
         simulation_config=simulation_config,
-        filter_config=filter_config 
+        filter_config=filter_config,
     )
-
-
-
-

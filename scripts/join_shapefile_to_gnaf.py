@@ -20,7 +20,12 @@ from fiona import supported_drivers
 from loguru import logger
 
 from nhs.config import data_config, logger_config
-from nhs.data import read_shapefile, read_spreadsheets, load_gnaf_files_by_states, filter_and_join_gnaf_frames
+from nhs.data import (
+    filter_and_join_gnaf_frames,
+    load_gnaf_files_by_states,
+    read_shapefile,
+    read_spreadsheets,
+)
 from nhs.data.geography import join_coords_with_area, to_geo_dataframe
 from nhs.logging import config_logger
 
@@ -41,8 +46,7 @@ def main(
         gnaf_path=gnaf_dir
     )
     filtered_gnaf_lf = filter_and_join_gnaf_frames(
-        default_geocode_lf,
-        address_detail_lf        
+        default_geocode_lf, address_detail_lf
     )
 
     logger.info(f"Reading shapefile from {shapefile_dir}...")

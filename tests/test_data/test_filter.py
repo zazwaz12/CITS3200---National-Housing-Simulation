@@ -201,7 +201,6 @@ class TestFilterAndJoinGnafFrames:
         assert result_lf.collect().height == 0
 
 
-
 class TestFilterSa1Regions:
     @pytest.fixture
     def sample_lazyframe(self):
@@ -219,7 +218,11 @@ class TestFilterSa1Regions:
             sample_lazyframe, region_codes=["101", "104"], sa1_column="SA1_CODE_2021"
         ).collect()
 
-        expected_data = {"SA1_CODE_2021": ["101", "104"], "SA2_CODE_2021": ["201", "204"], "value": [10, 40]}
+        expected_data = {
+            "SA1_CODE_2021": ["101", "104"],
+            "SA2_CODE_2021": ["201", "204"],
+            "value": [10, 40],
+        }
         expected = pl.DataFrame(expected_data)
 
         assert result.to_dicts() == expected.to_dicts()
@@ -230,14 +233,20 @@ class TestFilterSa1Regions:
             sample_lazyframe, sa2_codes=["202", "204"], sa2_column="SA2_CODE_2021"
         ).collect()
 
-        expected_data = {"SA1_CODE_2021": ["102", "104"], "SA2_CODE_2021": ["202", "204"], "value": [20, 40]}
+        expected_data = {
+            "SA1_CODE_2021": ["102", "104"],
+            "SA2_CODE_2021": ["202", "204"],
+            "value": [20, 40],
+        }
         expected = pl.DataFrame(expected_data)
 
         assert result.to_dicts() == expected.to_dicts()
 
     def test_filter_with_empty_codes(self, sample_lazyframe):
         # Test with empty region and SA2 codes (should return the original LazyFrame)
-        result = filter_sa1_regions(sample_lazyframe, [], [], "SA1_CODE_2021", "SA2_CODE_2021").collect()
+        result = filter_sa1_regions(
+            sample_lazyframe, [], [], "SA1_CODE_2021", "SA2_CODE_2021"
+        ).collect()
 
         # Expect the original DataFrame when no codes are provided
         expected = sample_lazyframe.collect()
@@ -246,19 +255,21 @@ class TestFilterSa1Regions:
 
     def test_filter_with_no_matching_sa1_codes(self, sample_lazyframe):
         # Test with SA1 codes that don't match any rows (should return an empty DataFrame)
-        result = filter_sa1_regions(sample_lazyframe, region_codes=["999"], sa1_column="SA1_CODE_2021").collect()
+        result = filter_sa1_regions(
+            sample_lazyframe, region_codes=["999"], sa1_column="SA1_CODE_2021"
+        ).collect()
 
         expected = pl.DataFrame({"SA1_CODE_2021": [], "SA2_CODE_2021": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
 
     def test_filter_with_no_matching_sa2_codes(self, sample_lazyframe):
         # Test with SA2 codes that don't match any rows (should return an empty DataFrame)
-        result = filter_sa1_regions(sample_lazyframe, sa2_codes=["999"], sa2_column="SA2_CODE_2021").collect()
+        result = filter_sa1_regions(
+            sample_lazyframe, sa2_codes=["999"], sa2_column="SA2_CODE_2021"
+        ).collect()
 
         expected = pl.DataFrame({"SA1_CODE_2021": [], "SA2_CODE_2021": [], "value": []})
         assert result.to_dicts() == expected.to_dicts()
-
-
 
 
 class TestFilterGnafCache:
@@ -309,10 +320,10 @@ class TestFilterGnafCache:
             postcodes=[2000],
         )
         expected = sample_lazyframe.filter(
-            (pl.col("STATE").is_in(["NSW"])) &
-            (pl.col("SA1_CODE21").is_in(["101", "104"])) &
-            (pl.col("SA2_CODE21").is_in(["201"])) &
-            (pl.col("FLAT_TYPE_CODE").is_in(["A"])) &
-            (pl.col("POSTCODE").is_in([2000]))
+            (pl.col("STATE").is_in(["NSW"]))
+            & (pl.col("SA1_CODE21").is_in(["101", "104"]))
+            & (pl.col("SA2_CODE21").is_in(["201"]))
+            & (pl.col("FLAT_TYPE_CODE").is_in(["A"]))
+            & (pl.col("POSTCODE").is_in([2000]))
         )
         assert result.collect().to_dicts() == expected.collect().to_dicts()

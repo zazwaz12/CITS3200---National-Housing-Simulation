@@ -1,9 +1,10 @@
 from typing import Literal
 
 import polars as pl
+from loguru import logger
 
 from .handling import read_spreadsheets
-from loguru import logger
+
 
 def load_gnaf_files_by_states(
     gnaf_path: str,
@@ -91,7 +92,6 @@ def load_gnaf_files_by_states(
     # Re-enable logging
     logger.enable("nhs")
 
-
     return default_geocode_lf, address_detail_lf
 
 
@@ -167,7 +167,7 @@ def filter_and_join_gnaf_frames(
 def filter_sa1_regions(
     lf: pl.LazyFrame,
     region_codes: list[str] = [],
-    sa2_codes: list[str] = [],     
+    sa2_codes: list[str] = [],
     sa1_column: str = "SA1_CODE21",
     sa2_column: str = "SA2_CODE21",
 ) -> pl.LazyFrame:
@@ -204,15 +204,13 @@ def filter_sa1_regions(
     return lf
 
 
-
-
 def filter_gnaf_cache(
     lf: pl.LazyFrame,
-    states: list[str] = [], 
-    region_codes: list[str] = [], 
-    sa2_codes: list[str] = [],   
-    flat_type_codes: list[str] = [],  
-    postcodes: list[int] = [], 
+    states: list[str] = [],
+    region_codes: list[str] = [],
+    sa2_codes: list[str] = [],
+    flat_type_codes: list[str] = [],
+    postcodes: list[int] = [],
 ) -> pl.LazyFrame:
     """
     A function to filter the GNAF cache based on states, SA1 area codes, SA2 area codes, building types, and postcodes.
