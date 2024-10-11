@@ -20,7 +20,12 @@ from fiona import supported_drivers
 from loguru import logger
 
 from nhs.config import data_config, logger_config
-from nhs.data import read_shapefile, read_spreadsheets
+from nhs.data import (
+    filter_and_join_gnaf_frames,
+    load_gnaf_files_by_states,
+    read_shapefile,
+    read_spreadsheets,
+)
 from nhs.data.geography import join_coords_with_area, to_geo_dataframe
 from nhs.logging import config_logger
 
@@ -28,7 +33,6 @@ from nhs.logging import config_logger
 def main(
     gnaf_dir: str,
     shapefile_dir: str,
-    pattern: str,
     output_name: str,
     data_config: dict,
     extension: str = "parquet",
@@ -38,14 +42,18 @@ def main(
     supported_drivers["ESRI Shapefile"] = "rw"
 
     logger.info(f"Reading GNAF data from {gnaf_dir}...")
-    lfs = read_spreadsheets(gnaf_dir, extension, pattern)
-    gnaf = pl.concat(lfs.values(), how="diagonal_relaxed")  # type: ignore
+    default_geocode_lf, address_detail_lf = load_gnaf_files_by_states(
+        gnaf_path=gnaf_dir
+    )
+    filtered_gnaf_lf = filter_and_join_gnaf_frames(
+        default_geocode_lf, address_detail_lf
+    )
 
     logger.info(f"Reading shapefile from {shapefile_dir}...")
     shapefile = read_shapefile(shapefile_dir, data_config["crs"])
 
     logger.info("Convert polars LazyFrame to geopandas GeoDataFrame...")
-    coords = to_geo_dataframe(gnaf, data_config["crs"])
+    coords = to_geo_dataframe(filtered_gnaf_lf, data_config["crs"])
 
     logger.info("Joining areas with points...")
     joined_coords = join_coords_with_area(coords, shapefile, strategy)
@@ -91,13 +99,6 @@ if __name__ == "__main__":
         default="configurations.yml",
     )
     parser.add_argument(
-        "-p",
-        "--pattern",
-        help="Regex pattern to match file names in the directory to process. Defaults to r'[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv'",
-        type=str,
-        default=r"[A-Z]+_ADDRESS_DEFAULT_GEOCODE_psv",
-    )
-    parser.add_argument(
         "-n",
         "--strategy",
         type=str,
@@ -119,7 +120,6 @@ if __name__ == "__main__":
     main(
         gnaf_dir=args.gnaf_dir or data_config["gnaf_path"],
         shapefile_dir=args.shapefile_dir or data_config["shapefile_path"],
-        pattern=args.pattern,
         output_name=args.output_name or data_config["gnaf_cache_file"],
         extension=args.extension,
         data_config=data_config,
