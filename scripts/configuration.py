@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+import os
+import argparse
+from loguru import logger
+import sys
+
+sys.path.append(".")
+sys.path.append("..")
+
+yaml_content = """
 # Logging configuration settings
 # See https://loguru.readthedocs.io/en/stable/api/logger.html
 logging:
@@ -61,3 +71,36 @@ simulation:
     - "Age_15_19_yr_M"
   # FALSE to skip visualization
   enable_visualization: false
+"""
+
+
+def main(args):
+    config_file_path = os.path.join(os.path.dirname(os.path.abspath(os.curdir)), 'configurations.yml')
+    file_name = config_file_path.split("\\")[-1]
+    try:
+        if not os.path.exists(config_file_path) or args.overwrite:
+            with open(config_file_path, 'w') as file:
+                file.write(yaml_content.strip())
+            if args.overwrite:
+                logger.info(f"{file_name} has been overwritten.")
+            else:
+                logger.info(f"{file_name} has been created.")
+        else:
+            logger.info(f"{file_name} already exists. Use --overwrite to overwrite the file.")
+    except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
+        print(f"An error occurred: {str(e)}")
+
+
+if __name__ == '__main__':
+    # Argument parser for command-line flags
+    parser = argparse.ArgumentParser(description='Create or overwrite a YAML configuration file.')
+    parser.add_argument(
+        '--overwrite',
+        action='store_true',
+        help='Overwrite the existing YAML configuration file if it exists.',
+        default=None,
+    )
+
+    args = parser.parse_args()
+    main(args)
