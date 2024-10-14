@@ -19,7 +19,7 @@ poetry install   # Install the dependencies from pyproject.toml
 poetry shell     # Activate the virtual environment
 ```
 
-#### Conda/Mamba for Python Version Management
+#### Conda/Mamba for Python Version Management (Optional)
 If you are using [Conda](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html) or [Mamba](https://github.com/mamba-org/mamba) *and you don't have the right Python version by default*, the easiest way to get started with poetry is to use Conda/Mamba to create an environment with the right Python version before installing via poetry.
 
 ```bash
