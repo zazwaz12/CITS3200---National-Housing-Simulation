@@ -2,6 +2,7 @@
 
 Repository for the National Housing Simulation project, involving mapping data points from the G-NAF and the SA1 census datasets.
 
+Hello!
 ## Install
 
 You can install project dependencies using either `poetry` or `devenv`.
