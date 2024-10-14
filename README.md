@@ -1,6 +1,10 @@
-# National Housing Simulation
+# Overview
 
-Repository for the National Housing Simulation project, involving mapping data points from the G-NAF and the SA1 census datasets.
+Repository for National Housing Simulation.
+
+This repository contains the code for the National Housing Simulation project in which census attributes from the Statistical Area 1 (SA1) is allocated to housing coordinates in the GNAF dataset.
+
+The functions are stored under `nhs/` and example scripts can be found under `scripts/`.
 
 ## Install
 
