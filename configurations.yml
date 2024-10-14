@@ -66,5 +66,3 @@ simulation:
     - "Age_5_14_yr_F"
     - "Age_5_14_yr_P"
     - "Age_15_19_yr_M"
-  # FALSE to skip visualization
-  enable_visualization: false
