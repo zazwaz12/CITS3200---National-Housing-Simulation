@@ -9,7 +9,7 @@ The functions are stored under `nhs/` and example scripts can be found under `sc
 Please see our [wiki](https://github.com/zazwaz12/CITS3200---National-Housing-Simulation/wiki/1.-Home) for details about our project.
 
 ## Installing Project Dependencies
-This is a summary of this [wiki article](https://github.com/zazwaz12/CITS3200---National-Housing-Simulation/wiki/2.-Installation/], please refer to that page for more details.
+This is a summary of this [wiki article](https://github.com/zazwaz12/CITS3200---National-Housing-Simulation/wiki/2.-Installation/), please refer to that page for more details.
 
 You can install project dependencies using either `poetry` or `devenv`. 
 
