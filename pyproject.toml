@@ -1,8 +1,16 @@
 [tool.poetry]
-name = "cits3200-project"
+name = "nhs"
 version = "0.1.0"
-description = "Python packages for the CITS3200 Project"
-package-mode = false
+description = "Project for National Home Simulation."
+package-mode = true
+authors = [
+  "Tin Chi Pang",
+  "Leyi Chen",
+  "Colin Melville",
+  "Reece Shi",
+  "Tim Zandi",
+  "Jessica Shindunata"
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
